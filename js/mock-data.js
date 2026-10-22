@@ -8,7 +8,7 @@ export const MOCK = {
     id: 1,
     nome: 'DAVI',
     email: 'contato@exemplo.com',
-    foto_url: 'assets/avatar-exemplo.svg',
+    foto_url: 'assets/foto-davi.jpg',
     sobre_pt: 'Edito desde 2019. Comecei cortando gameplay pros amigos e hoje faço motion, shorts e vídeos longos pra canais de games, tecnologia e humor. Gosto de ritmo, som no lugar certo e de segurar o público até o último segundo.',
     sobre_en: "I've been editing since 2019. I started cutting gameplay for friends and now I make motion, shorts and long form for gaming, tech and comedy channels. I care about pacing, sound in the right place and holding the audience to the last second.",
     redes: {
