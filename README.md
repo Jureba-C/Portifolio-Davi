@@ -87,6 +87,8 @@ npm run check:comments           # garante que o código não tem comentários
 4. Em **Authentication → Users → Add user**, crie o usuário com esse e-mail e uma senha forte (marque "Auto Confirm User").
 5. Em **Project Settings → API**, copie a **Project URL** e a chave **anon public** para `js/config.js`. Nunca use a chave `service_role` no site.
 6. Em **Authentication → URL Configuration**, coloque o endereço do site em **Site URL**.
+7. Em **Authentication → Sign In / Providers**, desligue **Allow new users to sign up**. Assim ninguém cria conta sozinho; só o admin que você cadastrou entra.
+8. Se já tinha rodado o `schema.sql` antes, rode de novo: ele só acrescenta as travas novas (links das redes só com `https://` e e-mail válido) sem apagar nada.
 
 Segurança: todas as tabelas têm Row Level Security. Qualquer pessoa lê. Só quem está logado **e** está na tabela `admins` escreve, reordena ou envia fotos.
 

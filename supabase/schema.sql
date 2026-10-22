@@ -57,6 +57,31 @@ create table if not exists public.settings (
   comissoes_abertas boolean not null default true
 );
 
+create or replace function public.redes_validas(redes jsonb)
+returns boolean
+language sql
+immutable
+set search_path = public
+as $$
+  select jsonb_typeof(redes) = 'object'
+    and not exists (
+      select 1 from jsonb_each(redes) as r(chave, valor)
+      where jsonb_typeof(r.valor) <> 'string'
+        or not (r.valor #>> '{}' = '' or (r.valor #>> '{}') ~* '^https://')
+    );
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'settings_redes_https') then
+    alter table public.settings add constraint settings_redes_https check (public.redes_validas(redes));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'settings_email_valido') then
+    alter table public.settings add constraint settings_email_valido check (email = '' or email ~* '^[^@\s<>"]+@[^@\s<>"]+\.[^@\s<>"]+$');
+  end if;
+end;
+$$;
+
 create or replace function public.eh_admin()
 returns boolean
 language sql

@@ -1,4 +1,4 @@
-import { carregarSite, linkYoutube, iniciais } from './data.js';
+import { carregarSite, linkYoutube, iniciais, urlSegura } from './data.js';
 import { t, campo, aplicar, definirIdioma, idioma, aoMudarIdioma } from './i18n.js';
 import { iniciarRevelacao, iniciarAranhaHero, iniciarRodape, letrasSoltas, recorte, temMouse } from './animations.js';
 import { iniciarCursor } from './cursor.js';
@@ -135,7 +135,7 @@ function renderSobre() {
   const nome = settings.nome || 'DECXZ';
   textoComDestaques(document.querySelector('[data-campo="sobre"]'), campo(settings, 'sobre'));
   const foto = document.querySelector('[data-campo="foto"]');
-  const src = settings.foto_url || 'assets/avatar-exemplo.svg';
+  const src = urlSegura(settings.foto_url, { midia: true }) || 'assets/avatar-exemplo.svg';
   if (foto.getAttribute('src') !== src) foto.src = src;
   foto.alt = t('sobre.fotoAlt', { nome });
   foto.onerror = () => { foto.onerror = null; foto.src = 'assets/avatar-exemplo.svg'; };
@@ -145,17 +145,18 @@ function renderSobre() {
 const CLIENTES_NO_CARTAZ = 6;
 
 function linkCliente(c, props, conteudo) {
-  const textos = [el('span', { class: 'sr-only', text: c.nome }), c.canal_url ? el('span', { class: 'sr-only', text: t('clientes.canal') }) : null];
-  return c.canal_url
-    ? el('a', { ...props, href: c.canal_url, target: '_blank', rel: 'noopener' }, conteudo, textos)
+  const textos = [el('span', { class: 'sr-only', text: c.nome }), urlSegura(c.canal_url) ? el('span', { class: 'sr-only', text: t('clientes.canal') }) : null];
+  const canal = urlSegura(c.canal_url);
+  return canal
+    ? el('a', { ...props, href: canal, target: '_blank', rel: 'noopener' }, conteudo, textos)
     : el('div', props, conteudo, textos);
 }
 
 function rostoCliente(c, classe) {
   const rosto = el('span', { class: classe, 'aria-hidden': 'true' });
   const iniciaisEl = () => el('span', { text: iniciais(c.nome) });
-  if (c.foto_url) {
-    const img = el('img', { src: c.foto_url, alt: '', loading: 'lazy', decoding: 'async', width: '160', height: '200' });
+  if (urlSegura(c.foto_url, { midia: true })) {
+    const img = el('img', { src: urlSegura(c.foto_url, { midia: true }), alt: '', loading: 'lazy', decoding: 'async', width: '160', height: '200' });
     img.addEventListener('error', () => { rosto.textContent = ''; rosto.append(iniciaisEl()); });
     rosto.append(img);
   } else {
@@ -348,7 +349,7 @@ function renderContato() {
   redes.textContent = '';
   const caixa = (icone) => el('span', { class: 'rede-dentro', html: ICONES[icone] });
   [['instagram', 'Instagram'], ['x', 'X / Twitter'], ['youtube', 'YouTube']].forEach(([chave, rotulo]) => {
-    const url = settings.redes?.[chave];
+    const url = urlSegura(settings.redes?.[chave]);
     if (url) redes.append(el('a', { href: url, target: '_blank', rel: 'noopener me', 'aria-label': `${rotulo} ${t('novaAba')}`, class: 'rede' }, caixa(chave)));
   });
   if (settings.discord_nick) {
@@ -363,6 +364,9 @@ function renderContato() {
       },
     }, caixa('discord')));
   }
+  const linhaEmail = document.querySelector('[data-campo="email-linha"]');
+  linhaEmail.hidden = !settings.email;
+  document.querySelector('[data-campo="email-texto"]').textContent = settings.email || '';
   if (settings.email) {
     redes.append(el('a', { href: `mailto:${settings.email}`, 'aria-label': `${t('contato.email')} (${settings.email})`, class: 'rede' }, caixa('email')));
   }

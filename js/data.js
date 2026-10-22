@@ -39,6 +39,13 @@ export function thumbYoutube(id, qualidade = 'hqdefault') {
   return id ? `https://i.ytimg.com/vi/${id}/${qualidade}.jpg` : '';
 }
 
+export function urlSegura(url, { midia = false } = {}) {
+  const valor = String(url || '').trim();
+  if (/^https?:\/\//i.test(valor) || /^(assets\/|blob:)/.test(valor)) return valor;
+  if (midia && /^data:(image|video)\//i.test(valor)) return valor;
+  return '';
+}
+
 export function linkYoutube(id) {
   return id ? `https://www.youtube.com/watch?v=${id}` : '';
 }

@@ -1,4 +1,4 @@
-import { thumbYoutube } from './data.js';
+import { thumbYoutube, urlSegura } from './data.js';
 import { reduzMovimento } from './animations.js';
 
 const controles = new Map();
@@ -68,7 +68,7 @@ function controleDeVideo(tela, video, poster) {
     visivel: false,
     carregar() {
       if (!autoplayPermitido() || v.getAttribute('src')) return;
-      v.src = video.preview_url;
+      v.src = urlSegura(video.preview_url, { midia: true });
     },
     tocar() {
       if (!autoplayPermitido()) return;
@@ -111,6 +111,7 @@ function controleDeYoutube(tela, video, poster, texto) {
       iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.youtube_id)}?${params}`;
       iframe.title = video.titulo;
       iframe.allow = 'autoplay; encrypted-media';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
       iframe.loading = 'lazy';
       iframe.tabIndex = -1;
       iframe.setAttribute('aria-hidden', 'true');
@@ -124,9 +125,9 @@ function controleDeYoutube(tela, video, poster, texto) {
 }
 
 export function montarPrevia(tela, video, { modo = 'card', textoSem = '' } = {}) {
-  const poster = video.poster_url || thumbYoutube(video.youtube_id);
+  const poster = urlSegura(video.poster_url, { midia: true }) || thumbYoutube(video.youtube_id);
   let controle = null;
-  if (video.preview_url) controle = controleDeVideo(tela, video, poster);
+  if (urlSegura(video.preview_url, { midia: true })) controle = controleDeVideo(tela, video, poster);
   else if (modo === 'destaque' && video.youtube_id && autoplayPermitido()) controle = controleDeYoutube(tela, video, poster, textoSem);
   else imagem(tela, poster, textoSem);
   if (!controle) return;

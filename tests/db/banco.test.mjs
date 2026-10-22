@@ -99,6 +99,19 @@ test('link de clipe ou foto precisa ser https', async () => {
   await assert.rejects(como('authenticated', ADMIN, () => db.query("update public.settings set foto_url = 'http://inseguro.com/a.jpg' where id = 1")));
 });
 
+test('redes e e-mail do contato não aceitam link perigoso', async () => {
+  await assert.rejects(como('authenticated', ADMIN, () => db.query(`update public.settings set redes = '{"instagram":"javascript:alert(1)"}'::jsonb where id = 1`)));
+  await assert.rejects(como('authenticated', ADMIN, () => db.query(`update public.settings set email = 'a@b.com?bcc=<x>' where id = 1`)));
+  await como('authenticated', ADMIN, () => db.query(`update public.settings set redes = '{"instagram":"https://instagram.com/x","x":""}'::jsonb, email = 'oi@decxz.com' where id = 1`));
+});
+
+test('rodar o schema de novo não apaga dados nem dá erro', async () => {
+  const antes = await db.query('select count(*)::int as n from public.videos');
+  await db.exec(await readFile(new URL('schema.sql', raiz), 'utf8'));
+  const depois = await db.query('select count(*)::int as n from public.videos');
+  assert.equal(depois.rows[0].n, antes.rows[0].n);
+});
+
 test('reordenar recusa tabela fora da lista', async () => {
   await assert.rejects(como('authenticated', ADMIN, () => db.query("select public.reordenar('admins', array[]::uuid[])")));
 });

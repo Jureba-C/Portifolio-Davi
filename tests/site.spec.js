@@ -167,6 +167,23 @@ test.describe('site público', () => {
     await expect(page).toHaveTitle(/Decxz Editor/);
   });
 
+  test('links perigosos são descartados', async ({ page }) => {
+    await page.goto('/?intro=0');
+    const r = await page.evaluate(async () => {
+      const { urlSegura } = await import('/js/data.js');
+      return [
+        urlSegura('javascript:alert(1)'),
+        urlSegura(' JavaScript:alert(1)'),
+        urlSegura('data:text/html,<script>1</script>'),
+        urlSegura('data:text/html,x', { midia: true }),
+        urlSegura('data:image/png;base64,AAAA', { midia: true }),
+        urlSegura('https://youtube.com/@x'),
+      ];
+    });
+    expect(r).toEqual(['', '', '', '', 'data:image/png;base64,AAAA', 'https://youtube.com/@x']);
+    expect(await page.locator('a[href^="javascript"], a[href^="data:"]').count()).toBe(0);
+  });
+
   test('a aranha foge ao clicar e volta quicando', async ({ page }) => {
     await page.goto('/?intro=0');
     await page.locator('.aranha-hero').click({ force: true });

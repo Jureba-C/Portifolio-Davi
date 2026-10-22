@@ -497,8 +497,8 @@ a.ficha:hover, a.ficha:focus-visible { background: var(--vermelho-escuro); trans
 .chip:hover { transform: rotate(-2deg); background: var(--cinza-claro); }
 .chip[aria-selected="true"] { background: var(--vermelho); color: var(--branco-puro); transform: rotate(-3deg) scale(1.08); filter: drop-shadow(0 0 12px rgba(255, 42, 61, .55)); }
 
-.filtros { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px; }
-.filtros-rotulo { font-family: var(--f-ui); font-weight: 800; font-style: italic; font-size: 20px; color: var(--cinza); text-transform: uppercase; letter-spacing: .06em; }
+.filtros { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 0 4px; max-width: 100%; padding-right: 8px; border: 3px solid var(--branco); background: var(--preto-2); box-shadow: 6px 6px 0 var(--vermelho); transform: rotate(-.6deg); }
+.filtros-rotulo { display: flex; align-items: center; margin-right: 6px; padding: 0 14px; background: var(--branco); color: var(--preto); font-family: var(--f-mono); font-weight: 700; font-size: 15px; letter-spacing: .02em; }
 .filtro {
   position: relative;
   min-height: 44px;
@@ -612,7 +612,14 @@ a.ficha:hover, a.ficha:focus-visible { background: var(--vermelho-escuro); trans
 }
 .rede:hover, .rede:focus-visible { color: var(--branco-puro); transform: translateY(-3px) rotate(-3deg); filter: drop-shadow(0 0 14px rgba(255, 42, 61, .7)); }
 .rede:hover .rede-dentro, .rede:focus-visible .rede-dentro { background: var(--vermelho); }
-.redes-legenda { font-size: 22px; color: var(--cinza); letter-spacing: 0.1em; }
+.redes-legenda { margin: 0; font-size: 20px; color: var(--cinza); letter-spacing: 0.1em; }
+.contato-chamada { max-width: 30ch; margin: -12px 0 0; font-family: var(--f-ui); font-weight: 800; font-size: clamp(22px, 2.2vw, 30px); line-height: 1.15; text-transform: uppercase; letter-spacing: .03em; text-wrap: balance; }
+.contato-janela { width: min(640px, 100%); border-color: var(--branco); box-shadow: 12px 12px 0 var(--vermelho); transform: rotate(-.8deg); }
+.contato-janela .janela-barra { background: var(--branco); color: var(--preto); }
+.contato-janela .janela-botoes span { border-color: var(--preto); }
+.contato-corpo { display: flex; flex-direction: column; align-items: center; gap: 26px; padding: 34px 20px 30px; background: var(--preto-2); color: var(--branco); }
+.contato-email { margin: -6px 0 0; font-family: var(--f-texto); font-size: 18px; color: var(--cinza-claro); overflow-wrap: anywhere; }
+.contato-email-texto { font-weight: 700; color: var(--branco-puro); user-select: all; }
 
 .rodape {
   height: 260px;
@@ -803,13 +810,16 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
   .aranha-trabalhos { display: none; }
   .abas { gap: 8px; }
   .chip { min-height: 46px; padding: 0 18px; font-size: 17px; }
-  .filtros-rotulo { font-size: 18px; }
+  .filtros-rotulo { flex-basis: 100%; justify-content: flex-start; min-height: 32px; margin: 0 -8px 4px 0; font-size: 14px; }
   .filtro { font-size: 17px; padding: 0 8px; }
   .grade { grid-template-columns: 1fr; gap: 56px; margin-top: 18px; }
   .grade-vertical { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px 16px; }
   .grade-vertical .card .quadro-titulo { font-size: 14px; }
   .grade-vertical .card .quadro-sub { display: none; }
   .contato { padding: 64px 16px 40px; gap: 28px; }
+  .contato-corpo { padding: 28px 14px 24px; gap: 20px; }
+  .contato-janela { box-shadow: 8px 8px 0 var(--vermelho); }
+  .redes-legenda { font-size: 16px; }
   .teia-contato { width: 120px; }
   .contato-titulo { font-size: clamp(40px, 13.5vw, 66px); flex-wrap: nowrap; }
   .selo { font-size: 19px; padding: 8px 18px; }
@@ -824,6 +834,16 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
   .player-linha { gap: 10px; }
   .player-tempo { font-size: 16px; }
   .player-youtube { font-size: 18px; }
+}
+
+@media (max-width: 440px) {
+  .contato-corpo .redes { gap: 6px; }
+  .contato-corpo .rede-dentro { width: 42px; height: 40px; }
+}
+
+@media (max-width: 340px) {
+  .contato-corpo .redes { gap: 4px; }
+  .contato-corpo .rede-dentro { width: 36px; height: 36px; }
 }
 
 @media (max-width: 380px) {

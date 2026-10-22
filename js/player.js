@@ -105,6 +105,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
       iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(item.youtubeId)}?${params}`;
       iframe.title = item.titulo || 'YouTube';
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
       iframe.allowFullscreen = true;
       iframe.referrerPolicy = 'strict-origin-when-cross-origin';
       iframe.addEventListener('load', () => {

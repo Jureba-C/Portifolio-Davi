@@ -66,7 +66,9 @@ function confirmar(texto, botao = 'EXCLUIR') {
 function urlCompleta(valor) {
   const texto = String(valor ?? '').trim();
   if (!texto) return '';
-  return /^https?:\/\//i.test(texto) ? texto : `https://${texto.replace(/^\/+/, '')}`;
+  if (/^https?:\/\//i.test(texto)) return texto;
+  if (/^[a-z][a-z0-9+.-]*:(?!\d)/i.test(texto)) return '';
+  return `https://${texto.replace(/^\/+/, '')}`;
 }
 
 function slug(texto) {
