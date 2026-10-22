@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Guia de estilo — papel e tinta</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/paper.css">
+<link rel="stylesheet" href="css/site.css">
+<style>
+.guia { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 48px 20px 96px; display: flex; flex-direction: column; gap: 64px; }
+.guia h1 { font-family: var(--f-titulo); font-size: clamp(56px, 8vw, 110px); line-height: .9; }
+.guia h2 { font-family: var(--f-titulo); font-size: 40px; color: var(--coral); margin-bottom: 18px; }
+.linha { display: flex; flex-wrap: wrap; gap: 28px; align-items: center; }
+.amostra { display: flex; flex-direction: column; gap: 8px; width: 150px; font-size: 15px; }
+.cor { height: 80px; border: 2px solid rgba(245, 230, 196, .25); }
+.tipo-linha { display: flex; flex-direction: column; gap: 4px; }
+.tipo-linha small { color: var(--cinza-papel-2); font-size: 15px; }
+.papel-demo { width: 260px; padding: 28px; background: var(--papel); color: var(--tinta); font-weight: 700; }
+.caixa-aranha { width: 90px; height: 90px; }
+.card-demo { width: 340px; }
+</style>
+</head>
+<body>
+<svg class="defs" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+    <filter id="boil"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="1"><animate attributeName="seed" values="1;5;9;13" dur="0.48s" calcMode="discrete" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+    <filter id="streaks"><feTurbulence type="fractalNoise" baseFrequency="0.006 0.55" numOctaves="3" seed="9"/><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 0.95  0 0 0 0 0.9  0 0 0 0.09 0"/></filter>
+  </defs>
+</svg>
+<svg class="textura" aria-hidden="true" focusable="false"><rect width="100%" height="100%" filter="url(#streaks)"/></svg>
+
+<main class="guia">
+  <header>
+    <h1 class="boil">GUIA DE ESTILO</h1>
+    <p class="rabisco" style="font-size: 30px; color: var(--cinza-papel)">papel rasgado, tinta, caneta e aranhas</p>
+  </header>
+
+  <section>
+    <h2>CORES</h2>
+    <div class="linha">
+      <div class="amostra"><span class="cor" style="background: var(--fundo)"></span>fundo #0A0909</div>
+      <div class="amostra"><span class="cor" style="background: var(--papel)"></span>papel #F2E3C1</div>
+      <div class="amostra"><span class="cor" style="background: var(--creme)"></span>texto #F5E6C4</div>
+      <div class="amostra"><span class="cor" style="background: var(--tinta)"></span>tinta #141112</div>
+      <div class="amostra"><span class="cor" style="background: var(--roxo)"></span>roxo #7C33CF</div>
+      <div class="amostra"><span class="cor" style="background: var(--roxo-hover)"></span>roxo hover #9147E8</div>
+      <div class="amostra"><span class="cor" style="background: var(--coral)"></span>coral #E8505B</div>
+      <div class="amostra"><span class="cor" style="background: var(--cinza-papel)"></span>cinza-papel #BFB39A</div>
+      <div class="amostra"><span class="cor" style="background: var(--cinza-papel-2)"></span>cinza-papel #9C917C</div>
+      <div class="amostra"><span class="cor" style="background: var(--verde)"></span>status #3DDC84</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>FONTES</h2>
+    <div class="linha" style="flex-direction: column; align-items: flex-start">
+      <div class="tipo-linha"><span style="font-family: var(--f-titulo); font-size: 64px; line-height: 1">LONDRINA SOLID 900</span><small>títulos e botões</small></div>
+      <div class="tipo-linha"><span style="font-size: 26px">Kalam 400 e <b>Kalam 700</b> — textos, menu e interface</span><small>texto corrido</small></div>
+      <div class="tipo-linha"><span style="font-family: var(--f-marcador); font-size: 30px">PERMANENT MARKER — COMMISSIONS: ON</span><small>selo e toast</small></div>
+      <div class="tipo-linha"><span class="rabisco" style="font-size: 34px">Covered By Your Grace — começa por aqui</span><small>anotações rabiscadas</small></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>PAPEL RASGADO</h2>
+    <div class="linha">
+      <div class="papel-demo torn">.torn</div>
+      <div class="papel-demo torn2">.torn2</div>
+      <div class="papel-demo scrap">.scrap</div>
+      <div class="papel-demo scrap2">.scrap2</div>
+      <div class="papel-demo rough">.rough</div>
+      <div class="papel-demo rough2">.rough2</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>BOTÕES E ABAS</h2>
+    <div class="linha">
+      <a href="#" class="ink-btn rough2 shake-hover ver-projetos"><span class="ink-fill rough">VER PROJETOS</span></a>
+      <a href="#" class="ink-btn rough2 shake-hover contratar"><span class="ink-fill rough">CONTRATAR</span></a>
+      <button type="button" class="chip rough" aria-selected="true" role="tab">Motion</button>
+      <button type="button" class="chip rough2" aria-selected="false" role="tab">Vertical</button>
+      <button type="button" class="filtro" aria-pressed="true">todos</button>
+      <button type="button" class="filtro" aria-pressed="false">Gameplay</button>
+      <span class="selo">COMMISSIONS: ON</span>
+      <span class="selo off">COMMISSIONS: OFF</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>CARD COM FITA</h2>
+    <div class="linha">
+      <a href="#" class="card tilt-l card-demo">
+        <span class="fita tape" aria-hidden="true"></span>
+        <div class="scrap thumb">
+          <span class="rough thumb-tag">MOTION</span>
+          <span class="play-bloco">
+            <svg aria-hidden="true" class="play-rabisco" viewBox="0 0 100 100"><path class="scrib" d="M50 6 C 80 4, 96 26, 94 52 C 92 80, 70 96, 46 94 C 20 92, 4 72, 6 48 C 8 22, 28 6, 58 9" fill="none" stroke="#E8505B" stroke-width="4" stroke-linecap="round"/></svg>
+            <span class="thumb-play"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true"><use href="assets/desenhos.svg#play"/></svg></span>
+          </span>
+        </div>
+        <div class="card-texto"><span class="card-titulo">Passe o mouse aqui</span><span class="card-quem">a fita descola e o círculo se desenha</span></div>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>ARANHAS E TEIA</h2>
+    <div class="linha">
+      <svg class="caixa-aranha" aria-hidden="true"><use href="assets/desenhos.svg#aranha"/></svg>
+      <svg class="caixa-aranha" aria-hidden="true" style="--corpo: var(--tinta); --marca: var(--roxo); --olhos: var(--coral)"><use href="assets/desenhos.svg#aranha"/></svg>
+      <svg class="caixa-aranha" aria-hidden="true" style="--corpo: var(--coral); --olhos: var(--creme)"><use href="assets/desenhos.svg#aranha"/></svg>
+      <svg class="caixa-aranha" aria-hidden="true" style="--perna: var(--tinta); --traco: 5; --corpo: var(--roxo); --contorno: var(--tinta); background: var(--papel)"><use href="assets/desenhos.svg#aranha"/></svg>
+      <svg aria-hidden="true" style="width: 200px; height: 200px"><use href="assets/desenhos.svg#teia"/></svg>
+    </div>
+  </section>
+</main>
+</body>
+</html>

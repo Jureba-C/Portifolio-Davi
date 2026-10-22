@@ -1,0 +1,24 @@
+{
+  "name": "portfolio-editor-video",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "serve . -l 4500 --no-clipboard",
+    "test": "playwright test",
+    "test:db": "node --test tests/db/banco.test.mjs",
+    "check:comments": "node scripts/sem-comentarios.mjs",
+    "seed": "node scripts/gerar-seed.mjs",
+    "imagens": "node scripts/gerar-imagens.mjs",
+    "vendor": "node scripts/vendor.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.2",
+    "@playwright/test": "1.56.1",
+    "@supabase/supabase-js": "2.49.4",
+    "acorn": "8.14.1",
+    "esbuild": "0.25.2",
+    "serve": "14.2.4",
+    "sortablejs": "1.15.6"
+  }
+}

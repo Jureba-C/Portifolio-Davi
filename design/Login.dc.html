@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Admin — login</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="paper.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&amp;family=Londrina+Solid:wght@400;900&amp;family=Covered+By+Your+Grace&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0909}
+a{color:#F5E6C4}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; background: #0A0909; color: #F5E6C4; font-family: 'Kalam', cursive; display: flex; align-items: center; justify-content: center; overflow: hidden">
+  <svg aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none">
+    <defs>
+      <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="4"></feTurbulence><feDisplacementMap in="SourceGraphic" scale="5"></feDisplacementMap></filter>
+      <filter id="l-streaks"><feTurbulence type="fractalNoise" baseFrequency="0.006 0.55" numOctaves="3" seed="9"></feTurbulence><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 0.95  0 0 0 0 0.9  0 0 0 0.09 0"></feColorMatrix></filter>
+    </defs>
+    <rect width="100%" height="100%" filter="url(#l-streaks)"></rect>
+  </svg>
+
+  <div style="position: relative; z-index: 1; width: 480px">
+    <div aria-hidden="true" class="torn" style="position: absolute; inset: 0; background: #7C33CF; transform: rotate(3deg) translate(12px, 10px)"></div>
+    <form class="torn2" style="position: relative; background: #F2E3C1; color: #141112; padding: 52px 44px 44px; display: flex; flex-direction: column; gap: 20px; transform: rotate(-1deg)">
+      <span aria-hidden="true" style="position: absolute; left: 50%; top: -8px; width: 120px; height: 30px; margin-left: -60px; background: rgba(245,230,196,0.75); transform: rotate(-4deg)"></span>
+      <h1 class="rough-text" style="margin: 0; font-family: 'Londrina Solid', cursive; font-weight: 900; font-size: 60px; line-height: 0.95">ACESSO ADMIN</h1>
+      <label style="display: flex; flex-direction: column; gap: 4px; font-size: 20px; font-weight: 700">e-mail
+        <input type="email" value="[email do editor]" class="rough" style="box-sizing: border-box; width: 100%; min-height: 52px; padding: 0 16px; background: #FFF8E8; border: 0; color: #141112; font-family: inherit; font-size: 19px">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 4px; font-size: 20px; font-weight: 700">senha
+        <input type="password" value="senhaerrada" class="rough2" style="box-sizing: border-box; width: 100%; min-height: 52px; padding: 0 16px; background: #FFF8E8; border: 0; outline: 3px solid #C42F3B; color: #141112; font-family: inherit; font-size: 19px">
+      </label>
+      <p role="alert" style="margin: -6px 0 0; font-family: 'Covered By Your Grace', cursive; font-size: 26px; color: #B0222E; transform: rotate(-1.5deg)">credenciais incorretas!</p>
+      <button type="submit" class="ink-btn rough2" style="align-self: stretch; padding: 4px; border: 0; background: #141112; cursor: pointer">
+        <span class="ink-fill rough" style="display: flex; align-items: center; justify-content: center; min-height: 54px; background: #7C33CF; color: #F5E6C4; font-family: 'Londrina Solid', cursive; font-weight: 900; font-size: 28px; transition: background .2s">ENTRAR</span>
+      </button>
+      <a href="Main.dc.html" style="align-self: center; font-size: 18px; color: #5C5246">← voltar ao site</a>
+    </form>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

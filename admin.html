@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin — painel do portfólio</title>
+<meta name="theme-color" content="#0A0909">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/londrina-solid-900-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/kalam-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/paper.css">
+<link rel="stylesheet" href="css/admin.css">
+<script type="module" src="js/admin.js"></script>
+</head>
+<body class="admin">
+<svg class="defs" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+    <filter id="streaks"><feTurbulence type="fractalNoise" baseFrequency="0.006 0.55" numOctaves="3" seed="9"/><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 0.95  0 0 0 0 0.9  0 0 0 0.09 0"/></filter>
+  </defs>
+</svg>
+<svg class="textura" aria-hidden="true" focusable="false"><rect width="100%" height="100%" filter="url(#streaks)"/></svg>
+
+<main class="login-tela" data-tela="login" hidden>
+  <div class="login-bloco">
+    <div aria-hidden="true" class="torn login-fundo"></div>
+    <form class="torn2 login-form" data-form="login" novalidate>
+      <span aria-hidden="true" class="fita login-fita"></span>
+      <h1 class="login-titulo rough-text">ACESSO ADMIN</h1>
+      <p class="aviso-modo" data-aviso-modo hidden></p>
+      <label class="campo">e-mail
+        <input type="email" name="email" class="rough" autocomplete="username" required>
+      </label>
+      <label class="campo">senha
+        <input type="password" name="senha" class="rough2" autocomplete="current-password" required>
+      </label>
+      <p class="login-erro rabisco" role="alert" data-login-erro></p>
+      <button type="submit" class="ink-btn rough2 login-entrar"><span class="ink-fill rough">ENTRAR</span></button>
+      <a href="./" class="login-voltar">← voltar ao site</a>
+    </form>
+  </div>
+</main>
+
+<div class="painel-tela" data-tela="painel" hidden>
+  <div class="admin-topo">
+    <header class="torn drop admin-cabecalho">
+      <div class="admin-marca">
+        <span class="rough-text admin-nome">ADMIN <span data-campo="nome">DAVI</span></span>
+        <span class="logado rabisco"><span aria-hidden="true" class="logado-ponto"></span>logado</span>
+      </div>
+      <div class="admin-links">
+        <a href="./" target="_blank" rel="noopener">ver site ↗</a>
+        <button type="button" class="sair" data-sair>sair</button>
+      </div>
+    </header>
+  </div>
+
+  <div class="admin-corpo">
+    <nav class="admin-menu" aria-label="Seções do painel">
+      <a href="#textos" class="rough">textos e redes</a>
+      <a href="#categorias">categorias</a>
+      <a href="#novo-video">novo vídeo</a>
+      <a href="#trabalhos">seus trabalhos</a>
+      <a href="#clientes">clientes</a>
+    </nav>
+
+    <main class="admin-principal">
+      <p class="aviso-modo aviso-painel" data-aviso-modo hidden></p>
+
+      <section id="textos" class="torn2 bloco" aria-labelledby="textos-titulo">
+        <div class="bloco-topo">
+          <h2 id="textos-titulo" class="bloco-titulo rough-text">TEXTOS E REDES</h2>
+          <button type="button" class="toggle" data-comissoes aria-pressed="true">
+            comissões abertas
+            <span class="toggle-trilho" aria-hidden="true"><span class="toggle-bola"></span></span>
+          </button>
+        </div>
+        <form class="bloco-form" data-form="textos" novalidate>
+          <div class="grade-2">
+            <label class="campo">nome artístico
+              <input name="nome" class="rough" required maxlength="40" placeholder="como aparece no site">
+            </label>
+            <label class="campo">e-mail de contato
+              <input name="email" type="email" class="rough2" placeholder="voce@email.com">
+            </label>
+          </div>
+          <div class="grade-2">
+            <label class="campo">sobre mim (PT)
+              <textarea name="sobre_pt" rows="5" class="rough" placeholder="quem é você, com quem já editou, seu estilo…"></textarea>
+            </label>
+            <label class="campo">sobre mim (EN)
+              <textarea name="sobre_en" rows="5" class="rough2" placeholder="who you are, who you've edited for…"></textarea>
+            </label>
+          </div>
+          <div class="grade-4">
+            <label class="campo">discord (nick)<input name="discord_nick" class="rough" placeholder="seunick"></label>
+            <label class="campo">instagram<input name="instagram" class="rough2" placeholder="instagram.com/…"></label>
+            <label class="campo">x / twitter<input name="x" class="rough" placeholder="x.com/…"></label>
+            <label class="campo">youtube<input name="youtube" class="rough2" placeholder="youtube.com/@…"></label>
+          </div>
+          <div class="linha-acoes">
+            <button type="submit" class="ink-btn rough2"><span class="ink-fill rough">SALVAR NA NUVEM</span></button>
+            <span class="salvo rabisco" role="status" data-salvo></span>
+          </div>
+        </form>
+      </section>
+
+      <div id="categorias" class="grade-blocos">
+        <section class="torn bloco" aria-labelledby="cat-titulo">
+          <h2 id="cat-titulo" class="bloco-titulo menor rough-text">ORDEM DAS CATEGORIAS</h2>
+          <p class="bloco-dica">arraste pra reordenar, ou renomeie e exclua.</p>
+          <ul class="lista-ordem" data-lista="categorias"></ul>
+          <form class="linha-add" data-form="categoria" novalidate>
+            <label class="sr-only" for="nova-categoria">nova categoria</label>
+            <input id="nova-categoria" name="nome" class="rough" placeholder="nova categoria" required maxlength="40">
+            <label class="sr-only" for="formato-categoria">formato</label>
+            <select id="formato-categoria" name="formato" class="rough2 select-curto">
+              <option value="horizontal">16:9</option>
+              <option value="vertical">9:16</option>
+            </select>
+            <button type="submit" class="rough2 botao-add">+ add</button>
+          </form>
+        </section>
+
+        <section class="torn2 bloco" aria-labelledby="filtros-titulo">
+          <h2 id="filtros-titulo" class="bloco-titulo menor rough-text">FILTROS DO LONG FORM</h2>
+          <p class="bloco-dica">sub-filtros dos vídeos maiores. arraste pra reordenar.</p>
+          <ul class="lista-filtros" data-lista="filtros"></ul>
+          <form class="linha-add" data-form="filtro" novalidate>
+            <label class="sr-only" for="novo-filtro">novo filtro</label>
+            <input id="novo-filtro" name="nome" class="rough2" placeholder="novo filtro (ex.: gameplay)" required maxlength="30">
+            <button type="submit" class="rough botao-add">+ add</button>
+          </form>
+        </section>
+      </div>
+
+      <section id="novo-video" class="torn bloco bloco-video" aria-labelledby="video-titulo">
+        <form class="video-form" data-form="video" novalidate>
+          <h2 id="video-titulo" class="bloco-titulo rough-text">NOVO VÍDEO</h2>
+          <fieldset class="campo-grupo">
+            <legend>tipo do post</legend>
+            <div class="tipos" role="radiogroup" aria-label="Tipo do post" data-lista="tipos"></div>
+          </fieldset>
+          <label class="campo">título do trabalho
+            <input name="titulo" class="rough" placeholder="ex.: o vídeo de 1 milhão de views" required maxlength="120">
+          </label>
+          <label class="campo" data-campo-filtro hidden>filtro secundário (opcional)
+            <select name="filter_id" class="rough2" data-lista="filtros-select"></select>
+          </label>
+          <label class="campo">link do YouTube
+            <input name="link" class="rough2" placeholder="youtube.com/watch?v=… · youtu.be/… · /shorts/…" inputmode="url" autocomplete="off">
+            <span class="campo-ajuda" data-link-ajuda></span>
+          </label>
+          <div class="grade-2">
+            <label class="campo">descrição / participantes (PT)<input name="descricao_pt" class="rough" placeholder="canal, roteiro, thumb…" maxlength="160"></label>
+            <label class="campo">descrição (EN)<input name="descricao_en" class="rough2" placeholder="channel, script, thumbnail…" maxlength="160"></label>
+          </div>
+          <label class="checagem"><input type="checkbox" name="destaque"> usar como showreel em destaque</label>
+          <p class="form-erro rabisco" role="alert" data-video-erro></p>
+          <button type="submit" class="ink-btn rough2 alinhar-inicio"><span class="ink-fill rough">ADICIONAR VÍDEO</span></button>
+        </form>
+        <aside class="previa" aria-label="Pré-visualização do card">
+          <span class="previa-legenda rabisco">assim vai aparecer no site:</span>
+          <div class="previa-card">
+            <span aria-hidden="true" class="fita previa-fita"></span>
+            <div class="scrap previa-thumb" data-previa-thumb>
+              <img alt="" hidden data-previa-img>
+              <span class="rough previa-tag" data-previa-tag>MOTION</span>
+              <span class="previa-play"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path d="M7 4 Q 14 8 20 12 Q 14 16 7 20 Q 8 12 7 4 Z" fill="#F5E6C4"/></svg></span>
+            </div>
+            <div class="previa-texto">
+              <span class="previa-titulo" data-previa-titulo>[Título do trabalho]</span>
+              <span class="previa-desc" data-previa-desc>[descrição / participantes]</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section id="trabalhos" class="torn2 bloco" aria-labelledby="trabalhos-titulo">
+        <div class="bloco-topo alinhar-fim">
+          <div>
+            <h2 id="trabalhos-titulo" class="bloco-titulo rough-text">SEUS TRABALHOS</h2>
+            <p class="bloco-dica">arraste pela alça — o site atualiza na hora.</p>
+          </div>
+          <label class="sr-only" for="busca">Buscar trabalho</label>
+          <input id="busca" type="search" class="rough busca" placeholder="buscar…" data-busca>
+        </div>
+        <ul class="lista-trabalhos" data-lista="trabalhos"></ul>
+      </section>
+
+      <div id="clientes" class="grade-blocos">
+        <section class="torn bloco" aria-labelledby="novo-cliente-titulo">
+          <h2 id="novo-cliente-titulo" class="bloco-titulo menor rough-text" data-cliente-titulo>NOVO CLIENTE</h2>
+          <form class="bloco-form" data-form="cliente" novalidate>
+            <label class="campo">nome do cliente<input name="nome" class="rough" placeholder="nome do canal" required maxlength="60"></label>
+            <label class="campo">link do canal<input name="canal_url" class="rough2" placeholder="youtube.com/@…" inputmode="url"></label>
+            <label class="enviar-foto" data-solta-foto>
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20 C 9 19, 15 21, 20 20"/></svg>
+              <span data-foto-rotulo>enviar foto</span>
+              <input type="file" name="arquivo" accept="image/*" class="sr-only">
+            </label>
+            <label class="campo">ou colar link da foto<input name="foto_url" class="rough" placeholder="https://…" inputmode="url"></label>
+            <p class="form-erro rabisco" role="alert" data-cliente-erro></p>
+            <div class="linha-acoes">
+              <button type="submit" class="ink-btn rough2"><span class="ink-fill rough" data-cliente-botao>ADICIONAR CLIENTE</span></button>
+              <button type="button" class="cancelar" data-cliente-cancelar hidden>cancelar</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="torn2 bloco" aria-labelledby="clientes-titulo">
+          <h2 id="clientes-titulo" class="bloco-titulo menor rough-text">CLIENTES CADASTRADOS</h2>
+          <p class="bloco-dica">arraste pra mudar a ordem.</p>
+          <ul class="grade-clientes" data-lista="clientes"></ul>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast-admin rough" role="status" aria-live="polite" data-toast></div>
+
+<dialog class="confirmar torn2" data-confirmar>
+  <form method="dialog" class="confirmar-form">
+    <p class="confirmar-texto" data-confirmar-texto></p>
+    <div class="linha-acoes">
+      <button value="sim" class="ink-btn rough2"><span class="ink-fill rough perigo">EXCLUIR</span></button>
+      <button value="nao" class="cancelar" autofocus>cancelar</button>
+    </div>
+  </form>
+</dialog>
+</body>
+</html>
