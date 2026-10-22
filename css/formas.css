@@ -66,6 +66,7 @@ footer:hover .footer-spider { transform: translateY(0); }
   .risca { animation: risca linear both; animation-timeline: view(); animation-range: entry 20% cover 42%; }
   .stamp-in { animation: carimbo linear both; animation-timeline: view(); animation-range: entry 15% cover 35%; }
 }
+.reveal:focus-within, .reveal-l:focus-within, .reveal-r:focus-within, .flutua:focus-visible { animation: none; }
 @keyframes entra { from { opacity: 0; transform: translateY(60px) skewY(3deg); } }
 @keyframes entra-esq { from { opacity: 0; transform: translateX(calc(var(--desloca, 160px) * -1)) skewX(-10deg); } }
 @keyframes entra-dir { from { opacity: 0; transform: translateX(var(--desloca, 160px)) skewX(10deg); } }
@@ -113,7 +114,6 @@ footer:hover .footer-spider { transform: translateY(0); }
 .intro-pulando .intro-meio, .intro-pulando .intro-faixa { animation: some .15s ease forwards; }
 
 .ink-cursor { position: fixed; left: 0; top: 0; z-index: 90; pointer-events: none; will-change: transform; }
-.cursor-on, .cursor-on a, .cursor-on button, .cursor-on [role="tab"] { cursor: none; }
 
 @media (max-width: 700px) { .reveal-l, .reveal-r { --desloca: 48px; } }
 

@@ -27,6 +27,7 @@ function obterObservador() {
 function semPrevia(tela, texto) {
   const caixa = document.createElement('span');
   caixa.className = 'previa-sem';
+  caixa.setAttribute('aria-hidden', 'true');
   caixa.textContent = texto;
   tela.append(caixa);
 }

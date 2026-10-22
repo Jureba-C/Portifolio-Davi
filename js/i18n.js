@@ -1,6 +1,10 @@
 const TEXTOS = {
   pt: {
     'pular': 'pular para os trabalhos',
+    'movimento.pausar': 'Pausar animações',
+    'novaAba': '(abre em nova aba)',
+    'pagina.titulo': 'Decxz Editor — editor de vídeo · motion, shorts e long form',
+    'player.abrirYoutubeAria': 'abrir no YouTube (abre em nova aba)',
     'menu.abrir': 'Abrir menu',
     'menu.fechar': 'Fechar menu',
     'menu.principal': 'Principal',
@@ -35,7 +39,6 @@ const TEXTOS = {
     'trabalhos.filtrar': 'filtrar:',
     'trabalhos.todos': 'todos',
     'trabalhos.vazio': 'nada por aqui ainda… a aranha tá tecendo',
-    'trabalhos.assistir': 'Assistir: {titulo}',
     'trabalhos.verVideo': 'assistir ↗',
     'trabalhos.semPrevia': 'PRÉVIA EM BREVE',
     'sobre.titulo': 'SOBRE MIM',
@@ -66,6 +69,10 @@ const TEXTOS = {
   },
   en: {
     'pular': 'skip to the work',
+    'movimento.pausar': 'Pause animations',
+    'novaAba': '(opens in a new tab)',
+    'pagina.titulo': 'Decxz Editor — video editor · motion, shorts and long form',
+    'player.abrirYoutubeAria': 'open on YouTube (opens in a new tab)',
     'menu.abrir': 'Open menu',
     'menu.fechar': 'Close menu',
     'menu.principal': 'Main',
@@ -100,7 +107,6 @@ const TEXTOS = {
     'trabalhos.filtrar': 'filter:',
     'trabalhos.todos': 'all',
     'trabalhos.vazio': 'nothing here yet… the spider is still weaving',
-    'trabalhos.assistir': 'Watch: {titulo}',
     'trabalhos.verVideo': 'watch ↗',
     'trabalhos.semPrevia': 'PREVIEW SOON',
     'sobre.titulo': 'ABOUT ME',

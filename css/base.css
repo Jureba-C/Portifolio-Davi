@@ -211,6 +211,15 @@ h1, h2, h3, p { margin: 0; }
   .boil { filter: none; }
 }
 
+html.parado { scroll-behavior: auto; }
+html.parado *, html.parado *::before, html.parado *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+html.parado .boil { filter: none; }
+html.parado .reveal, html.parado .reveal-l, html.parado .reveal-r, html.parado .risca, html.parado .stamp-in { animation: none; }
+
 .recorte { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 2px; line-height: 1; }
 .recorte .r {
   display: inline-block;

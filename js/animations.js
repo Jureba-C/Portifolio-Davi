@@ -1,6 +1,6 @@
 const mq = (q) => window.matchMedia?.(q).matches ?? false;
 
-export const reduzMovimento = () => mq('(prefers-reduced-motion: reduce)');
+export const reduzMovimento = () => document.documentElement.classList.contains('parado') || mq('(prefers-reduced-motion: reduce)');
 export const temMouse = () => mq('(hover: hover) and (pointer: fine)');
 
 export function iniciarRevelacao() {

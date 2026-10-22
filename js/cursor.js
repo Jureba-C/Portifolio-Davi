@@ -57,6 +57,10 @@ export function iniciarCursor() {
 
   window.addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse') return;
+    if (reduzMovimento()) {
+      mostrar(false);
+      return;
+    }
     alvo.x = e.clientX;
     alvo.y = e.clientY;
     quente = Boolean(e.target?.closest?.('a, button, .card, [role="tab"], input, label'));

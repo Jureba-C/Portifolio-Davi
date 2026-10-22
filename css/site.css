@@ -85,6 +85,11 @@ main, footer { position: relative; z-index: 1; }
 
 .cabecalho-acoes { display: flex; align-items: center; gap: 18px; }
 .idiomas { display: flex; background: var(--branco); padding: 3px 10px; }
+.movimento { display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 46px; border: 0; background: var(--branco); color: var(--preto); }
+.movimento:hover { background: var(--branco-puro); }
+.movimento[aria-pressed="true"] { background: var(--vermelho); color: var(--branco-puro); }
+.movimento .icone-tocar, .movimento[aria-pressed="true"] .icone-pausa { display: none; }
+.movimento[aria-pressed="true"] .icone-tocar { display: block; }
 .idioma {
   min-width: 40px;
   min-height: 40px;
@@ -156,7 +161,7 @@ main, footer { position: relative; z-index: 1; }
   margin: 0;
   padding: 18px 20px 20px;
   font-family: var(--f-texto);
-  font-weight: 600;
+  font-weight: 500;
   font-size: clamp(18px, 1.4vw, 21px);
   line-height: 1.4;
   text-align: left;
@@ -206,6 +211,7 @@ main, footer { position: relative; z-index: 1; }
 }
 @keyframes eiPula { from { opacity: 0; transform: rotate(-8deg) scale(.4); } }
 
+.showreel:empty { aspect-ratio: 16 / 10.2; }
 .showreel .quadro { rotate: -1.4deg; }
 .showreel .quadro-rec { right: 76px; }
 .showreel .quadro-titulo { font-size: clamp(22px, 2.2vw, 32px); }
@@ -719,7 +725,7 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
   .abertura-nome { font-size: clamp(110px, 16vw, 170px); }
   .teia-traje-dir { --fio: var(--preto); --fio-opacidade: .5; }
   .meio-tom-dir { display: block; }
-  .meio-tom-canto { bottom: auto; top: 46%; }
+  .meio-tom-canto { bottom: auto; top: 340px; }
   .showreel { max-width: 860px; width: 100%; justify-self: center; }
   .destaques-fileira .quadro-sub { display: none; }
   .destaques-fileira .quadro-titulo { font-size: 15px; }
@@ -740,7 +746,8 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
   .menu a { font-size: 22px; min-height: 44px; display: flex; align-items: center; }
   .cabecalho.aberto .menu { display: flex; }
   .cabecalho.aberto { clip-path: polygon(0 0, 100% 0, 100% 94%, 0 100%); }
-  .cabecalho-acoes { gap: 10px; margin-left: auto; }
+  .cabecalho-acoes { gap: 8px; margin-left: auto; }
+  .movimento { width: 42px; height: 42px; }
   .contratar { display: none; }
 }
 
@@ -748,7 +755,7 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
   .abertura-miolo { padding: 36px 16px 44px; gap: 40px; }
   .aranha-fio { right: 14px; }
   .teia-traje { width: 62vw; }
-  .meio-tom-canto { width: 56vw; top: 38%; }
+  .meio-tom-canto { width: 56vw; top: 300px; }
   .aranha-fio .fio { height: 40px; }
   .aranha-hero { width: 40px; height: 40px; }
   .ei { right: 64px; top: 14px; font-size: 20px; }
@@ -826,4 +833,11 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
   .ei, .player-caixa, .clientes-mural { animation: none; }
   .ficha { transition: none; }
   .toast, .quadro, .quadro-sombra, .quadro-borda, .quadro-assistir, .chip, .rede, .rede-dentro, .menu a::before, .botao, .painel { transition: none; }
+}
+
+.sem-js { margin: 0; padding: 18px 16px; background: var(--branco-puro); color: var(--preto); font-family: var(--f-ui); font-weight: 800; font-size: 20px; text-align: center; }
+
+@media (forced-colors: active) {
+  .botao, .chip, .idiomas, .movimento, .menu-botao, .rede-dentro, .filtro, .ficha, .janela, .player-fechar, .quadro-borda, .painel-borda { border: 2px solid ButtonText; }
+  .idioma[aria-pressed="true"], .chip[aria-selected="true"], .movimento[aria-pressed="true"], .filtro[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
 }

@@ -142,6 +142,31 @@ test.describe('site público', () => {
     await expect(mural).toBeHidden();
   });
 
+  test('botão de pausar animações para tudo e lembra a escolha', async ({ page }) => {
+    await page.goto('/?intro=0');
+    const botao = page.locator('[data-movimento]');
+    const video = page.locator('[data-lista="showreel"] video');
+    await expect.poll(() => video.evaluate((v) => !v.paused), { timeout: 8000 }).toBe(true);
+    await botao.click();
+    await expect(botao).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(() => video.evaluate((v) => v.paused)).toBe(true);
+    const duracao = await page.locator('.letras-pulam .l').first().evaluate((el) => parseFloat(getComputedStyle(el).animationDuration));
+    expect(duracao).toBeLessThan(0.01);
+    await page.reload();
+    await expect(page.locator('html')).toHaveClass(/parado/);
+    await expect(page.locator('[data-movimento]')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('[data-movimento]').click();
+    await expect(page.locator('html')).not.toHaveClass(/parado/);
+  });
+
+  test('links que abrem em nova aba avisam', async ({ page }) => {
+    await page.goto('/?intro=0');
+    for (const link of await page.locator('.redes a[target="_blank"]').all()) {
+      await expect(link).toHaveAttribute('aria-label', /nova aba/);
+    }
+    await expect(page).toHaveTitle(/Decxz Editor/);
+  });
+
   test('a aranha foge ao clicar e volta quicando', async ({ page }) => {
     await page.goto('/?intro=0');
     await page.locator('.aranha-hero').click({ force: true });

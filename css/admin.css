@@ -75,7 +75,7 @@
   padding: 18px clamp(20px, 3vw, 44px);
 }
 .admin-marca { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
-.admin-nome { font-family: var(--f-display); font-weight: 900; font-size: 34px; line-height: 1; }
+.admin-nome { margin: 0; font-family: var(--f-display); font-weight: 900; font-size: 34px; line-height: 1; }
 .logado { display: inline-flex; align-items: center; gap: 6px; font-size: 24px; color: var(--verde-ok); transform: rotate(-3deg); }
 .logado-ponto { width: 9px; height: 9px; border-radius: 50%; background: var(--verde-ok); }
 .admin-links { display: flex; flex-wrap: wrap; align-items: center; gap: 22px; font-size: 20px; font-weight: 700; }
@@ -443,3 +443,4 @@
 .toast-admin.erro { background: var(--branco-puro); color: var(--vermelho-escuro); }
 .login-fundo { background: var(--vermelho); }
 .aviso-modo { border-color: var(--preto); color: var(--preto); background: var(--branco-puro); }
+.chip-filtro, .chip-filtro .icone-botao, .admin-menu a.ativo, .tipo[aria-checked="true"], .selo-cat { color: var(--branco-puro); }

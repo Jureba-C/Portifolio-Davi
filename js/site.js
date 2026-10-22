@@ -60,7 +60,6 @@ function quadro(video, { classe = '', selo = '', rec = false, assistir = '', ver
     class: `quadro ${classe}${vertical ? ' vertical' : ''}`,
     href: linkYoutube(video.youtube_id) || '#trabalhos',
     'data-video': video.id,
-    'aria-label': t('trabalhos.assistir', { titulo: video.titulo }),
     onclick: (e) => {
       e.preventDefault();
       abrirVideo(video);
@@ -74,7 +73,7 @@ function quadro(video, { classe = '', selo = '', rec = false, assistir = '', ver
   el('span', { class: 'quadro-rotulo' },
     el('span', { class: 'quadro-titulo', text: video.titulo }),
     quem ? el('span', { class: 'quadro-sub', text: quem }) : null),
-  assistir ? el('span', { class: 'quadro-assistir nota', 'aria-hidden': 'true', text: assistir }) : null);
+  assistir ? el('span', { class: 'quadro-assistir nota', text: assistir }) : null);
   montarPrevia(tela, video, { modo, textoSem: t('trabalhos.semPrevia') });
   return link;
 }
@@ -191,6 +190,23 @@ function renderClientes() {
   mural.hidden = !aberto;
   botao.setAttribute('aria-expanded', String(aberto));
   botao.querySelector('.botao-miolo').textContent = aberto ? t('clientes.verMenos') : t('clientes.verTodos', { n: clients.length });
+}
+
+function iniciarMovimento() {
+  const raiz = document.documentElement;
+  const botao = document.querySelector('[data-movimento]');
+  const aplicarEstado = () => {
+    const parado = raiz.classList.contains('parado');
+    botao.setAttribute('aria-pressed', String(parado));
+    botao.title = t('movimento.pausar');
+    suspenderPrevias('usuario', parado);
+  };
+  botao.addEventListener('click', () => {
+    raiz.classList.toggle('parado');
+    try { localStorage.setItem('movimento', raiz.classList.contains('parado') ? 'parado' : 'livre'); } catch (e) {}
+    aplicarEstado();
+  });
+  aplicarEstado();
 }
 
 function iniciarClientes() {
@@ -321,7 +337,7 @@ function renderContato() {
   const caixa = (icone) => el('span', { class: 'rede-dentro', html: ICONES[icone] });
   [['instagram', 'Instagram'], ['x', 'X / Twitter'], ['youtube', 'YouTube']].forEach(([chave, rotulo]) => {
     const url = settings.redes?.[chave];
-    if (url) redes.append(el('a', { href: url, target: '_blank', rel: 'noopener me', 'aria-label': rotulo, class: 'rede' }, caixa(chave)));
+    if (url) redes.append(el('a', { href: url, target: '_blank', rel: 'noopener me', 'aria-label': `${rotulo} ${t('novaAba')}`, class: 'rede' }, caixa(chave)));
   });
   if (settings.discord_nick) {
     redes.append(el('button', {
@@ -348,6 +364,7 @@ function renderOffline(origem) {
 }
 
 function renderTudo() {
+  document.title = t('pagina.titulo');
   renderNome();
   renderDestaques();
   renderSobre();
@@ -409,6 +426,7 @@ async function iniciar() {
   iniciarCabecalho();
   iniciarAbasTeclado();
   iniciarClientes();
+  iniciarMovimento();
   iniciarAranhaHero();
   iniciarRodape();
   iniciarCursor();
