@@ -88,7 +88,7 @@ test.describe('painel admin (modo local)', () => {
     await expect(page.locator('[data-toast]')).toContainText('vídeo adicionado');
     const site = await context.newPage();
     await site.goto('/?intro=0');
-    const destaque = site.locator('[data-lista="destaques"] .quadro', { hasText: 'Clipe novo' });
+    const destaque = site.locator('#topo .quadro', { hasText: 'Clipe novo' });
     await expect(destaque).toHaveCount(1);
     await expect(destaque.locator('video')).toHaveJSProperty('muted', true);
   });

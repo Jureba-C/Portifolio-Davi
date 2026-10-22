@@ -203,7 +203,7 @@ async function abrirPainel() {
 }
 
 function renderTudo() {
-  $$('[data-campo="nome"]').forEach((n) => { n.textContent = db.settings.nome || 'DAVI'; });
+  $$('[data-campo="nome"]').forEach((n) => { n.textContent = db.settings.nome || 'DECXZ'; });
   renderComissoes();
   renderCategorias();
   renderFiltros();

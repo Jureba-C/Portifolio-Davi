@@ -59,7 +59,7 @@ test.describe('site público', () => {
     await page.click('[data-idioma="en"]');
     await expect(page.locator('#trabalhos-titulo')).toHaveText('WORK');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page.locator('[data-campo="sobre"]')).toContainText('editing video');
+    await expect(page.locator('[data-campo="sobre"]')).toContainText('editing since');
     await page.reload();
     await expect(page.locator('#trabalhos-titulo')).toHaveText('WORK');
     await page.click('[data-idioma="pt"]');
@@ -78,7 +78,7 @@ test.describe('site público', () => {
     await page.getByRole('button', { name: 'Vlog' }).click();
     await expect(page.locator('.grade .card')).toHaveCount(1);
     await expect(page.locator('.grade .quadro-titulo')).toHaveText('Um dia na Paulista');
-    await page.getByRole('button', { name: 'todos' }).click();
+    await page.getByRole('button', { name: 'todos', exact: true }).click();
     await expect(page.locator('.grade .card')).toHaveCount(4);
   });
 
@@ -110,8 +110,8 @@ test.describe('site público', () => {
     await page.locator('.grade .card').first().click();
     const player = page.locator('[data-player]');
     await expect(player).toHaveClass(/vertical/);
-    const caixa = await page.locator('[data-player-tela]').boundingBox();
-    expect(caixa.height / caixa.width).toBeGreaterThan(1.6);
+    const proporcao = await page.locator('[data-player-tela]').evaluate((el) => el.offsetHeight / el.offsetWidth);
+    expect(proporcao).toBeGreaterThan(1.6);
     await page.mouse.click(5, 5);
     await expect(player).toBeHidden();
   });
@@ -123,8 +123,23 @@ test.describe('site público', () => {
     await expect(page.locator('.toast')).toHaveText('NICK COPIADO!');
     await expect(page.locator('.toast')).toHaveClass(/visivel/);
     if (!ehCelular(testInfo)) {
-      expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('davi.edits');
+      expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('decxz.editor');
     }
+  });
+
+  test('clientes mostram 6 no cartaz e o resto em ver todos', async ({ page }) => {
+    await page.goto('/?intro=0');
+    await expect(page.locator('[data-lista="clientes"] > li')).toHaveCount(6);
+    const mural = page.locator('[data-lista="clientes-todos"]');
+    await expect(mural).toBeHidden();
+    const botao = page.locator('[data-clientes-mais]');
+    await expect(botao).toHaveText('VER TODOS OS CLIENTES (16)');
+    await botao.click();
+    await expect(mural).toBeVisible();
+    await expect(mural.locator('.ficha')).toHaveCount(10);
+    await expect(botao).toHaveAttribute('aria-expanded', 'true');
+    await botao.click();
+    await expect(mural).toBeHidden();
   });
 
   test('a aranha foge ao clicar e volta quicando', async ({ page }) => {
@@ -138,10 +153,11 @@ test.describe('site público', () => {
 
   test('destaques da abertura tocam sozinhos, sem som e sem botão de play', async ({ page }) => {
     await page.goto('/?intro=0');
-    const destaques = page.locator('[data-lista="destaques"] .quadro');
-    await expect(destaques).toHaveCount(4);
-    await expect(destaques.first().locator('.quadro-rec')).toBeVisible();
-    const video = destaques.first().locator('video');
+    const showreel = page.locator('[data-lista="showreel"] .quadro');
+    await expect(showreel).toHaveCount(1);
+    await expect(page.locator('[data-lista="destaques"] .quadro')).toHaveCount(3);
+    await expect(showreel.locator('.quadro-rec')).toBeVisible();
+    const video = showreel.locator('video');
     await expect(video).toHaveJSProperty('muted', true);
     await expect(video).toHaveJSProperty('loop', true);
     await expect(video).not.toHaveAttribute('controls', /.*/);
@@ -173,7 +189,7 @@ test.describe('site público', () => {
   test('sobre mim tem foto e texto curto', async ({ page }) => {
     await page.goto('/?intro=0');
     const foto = page.locator('[data-campo="foto"]');
-    await expect(foto).toHaveAttribute('alt', 'Foto de DAVI');
+    await expect(foto).toHaveAttribute('alt', 'Foto de DECXZ');
     expect(await foto.evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
     const texto = await page.locator('[data-campo="sobre"]').textContent();
     expect(texto.length).toBeLessThan(320);
@@ -224,7 +240,7 @@ test.describe('movimento reduzido', () => {
     expect(animadas).toEqual([]);
     const filtro = await page.locator('.abertura-nome').evaluate((el) => getComputedStyle(el).filter);
     expect(filtro).toBe('none');
-    const video = page.locator('[data-lista="destaques"] video').first();
+    const video = page.locator('[data-lista="showreel"] video').first();
     await page.waitForTimeout(1200);
     await expect(video).toHaveJSProperty('paused', true);
     expect(await video.getAttribute('src')).toBeNull();

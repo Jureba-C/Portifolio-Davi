@@ -8,7 +8,7 @@ const fonte = async (arquivo) => `data:font/woff2;base64,${(await ler(`assets/fo
 
 const css = await ler('css/paper.css');
 const desenhos = (await ler('assets/desenhos.svg')).toString().replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
-const nome = MOCK.settings.nome || 'DAVI';
+const nome = MOCK.settings.nome || 'DECXZ';
 
 const pagina = (corpo) => `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:'Londrina Solid';font-weight:900;src:url(${FONTES.londrina}) format('woff2')}

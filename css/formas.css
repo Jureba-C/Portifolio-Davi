@@ -67,8 +67,8 @@ footer:hover .footer-spider { transform: translateY(0); }
   .stamp-in { animation: carimbo linear both; animation-timeline: view(); animation-range: entry 15% cover 35%; }
 }
 @keyframes entra { from { opacity: 0; transform: translateY(60px) skewY(3deg); } }
-@keyframes entra-esq { from { opacity: 0; transform: translateX(-160px) skewX(-10deg); } }
-@keyframes entra-dir { from { opacity: 0; transform: translateX(160px) skewX(10deg); } }
+@keyframes entra-esq { from { opacity: 0; transform: translateX(calc(var(--desloca, 160px) * -1)) skewX(-10deg); } }
+@keyframes entra-dir { from { opacity: 0; transform: translateX(var(--desloca, 160px)) skewX(10deg); } }
 @keyframes risca { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes carimbo { from { opacity: 0; transform: scale(2.4) rotate(-20deg); } 70% { opacity: 1; transform: scale(.94) rotate(-5deg); } to { opacity: 1; transform: scale(1) rotate(-6deg); } }
 
@@ -102,7 +102,7 @@ footer:hover .footer-spider { transform: translateY(0); }
   gap: 18px;
   animation: some .3s ease 2.05s forwards;
 }
-.intro-nome { font-family: var(--f-display); font-size: clamp(110px, 24vw, 280px); line-height: .9; color: var(--branco-puro); text-shadow: 0.05em 0.05em 0 var(--preto); }
+.intro-nome { font-family: var(--f-display); font-size: clamp(80px, 26vw, 280px); line-height: .9; color: var(--branco-puro); text-shadow: 0.05em 0.05em 0 var(--preto); }
 .intro-nome .l { display: inline-block; }
 .intro-nome .l { opacity: 0; animation: carimba .28s cubic-bezier(.3, 1.8, .5, 1) forwards; }
 @keyframes carimba { from { opacity: 0; scale: 2.2; } to { opacity: 1; scale: 1; } }
@@ -115,8 +115,11 @@ footer:hover .footer-spider { transform: translateY(0); }
 .ink-cursor { position: fixed; left: 0; top: 0; z-index: 90; pointer-events: none; will-change: transform; }
 .cursor-on, .cursor-on a, .cursor-on button, .cursor-on [role="tab"] { cursor: none; }
 
+@media (max-width: 700px) { .reveal-l, .reveal-r { --desloca: 48px; } }
+
 @media (prefers-reduced-motion: reduce) {
   .swing, .crawl, .letras-pulam .l, .strip-l, .strip-r, .gira, .pisca, .rec, .flutua, .pop, .reveal, .reveal-l, .reveal-r, .risca, .stamp-in { animation: none; }
   .flee-up, .flee-down, .footer-spider, .spider-btn { transition: none; }
   .intro { display: none !important; }
+  .boil { filter: none; }
 }

@@ -15,7 +15,7 @@ const ICONES = {
   email: '<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="miter"><path d="M3 6 H21 V18 H3 Z"/><path d="M3 6 L12 13 L21 6"/></svg>',
 };
 
-const estado = { db: null, categoria: null, filtro: 'todos' };
+const estado = { db: null, categoria: null, filtro: 'todos', clientesAbertos: false };
 const player = criarPlayer({
   aoAbrir: () => suspenderPrevias('player', true),
   aoFechar: () => suspenderPrevias('player', false),
@@ -80,7 +80,7 @@ function quadro(video, { classe = '', selo = '', rec = false, assistir = '', ver
 }
 
 function renderNome() {
-  const nome = estado.db.settings.nome || 'DAVI';
+  const nome = estado.db.settings.nome || 'DECXZ';
   document.querySelectorAll('[data-campo="nome"]').forEach((no) => { no.textContent = nome; });
   const h1 = document.querySelector('[data-campo="nome-letras"]');
   h1.setAttribute('aria-label', nome);
@@ -121,7 +121,7 @@ function renderDestaques() {
 
 function renderSobre() {
   const { settings } = estado.db;
-  const nome = settings.nome || 'DAVI';
+  const nome = settings.nome || 'DECXZ';
   document.querySelector('[data-campo="sobre"]').textContent = campo(settings, 'sobre');
   const foto = document.querySelector('[data-campo="foto"]');
   const src = settings.foto_url || 'assets/avatar-exemplo.svg';
@@ -131,39 +131,74 @@ function renderSobre() {
   document.querySelector('[data-campo="foto-selo"]').textContent = t('sobre.fotoSelo', { nome });
 }
 
+const CLIENTES_NO_CARTAZ = 6;
+
+function linkCliente(c, props, conteudo) {
+  const textos = [el('span', { class: 'sr-only', text: c.nome }), c.canal_url ? el('span', { class: 'sr-only', text: t('clientes.canal') }) : null];
+  return c.canal_url
+    ? el('a', { ...props, href: c.canal_url, target: '_blank', rel: 'noopener' }, conteudo, textos)
+    : el('div', props, conteudo, textos);
+}
+
+function rostoCliente(c, classe) {
+  const rosto = el('span', { class: classe, 'aria-hidden': 'true' });
+  const iniciaisEl = () => el('span', { text: iniciais(c.nome) });
+  if (c.foto_url) {
+    const img = el('img', { src: c.foto_url, alt: '', loading: 'lazy', decoding: 'async', width: '160', height: '200' });
+    img.addEventListener('error', () => { rosto.textContent = ''; rosto.append(iniciaisEl()); });
+    rosto.append(img);
+  } else {
+    rosto.append(iniciaisEl());
+  }
+  return rosto;
+}
+
+function cartazCliente(c, i) {
+  const nome = el('span', { class: 'client-nome recorte', 'aria-hidden': 'true' });
+  recorte(nome, c.nome);
+  const conteudo = [
+    el('span', { class: 'painel' },
+      el('span', { class: 'painel-sombra', 'aria-hidden': 'true' }),
+      el('span', { class: 'painel-borda' }, rostoCliente(c, 'painel-rosto'))),
+    nome,
+  ];
+  return el('li', {}, linkCliente(c, { class: 'client flutua', style: `animation-delay: ${(i * 0.45).toFixed(2)}s` }, conteudo));
+}
+
+function fichaCliente(c) {
+  const conteudo = [rostoCliente(c, 'ficha-rosto'), el('span', { class: 'ficha-nome', 'aria-hidden': 'true', text: c.nome })];
+  return el('li', {}, linkCliente(c, { class: 'ficha' }, conteudo));
+}
+
 function renderClientes() {
   const lista = document.querySelector('[data-lista="clientes"]');
+  const mural = document.querySelector('[data-lista="clientes-todos"]');
+  const botao = document.querySelector('[data-clientes-mais]');
   lista.textContent = '';
+  mural.textContent = '';
   const { clients } = estado.db;
   if (!clients.length) {
     lista.append(el('li', {}, aranhaVazia(t('clientes.vazio'))));
+    botao.hidden = true;
+    mural.hidden = true;
     return;
   }
-  clients.forEach((c, i) => {
-    const rosto = el('span', { class: 'painel-rosto', 'aria-hidden': 'true' });
-    const iniciaisEl = () => el('span', { text: iniciais(c.nome) });
-    if (c.foto_url) {
-      const img = el('img', { src: c.foto_url, alt: '', loading: 'lazy', decoding: 'async', width: '160', height: '200' });
-      img.addEventListener('error', () => { rosto.textContent = ''; rosto.append(iniciaisEl()); });
-      rosto.append(img);
-    } else {
-      rosto.append(iniciaisEl());
-    }
-    const nome = el('span', { class: 'client-nome recorte', 'aria-hidden': 'true' });
-    recorte(nome, c.nome);
-    const conteudo = [
-      el('span', { class: 'painel' },
-        el('span', { class: 'painel-sombra', 'aria-hidden': 'true' }),
-        el('span', { class: 'painel-borda' }, rosto)),
-      nome,
-      el('span', { class: 'sr-only', text: c.nome }),
-      c.canal_url ? el('span', { class: 'sr-only', text: t('clientes.canal') }) : null,
-    ];
-    const props = { class: 'client flutua', style: `animation-delay: ${(i * 0.45).toFixed(2)}s` };
-    const item = c.canal_url
-      ? el('a', { ...props, href: c.canal_url, target: '_blank', rel: 'noopener' }, conteudo)
-      : el('div', props, conteudo);
-    lista.append(el('li', {}, item));
+  clients.slice(0, CLIENTES_NO_CARTAZ).forEach((c, i) => lista.append(cartazCliente(c, i)));
+  const resto = clients.slice(CLIENTES_NO_CARTAZ);
+  resto.forEach((c) => mural.append(fichaCliente(c)));
+  botao.hidden = resto.length === 0;
+  const aberto = resto.length > 0 && estado.clientesAbertos;
+  mural.hidden = !aberto;
+  botao.setAttribute('aria-expanded', String(aberto));
+  botao.querySelector('.botao-miolo').textContent = aberto ? t('clientes.verMenos') : t('clientes.verTodos', { n: clients.length });
+}
+
+function iniciarClientes() {
+  const botao = document.querySelector('[data-clientes-mais]');
+  botao.addEventListener('click', () => {
+    estado.clientesAbertos = !estado.clientesAbertos;
+    renderClientes();
+    if (!estado.clientesAbertos) document.querySelector('#clientes').scrollIntoView({ block: 'start' });
   });
 }
 
@@ -373,6 +408,7 @@ async function iniciar() {
   marcarIdioma();
   iniciarCabecalho();
   iniciarAbasTeclado();
+  iniciarClientes();
   iniciarAranhaHero();
   iniciarRodape();
   iniciarCursor();

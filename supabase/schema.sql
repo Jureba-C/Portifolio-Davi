@@ -47,7 +47,7 @@ create table if not exists public.clients (
 
 create table if not exists public.settings (
   id smallint primary key default 1 check (id = 1),
-  nome text not null default 'DAVI' check (char_length(nome) between 1 and 40),
+  nome text not null default 'DECXZ' check (char_length(nome) between 1 and 40),
   email text not null default '',
   foto_url text not null default '' check (foto_url = '' or foto_url ~* '^https://'),
   sobre_pt text not null default '' check (char_length(sobre_pt) <= 2000),

@@ -6,7 +6,7 @@ const semPrevia = { preview_url: '', poster_url: '' };
 export const MOCK = {
   settings: {
     id: 1,
-    nome: 'DAVI',
+    nome: 'DECXZ',
     email: 'contato@exemplo.com',
     foto_url: 'assets/foto-davi.jpg',
     sobre_pt: 'Edito desde 2019. Comecei cortando gameplay pros amigos e hoje faço motion, shorts e vídeos longos pra canais de games, tecnologia e humor. Gosto de ritmo, som no lugar certo e de segurar o público até o último segundo.',
@@ -16,7 +16,7 @@ export const MOCK = {
       x: 'https://x.com/exemplo',
       youtube: 'https://www.youtube.com/@exemplo',
     },
-    discord_nick: 'davi.edits',
+    discord_nick: 'decxz.editor',
     comissoes_abertas: true,
   },
   categories: [
@@ -50,5 +50,15 @@ export const MOCK = {
     { id: 'cl-4', nome: 'Lua de Lata', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 3 },
     { id: 'cl-5', nome: 'Clã Vermelho', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 4 },
     { id: 'cl-6', nome: 'Bit a Bit', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 5 },
+    { id: 'cl-7', nome: 'Neon Quebrado', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 6 },
+    { id: 'cl-8', nome: 'Ping Alto', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 7 },
+    { id: 'cl-9', nome: 'Toca do Lobo', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 8 },
+    { id: 'cl-10', nome: 'Canal do Rafa', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 9 },
+    { id: 'cl-11', nome: 'Dois Botões', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 10 },
+    { id: 'cl-12', nome: 'Respawn BR', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 11 },
+    { id: 'cl-13', nome: 'Café com Bug', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 12 },
+    { id: 'cl-14', nome: 'Modo Turbo', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 13 },
+    { id: 'cl-15', nome: 'Sala 404', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 14 },
+    { id: 'cl-16', nome: 'Zona Morta', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 15 },
   ],
 };
