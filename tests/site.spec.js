@@ -59,7 +59,7 @@ test.describe('site público', () => {
     await page.click('[data-idioma="en"]');
     await expect(page.locator('#trabalhos-titulo')).toHaveText('WORK');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page.locator('[data-campo="sobre"]')).toContainText('editing since');
+    await expect(page.locator('[data-campo="sobre"]')).toContainText('video editor and motion designer');
     await page.reload();
     await expect(page.locator('#trabalhos-titulo')).toHaveText('WORK');
     await page.click('[data-idioma="pt"]');
@@ -217,7 +217,9 @@ test.describe('site público', () => {
     await expect(foto).toHaveAttribute('alt', 'Foto de DECXZ');
     expect(await foto.evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
     const texto = await page.locator('[data-campo="sobre"]').textContent();
-    expect(texto.length).toBeLessThan(320);
+    expect(texto.length).toBeLessThan(700);
+    await expect(page.locator('[data-campo="sobre"] strong')).toHaveCount(3);
+    expect(texto).not.toContain('*');
     await expect(page.locator('.olho, .olho-svg')).toHaveCount(0);
   });
 

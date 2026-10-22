@@ -9,8 +9,8 @@ export const MOCK = {
     nome: 'DECXZ',
     email: 'contato@exemplo.com',
     foto_url: 'assets/foto-decxz.webp',
-    sobre_pt: 'Edito desde 2019. Comecei cortando gameplay pros amigos e hoje faço motion, shorts e vídeos longos pra canais de games, tecnologia e humor. Gosto de ritmo, som no lugar certo e de segurar o público até o último segundo.',
-    sobre_en: "I've been editing since 2019. I started cutting gameplay for friends and now I make motion, shorts and long form for gaming, tech and comedy channels. I care about pacing, sound in the right place and holding the audience to the last second.",
+    sobre_pt: "Sou editor de vídeo e motion designer, com *3 anos de experiência profissional*. Especializado em cinematics, vídeos longos, conteúdos verticais e motion design, utilizo Premiere Pro e After Effects para criar projetos com identidade própria.\n\nCombino *movimento, ritmo e sound design* para transformar cada edição em uma experiência audiovisual única. Sem fórmulas prontas, sem padrões engessados.\n\n*Cada projeto tem sua identidade. Meu trabalho é fazer você senti-la.*",
+    sobre_en: "I'm a video editor and motion designer with *3 years of professional experience*. Specialized in cinematics, long-form videos, vertical content and motion design, I use Premiere Pro and After Effects to build projects with their own identity.\n\nI combine *movement, rhythm and sound design* to turn every edit into a unique audiovisual experience. No ready-made formulas, no rigid templates.\n\n*Every project has its own identity. My job is to make you feel it.*",
     redes: {
       instagram: 'https://www.instagram.com/exemplo',
       x: 'https://x.com/exemplo',

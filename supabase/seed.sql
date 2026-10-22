@@ -33,11 +33,29 @@ insert into public.clients (id, nome, canal_url, foto_url, ordem) values
   ('cc6c4236-790c-51c9-8dfa-f2725884046b', 'Rota 77', 'https://www.youtube.com/@exemplo', '', 2),
   ('afa3f9d3-e2d8-505e-9486-87f30ee88b24', 'Lua de Lata', 'https://www.youtube.com/@exemplo', '', 3),
   ('2f202edf-6c6e-5e4e-bae1-87966f93e535', 'Clã Vermelho', 'https://www.youtube.com/@exemplo', '', 4),
-  ('570060c7-a65c-5498-9c6c-cbfb099bccac', 'Bit a Bit', 'https://www.youtube.com/@exemplo', '', 5)
+  ('570060c7-a65c-5498-9c6c-cbfb099bccac', 'Bit a Bit', 'https://www.youtube.com/@exemplo', '', 5),
+  ('a37bec71-929b-5c4a-9e14-8b7ec3033fdf', 'Neon Quebrado', 'https://www.youtube.com/@exemplo', '', 6),
+  ('9e56f29f-83a7-5271-8676-98ec309d3a6c', 'Ping Alto', 'https://www.youtube.com/@exemplo', '', 7),
+  ('d8c31790-2761-5548-a24b-9dc301a66029', 'Toca do Lobo', 'https://www.youtube.com/@exemplo', '', 8),
+  ('1e6b1331-7867-5ef3-abb6-7774dc288ccd', 'Canal do Rafa', 'https://www.youtube.com/@exemplo', '', 9),
+  ('9b6e8be1-17b3-586d-98f5-c489ea36329e', 'Dois Botões', 'https://www.youtube.com/@exemplo', '', 10),
+  ('c86f297e-f635-5f42-afb4-a1db780fcc7b', 'Respawn BR', 'https://www.youtube.com/@exemplo', '', 11),
+  ('e1aac5ca-b9aa-5229-b6b7-189579911fea', 'Café com Bug', 'https://www.youtube.com/@exemplo', '', 12),
+  ('c37f62f0-8a77-5bf3-9c3f-1b1412adc2de', 'Modo Turbo', 'https://www.youtube.com/@exemplo', '', 13),
+  ('ef6c35a3-daa1-51ac-bcee-01b084c7884c', 'Sala 404', 'https://www.youtube.com/@exemplo', '', 14),
+  ('14888b1e-7712-5d91-bc00-2f761c2d2215', 'Zona Morta', 'https://www.youtube.com/@exemplo', '', 15)
 on conflict (id) do nothing;
 
 insert into public.settings (id, nome, email, sobre_pt, sobre_en, redes, discord_nick, comissoes_abertas) values
-  (1, 'DECXZ', 'contato@exemplo.com', 'Edito desde 2019. Comecei cortando gameplay pros amigos e hoje faço motion, shorts e vídeos longos pra canais de games, tecnologia e humor. Gosto de ritmo, som no lugar certo e de segurar o público até o último segundo.', 'I''ve been editing since 2019. I started cutting gameplay for friends and now I make motion, shorts and long form for gaming, tech and comedy channels. I care about pacing, sound in the right place and holding the audience to the last second.', '{"instagram":"https://www.instagram.com/exemplo","x":"https://x.com/exemplo","youtube":"https://www.youtube.com/@exemplo"}'::jsonb, 'decxz.editor', true)
+  (1, 'DECXZ', 'contato@exemplo.com', 'Sou editor de vídeo e motion designer, com *3 anos de experiência profissional*. Especializado em cinematics, vídeos longos, conteúdos verticais e motion design, utilizo Premiere Pro e After Effects para criar projetos com identidade própria.
+
+Combino *movimento, ritmo e sound design* para transformar cada edição em uma experiência audiovisual única. Sem fórmulas prontas, sem padrões engessados.
+
+*Cada projeto tem sua identidade. Meu trabalho é fazer você senti-la.*', 'I''m a video editor and motion designer with *3 years of professional experience*. Specialized in cinematics, long-form videos, vertical content and motion design, I use Premiere Pro and After Effects to build projects with their own identity.
+
+I combine *movement, rhythm and sound design* to turn every edit into a unique audiovisual experience. No ready-made formulas, no rigid templates.
+
+*Every project has its own identity. My job is to make you feel it.*', '{"instagram":"https://www.instagram.com/exemplo","x":"https://x.com/exemplo","youtube":"https://www.youtube.com/@exemplo"}'::jsonb, 'decxz.editor', true)
 on conflict (id) do update set nome = excluded.nome, email = excluded.email, sobre_pt = excluded.sobre_pt, sobre_en = excluded.sobre_en, redes = excluded.redes, discord_nick = excluded.discord_nick, comissoes_abertas = excluded.comissoes_abertas;
 
 commit;

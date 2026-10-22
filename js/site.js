@@ -118,10 +118,22 @@ function renderDestaques() {
   resto.forEach((video) => fileira.append(quadro(video, { classe: 'destaque', modo: 'destaque' })));
 }
 
+function textoComDestaques(alvo, texto) {
+  alvo.textContent = '';
+  String(texto || '').split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean).forEach((paragrafo) => {
+    const p = el('p');
+    paragrafo.replace(/\s*\n\s*/g, ' ').split(/(\*[^*]+\*)/).forEach((parte) => {
+      if (/^\*[^*]+\*$/.test(parte)) p.append(el('strong', { text: parte.slice(1, -1) }));
+      else if (parte) p.append(parte.replace(/\*/g, ''));
+    });
+    alvo.append(p);
+  });
+}
+
 function renderSobre() {
   const { settings } = estado.db;
   const nome = settings.nome || 'DECXZ';
-  document.querySelector('[data-campo="sobre"]').textContent = campo(settings, 'sobre');
+  textoComDestaques(document.querySelector('[data-campo="sobre"]'), campo(settings, 'sobre'));
   const foto = document.querySelector('[data-campo="foto"]');
   const src = settings.foto_url || 'assets/avatar-exemplo.svg';
   if (foto.getAttribute('src') !== src) foto.src = src;
