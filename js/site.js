@@ -1,6 +1,6 @@
 import { carregarSite, linkYoutube, iniciais, urlSegura } from './data.js';
 import { t, campo, aplicar, definirIdioma, idioma, aoMudarIdioma } from './i18n.js';
-import { iniciarRevelacao, iniciarAranhaHero, iniciarRodape, letrasSoltas, recorte, temMouse } from './animations.js';
+import { iniciarRevelacao, iniciarAranhaHero, iniciarRodape, aranhasVivas, letrasSoltas, recorte, temMouse } from './animations.js';
 import { iniciarCursor } from './cursor.js';
 import { criarPlayer } from './player.js';
 import { montarPrevia, soltarPrevias, suspenderPrevias } from './previa.js';
@@ -444,6 +444,7 @@ async function iniciar() {
   iniciarClientes();
   iniciarMovimento();
   iniciarAranhaHero();
+  aranhasVivas();
   iniciarRodape();
   iniciarCursor();
   observarNovos = iniciarRevelacao() ?? (() => {});

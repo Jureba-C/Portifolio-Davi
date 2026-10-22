@@ -1,18 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg">
   <symbol id="aranha" viewBox="-40 -40 80 80" overflow="visible">
-    <g fill="none" stroke-linecap="round" stroke-linejoin="round" style="stroke: var(--perna, #F4F1EC); stroke-width: var(--traco, 2.6)">
-      <path d="M-3.5 -8 C -9 -19, -15 -26, -20 -27 L -29 -37"/><path d="M-5.5 -5 C -13 -11, -20 -15, -26 -15 L -38 -21"/><path d="M-5.5 -1 C -13 0, -20 3, -25 7 L -36 17"/><path d="M-4 2 C -10 8, -14 15, -17 21 L -24 35"/>
-      <path d="M3.5 -8 C 9 -19, 15 -26, 20 -27 L 29 -37"/><path d="M5.5 -5 C 13 -11, 20 -15, 26 -15 L 38 -21"/><path d="M5.5 -1 C 13 0, 20 3, 25 7 L 36 17"/><path d="M4 2 C 10 8, 14 15, 17 21 L 24 35"/>
-      <path d="M-2.4 -11 Q -5.2 -14 -3.6 -16.5"/><path d="M2.4 -11 Q 5.2 -14 3.6 -16.5"/>
+    <g class="pernas" fill="none" stroke-linecap="round" stroke-linejoin="round" style="stroke: var(--perna, #F4F1EC); stroke-width: var(--traco, 2.6)">
+      <path class="perna pe1" d="M-3.5 -8 C -9 -19, -15 -26, -20 -27 L -29 -37"/><path class="perna pe2" d="M-5.5 -5 C -13 -11, -20 -15, -26 -15 L -38 -21"/><path class="perna pe3" d="M-5.5 -1 C -13 0, -20 3, -25 7 L -36 17"/><path class="perna pe4" d="M-4 2 C -10 8, -14 15, -17 21 L -24 35"/>
+      <path class="perna pd1" d="M3.5 -8 C 9 -19, 15 -26, 20 -27 L 29 -37"/><path class="perna pd2" d="M5.5 -5 C 13 -11, 20 -15, 26 -15 L 38 -21"/><path class="perna pd3" d="M5.5 -1 C 13 0, 20 3, 25 7 L 36 17"/><path class="perna pd4" d="M4 2 C 10 8, 14 15, 17 21 L 24 35"/>
+      <path class="palpo palpo-e" d="M-2.4 -11 Q -5.2 -14 -3.6 -16.5"/><path class="palpo palpo-d" d="M2.4 -11 Q 5.2 -14 3.6 -16.5"/>
     </g>
-    <path d="M0 1 C 9 1, 13 9, 13 16 C 13 25, 7 31, 0 31 C -7 31, -13 25, -13 16 C -13 9, -9 1, 0 1 Z" style="fill: var(--corpo, #E3162B); stroke: var(--contorno, #F4F1EC); stroke-width: var(--traco-corpo, 2.4)"/>
-    <path d="M-4 11 L4 11 L0 16.5 Z M0 16.5 L4 22 L-4 22 Z" style="fill: var(--marca, transparent)"/>
-    <path d="M-8.5 9 Q -10 14 -8.5 19" fill="none" stroke-linecap="round" style="stroke: var(--contorno, #F4F1EC); stroke-width: 1.8; opacity: .7"/>
-    <ellipse cx="0" cy="-4.5" rx="6.6" ry="7.4" style="fill: var(--cabeca, #0B0B0C); stroke: var(--contorno-cabeca, var(--contorno, #F4F1EC)); stroke-width: var(--traco-corpo, 2.4)"/>
-    <circle cx="-2.4" cy="-7" r="1.7" style="fill: var(--olhos, #E3162B)"/>
-    <circle cx="2.4" cy="-7" r="1.7" style="fill: var(--olhos, #E3162B)"/>
-    <circle cx="-4.6" cy="-4.4" r="0.95" style="fill: var(--olhos, #E3162B)"/>
-    <circle cx="4.6" cy="-4.4" r="0.95" style="fill: var(--olhos, #E3162B)"/>
+    <g class="abdomen">
+      <path d="M0 1 C 9 1, 13 9, 13 16 C 13 25, 7 31, 0 31 C -7 31, -13 25, -13 16 C -13 9, -9 1, 0 1 Z" style="fill: var(--corpo, #E3162B); stroke: var(--contorno, #F4F1EC); stroke-width: var(--traco-corpo, 2.4)"/>
+      <path d="M-4 11 L4 11 L0 16.5 Z M0 16.5 L4 22 L-4 22 Z" style="fill: var(--marca, transparent)"/>
+      <path d="M-8.5 9 Q -10 14 -8.5 19" fill="none" stroke-linecap="round" style="stroke: var(--contorno, #F4F1EC); stroke-width: 1.8; opacity: .7"/>
+    </g>
+    <g class="cabeca">
+      <ellipse cx="0" cy="-4.5" rx="6.6" ry="7.4" style="fill: var(--cabeca, #0B0B0C); stroke: var(--contorno-cabeca, var(--contorno, #F4F1EC)); stroke-width: var(--traco-corpo, 2.4)"/>
+      <g class="olhos">
+        <circle cx="-2.4" cy="-7" r="1.7" style="fill: var(--olhos, #E3162B)"/>
+        <circle cx="2.4" cy="-7" r="1.7" style="fill: var(--olhos, #E3162B)"/>
+        <circle cx="-4.6" cy="-4.4" r="0.95" style="fill: var(--olhos, #E3162B)"/>
+        <circle cx="4.6" cy="-4.4" r="0.95" style="fill: var(--olhos, #E3162B)"/>
+      </g>
+    </g>
   </symbol>
   <symbol id="teia" viewBox="0 0 200 200">
     <g fill="none" stroke-linecap="round" style="stroke: var(--fio, #F4F1EC); stroke-opacity: var(--fio-opacidade, 0.5); stroke-width: var(--fio-traco, 1.6)">

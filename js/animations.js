@@ -26,6 +26,25 @@ export function iniciarRevelacao() {
   return observar;
 }
 
+export async function aranhasVivas() {
+  const alvos = [...document.querySelectorAll('svg.aranha-svg')].filter((svg) => svg.querySelector('use'));
+  if (!alvos.length) return;
+  try {
+    const resposta = await fetch('assets/desenhos.svg');
+    if (!resposta.ok) return;
+    const doc = new DOMParser().parseFromString(await resposta.text(), 'image/svg+xml');
+    const simbolo = doc.getElementById('aranha');
+    if (!simbolo) return;
+    alvos.forEach((svg) => {
+      svg.setAttribute('viewBox', simbolo.getAttribute('viewBox'));
+      svg.classList.add('aranha-viva');
+      svg.replaceChildren(...[...simbolo.children].map((no) => document.importNode(no, true)));
+    });
+  } catch {
+    return;
+  }
+}
+
 export function iniciarAranhaHero() {
   const botao = document.querySelector('.aranha-hero');
   const fuga = document.querySelector('.fuga');

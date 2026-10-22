@@ -185,7 +185,7 @@ main, footer { position: relative; z-index: 1; }
 .aranha-fio { position: absolute; z-index: 4; right: clamp(12px, 2.4vw, 40px); top: 0; pointer-events: none; }
 .fuga { display: flex; flex-direction: column; align-items: center; }
 .fio { display: block; width: 2px; background: rgba(244, 241, 236, 0.6); }
-.aranha-fio .fio { height: 70px; }
+.aranha-fio .fio { --fio-h: 70px; height: var(--fio-h); }
 .aranha-hero {
   pointer-events: auto;
   width: 54px;
@@ -476,7 +476,7 @@ a.ficha:hover, a.ficha:focus-visible { background: var(--vermelho-escuro); trans
   align-items: center;
   pointer-events: none;
 }
-.aranha-trabalhos .fio { height: 140px; }
+.aranha-trabalhos .fio { --fio-h: 140px; height: var(--fio-h); }
 .aranha-trabalhos svg { width: 54px; height: 54px; margin-top: -6px; --corpo: var(--vermelho); --olhos: var(--branco); }
 
 .abas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 10px; }
@@ -765,7 +765,7 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
   .aranha-fio { right: 14px; }
   .teia-traje { width: 62vw; }
   .meio-tom-canto { width: 56vw; top: 300px; }
-  .aranha-fio .fio { height: 40px; }
+  .aranha-fio .fio { --fio-h: 40px; }
   .aranha-hero { width: 40px; height: 40px; }
   .ei { right: 64px; top: 14px; font-size: 20px; }
   .abertura-nome { font-size: clamp(80px, 27vw, 132px); }
