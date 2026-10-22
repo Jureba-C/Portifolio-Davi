@@ -40,7 +40,7 @@ test.describe('painel admin (modo local)', () => {
     const site = await context.newPage();
     await site.goto('/?intro=0');
     await site.click('[data-categoria="long-form"]');
-    await expect(site.locator('.grade .card-titulo').first()).toHaveText('Vídeo de teste');
+    await expect(site.locator('.grade .quadro-titulo').first()).toHaveText('Vídeo de teste');
     await site.getByRole('button', { name: 'Vlog' }).click();
     await expect(site.locator('.grade .card')).toHaveCount(2);
 
@@ -52,8 +52,8 @@ test.describe('painel admin (modo local)', () => {
     await expect(page.locator('[data-lista="trabalhos"] > li').nth(1).locator('.item-titulo')).toHaveText('Vídeo de teste');
     await site.reload();
     await site.click('[data-categoria="long-form"]');
-    await expect(site.locator('.grade .card-titulo').first()).toHaveText('Zerei o jogo sem tomar dano');
-    await expect(site.locator('.grade .card-titulo').nth(1)).toHaveText('Vídeo de teste');
+    await expect(site.locator('.grade .quadro-titulo').first()).toHaveText('Zerei o jogo sem tomar dano');
+    await expect(site.locator('.grade .quadro-titulo').nth(1)).toHaveText('Vídeo de teste');
     await page.fill('[data-busca]', '');
 
     const item = page.locator('[data-lista="trabalhos"] > li', { hasText: 'Vídeo de teste' });
@@ -74,6 +74,33 @@ test.describe('painel admin (modo local)', () => {
     await expect(page.locator('[data-link-ajuda]')).toHaveText('não reconheci esse link do YouTube');
     await page.click('[data-form="video"] button[type="submit"]');
     await expect(page.locator('[data-video-erro]')).toHaveText('cola um link do YouTube válido!');
+  });
+
+  test('vídeo novo com clipe e destaque aparece tocando na abertura', async ({ page, context }) => {
+    await entrar(page);
+    await page.fill('[data-form="video"] [name="titulo"]', 'Clipe novo');
+    await page.fill('[data-form="video"] [name="link"]', 'https://youtu.be/dQw4w9WgXcQ');
+    await page.setInputFiles('[data-form="video"] [name="clipe"]', 'assets/exemplos/previa-motion.webm');
+    await expect(page.locator('[data-rotulo="clipe"]')).toContainText('previa-motion.webm');
+    await expect(page.locator('[data-previa-video]')).toBeVisible();
+    await page.check('[data-form="video"] [name="destaque"]');
+    await page.click('[data-form="video"] button[type="submit"]');
+    await expect(page.locator('[data-toast]')).toContainText('vídeo adicionado');
+    const site = await context.newPage();
+    await site.goto('/?intro=0');
+    const destaque = site.locator('[data-lista="destaques"] .quadro', { hasText: 'Clipe novo' });
+    await expect(destaque).toHaveCount(1);
+    await expect(destaque.locator('video')).toHaveJSProperty('muted', true);
+  });
+
+  test('foto do sobre mim troca pelo link', async ({ page, context }) => {
+    await entrar(page);
+    await page.fill('[data-form="textos"] [name="foto_url"]', 'https://exemplo.com/foto.jpg');
+    await page.click('[data-form="textos"] button[type="submit"]');
+    await expect(page.locator('[data-salvo]')).toHaveText('salvo ✓');
+    const site = await context.newPage();
+    await site.goto('/?intro=0');
+    await expect(site.locator('[data-campo="foto"]')).toHaveAttribute('src', /assets\/avatar-exemplo\.svg|exemplo\.com/);
   });
 
   test('link de Shorts deixa a prévia em 9:16', async ({ page }) => {

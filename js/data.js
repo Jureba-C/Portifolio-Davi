@@ -1,5 +1,5 @@
 import { MOCK } from './mock-data.js';
-import { BUCKET_CLIENTES } from './config.js';
+import { BUCKET_MIDIA } from './config.js';
 import { nuvemConfigurada, obterCliente } from './supabase.js';
 
 const CHAVE_CACHE = 'portfolio-cache';
@@ -57,10 +57,11 @@ function normalizar(db) {
     settings: { ...base.settings, ...(db?.settings ?? {}) },
     categories: [...(db?.categories ?? base.categories)].sort(porOrdem),
     longform_filters: [...(db?.longform_filters ?? base.longform_filters)].sort(porOrdem),
-    videos: [...(db?.videos ?? base.videos)].sort(porOrdem),
+    videos: [...(db?.videos ?? base.videos)].map((v) => ({ preview_url: '', poster_url: '', ...v })).sort(porOrdem),
     clients: [...(db?.clients ?? base.clients)].sort(porOrdem),
   };
   saida.settings.redes = { instagram: '', x: '', youtube: '', ...(saida.settings.redes ?? {}) };
+  saida.settings.foto_url = saida.settings.foto_url ?? '';
   return saida;
 }
 
@@ -76,7 +77,10 @@ function ler(chave) {
 function gravar(chave, valor) {
   try {
     localStorage.setItem(chave, JSON.stringify(valor));
-  } catch {}
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function comTempo(promessa, ms) {
@@ -127,7 +131,9 @@ export function loginLocalPermitido() {
 function apiLocal() {
   let sessao = ler('portfolio-local-sessao');
   const db = () => bancoLocal();
-  const salvar = (novo) => gravar(CHAVE_LOCAL, novo);
+  const salvar = (novo) => {
+    if (!gravar(CHAVE_LOCAL, novo)) throw new Error('armazenamento-cheio');
+  };
   return {
     modo: 'local',
     async sessaoAtual() {
@@ -174,7 +180,6 @@ function apiLocal() {
       if (tabela === 'longform_filters') {
         atual.videos = atual.videos.map((v) => (v.filter_id === id ? { ...v, filter_id: null } : v));
       }
-      if (tabela === 'videos' && atual.settings.video_destaque_id === id) atual.settings.video_destaque_id = null;
       salvar(atual);
     },
     async reordenar(tabela, ids) {
@@ -185,13 +190,7 @@ function apiLocal() {
         .sort(porOrdem);
       salvar(atual);
     },
-    async definirDestaque(videoId) {
-      const atual = db();
-      atual.videos = atual.videos.map((v) => ({ ...v, destaque: v.id === videoId }));
-      atual.settings.video_destaque_id = videoId;
-      salvar(atual);
-    },
-    async enviarFoto(arquivo) {
+    async enviarArquivo(arquivo) {
       return new Promise((resolver, rejeitar) => {
         const leitor = new FileReader();
         leitor.onload = () => resolver(String(leitor.result));
@@ -258,16 +257,12 @@ function apiNuvem() {
       const cliente = await sb();
       checar(await cliente.rpc('reordenar', { tabela, ids }));
     },
-    async definirDestaque(videoId) {
+    async enviarArquivo(arquivo, pasta = 'geral') {
       const cliente = await sb();
-      checar(await cliente.rpc('definir_destaque', { video: videoId }));
-    },
-    async enviarFoto(arquivo) {
-      const cliente = await sb();
-      const extensao = (arquivo.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const caminho = `${novoId()}.${extensao}`;
-      checar(await cliente.storage.from(BUCKET_CLIENTES).upload(caminho, arquivo, { cacheControl: '31536000', upsert: false }));
-      return cliente.storage.from(BUCKET_CLIENTES).getPublicUrl(caminho).data.publicUrl;
+      const extensao = (arquivo.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const caminho = `${pasta}/${novoId()}.${extensao}`;
+      checar(await cliente.storage.from(BUCKET_MIDIA).upload(caminho, arquivo, { cacheControl: '31536000', upsert: false, contentType: arquivo.type || undefined }));
+      return cliente.storage.from(BUCKET_MIDIA).getPublicUrl(caminho).data.publicUrl;
     },
   };
 }

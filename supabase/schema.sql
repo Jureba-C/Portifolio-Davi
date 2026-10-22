@@ -24,6 +24,8 @@ create table if not exists public.videos (
   descricao_pt text not null default '' check (char_length(descricao_pt) <= 160),
   descricao_en text not null default '' check (char_length(descricao_en) <= 160),
   youtube_id text not null check (youtube_id ~ '^[A-Za-z0-9_-]{11}$'),
+  preview_url text not null default '' check (preview_url = '' or preview_url ~* '^https://'),
+  poster_url text not null default '' check (poster_url = '' or poster_url ~* '^https://'),
   category_id uuid not null references public.categories (id) on delete cascade,
   filter_id uuid references public.longform_filters (id) on delete set null,
   destaque boolean not null default false,
@@ -33,6 +35,7 @@ create table if not exists public.videos (
 
 create index if not exists videos_category_idx on public.videos (category_id);
 create index if not exists videos_ordem_idx on public.videos (ordem);
+create index if not exists videos_destaque_idx on public.videos (destaque) where destaque;
 
 create table if not exists public.clients (
   id uuid primary key default gen_random_uuid(),
@@ -46,12 +49,12 @@ create table if not exists public.settings (
   id smallint primary key default 1 check (id = 1),
   nome text not null default 'DAVI' check (char_length(nome) between 1 and 40),
   email text not null default '',
+  foto_url text not null default '' check (foto_url = '' or foto_url ~* '^https://'),
   sobre_pt text not null default '' check (char_length(sobre_pt) <= 2000),
   sobre_en text not null default '' check (char_length(sobre_en) <= 2000),
   redes jsonb not null default '{}'::jsonb check (jsonb_typeof(redes) = 'object'),
   discord_nick text not null default '' check (char_length(discord_nick) <= 40),
-  comissoes_abertas boolean not null default true,
-  video_destaque_id uuid references public.videos (id) on delete set null
+  comissoes_abertas boolean not null default true
 );
 
 create or replace function public.eh_admin()
@@ -127,46 +130,28 @@ $$;
 revoke all on function public.reordenar(text, uuid[]) from public, anon;
 grant execute on function public.reordenar(text, uuid[]) to authenticated;
 
-create or replace function public.definir_destaque(video uuid)
-returns void
-language plpgsql
-security invoker
-set search_path = public
-as $$
-begin
-  if not public.eh_admin() then
-    raise exception 'sem permissao' using errcode = '42501';
-  end if;
-  update public.videos set destaque = coalesce(id = video, false) where destaque or id = video;
-  update public.settings set video_destaque_id = video where id = 1;
-end;
-$$;
-
-revoke all on function public.definir_destaque(uuid) from public, anon;
-grant execute on function public.definir_destaque(uuid) to authenticated;
-
 insert into public.settings (id) values (1) on conflict (id) do nothing;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('clientes', 'clientes', true, 3145728, array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'])
+values ('midia', 'midia', true, 15728640, array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'video/mp4', 'video/webm'])
 on conflict (id) do update set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
 
-drop policy if exists "fotos de clientes: leitura publica" on storage.objects;
-create policy "fotos de clientes: leitura publica" on storage.objects
+drop policy if exists "midia: leitura publica" on storage.objects;
+create policy "midia: leitura publica" on storage.objects
   for select to anon, authenticated
-  using (bucket_id = 'clientes');
+  using (bucket_id = 'midia');
 
-drop policy if exists "fotos de clientes: admin envia" on storage.objects;
-create policy "fotos de clientes: admin envia" on storage.objects
+drop policy if exists "midia: admin envia" on storage.objects;
+create policy "midia: admin envia" on storage.objects
   for insert to authenticated
-  with check (bucket_id = 'clientes' and public.eh_admin());
+  with check (bucket_id = 'midia' and public.eh_admin());
 
-drop policy if exists "fotos de clientes: admin altera" on storage.objects;
-create policy "fotos de clientes: admin altera" on storage.objects
+drop policy if exists "midia: admin altera" on storage.objects;
+create policy "midia: admin altera" on storage.objects
   for update to authenticated
-  using (bucket_id = 'clientes' and public.eh_admin());
+  using (bucket_id = 'midia' and public.eh_admin());
 
-drop policy if exists "fotos de clientes: admin apaga" on storage.objects;
-create policy "fotos de clientes: admin apaga" on storage.objects
+drop policy if exists "midia: admin apaga" on storage.objects;
+create policy "midia: admin apaga" on storage.objects
   for delete to authenticated
-  using (bucket_id = 'clientes' and public.eh_admin());
+  using (bucket_id = 'midia' and public.eh_admin());

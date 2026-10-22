@@ -1,7 +1,7 @@
 import { reduzMovimento, temMouse } from './animations.js';
 
 const TAMANHOS = [12, 10, 8, 6];
-const CORES = ['var(--coral)', 'var(--roxo)', 'var(--roxo)', 'var(--roxo)'];
+const CORES = ['var(--branco-puro)', 'var(--vermelho)', 'var(--vermelho)', 'var(--vermelho)'];
 const OPACIDADES = [1, 0.75, 0.6, 0.45];
 
 function criar(tamanho, extra = {}) {
@@ -17,8 +17,8 @@ export function iniciarCursor() {
   const pingos = TAMANHOS.map((t, i) =>
     criar(t, { borderRadius: '50%', background: CORES[i], opacity: String(OPACIDADES[i]) }),
   );
-  const anel = criar(44, { mixBlendMode: 'difference', color: 'var(--creme)' });
-  anel.innerHTML = '<svg viewBox="0 0 44 44" style="width:100%;height:100%;overflow:visible"><path d="M22 3 C 34 2, 42 11, 41 22 C 40 34, 31 42, 20 41 C 9 40, 2 31, 3 20 C 4 10, 12 3, 25 4" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
+  const anel = criar(44, { mixBlendMode: 'difference', color: 'var(--branco-puro)' });
+  anel.innerHTML = '<svg viewBox="0 0 44 44" style="width:100%;height:100%;overflow:visible"><path d="M22 2 L42 22 L22 42 L2 22 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="miter"/></svg>';
   [...pingos].reverse().forEach((p) => document.body.append(p));
   document.body.append(anel);
   [...pingos, anel].forEach((p) => { p.style.opacity = '0'; });

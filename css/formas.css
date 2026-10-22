@@ -1,0 +1,122 @@
+.corte-a { clip-path: polygon(0 3%, 100% 0, 98.5% 100%, 1.5% 96%); }
+.corte-b { clip-path: polygon(2% 0, 100% 4%, 97.5% 96%, 0 100%); }
+.corte-c { clip-path: polygon(0 0, 97% 2%, 100% 100%, 3% 97%); }
+.chanfro { clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
+.chanfro-inv { clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 12px 100%); }
+.ponta { clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px)); }
+
+.boil { filter: url(#boil); }
+.rough-text { filter: url(#rough); }
+
+.tilt-l { transform: rotate(-1.6deg); }
+.tilt-r { transform: rotate(1.3deg); }
+.tilt-0 { transform: rotate(-0.4deg); }
+
+.letras-pulam .l { display: inline-block; }
+.sacode:hover, .letras-pulam .l:hover { animation: sacode .32s linear infinite; }
+@keyframes sacode { 0%, 100% { transform: rotate(-7deg) scale(1.06); } 50% { transform: rotate(7deg) scale(1.12); } }
+
+.letras-pulam .l { animation: pula 3.2s ease-in-out infinite; }
+@keyframes pula {
+  0%, 74%, 100% { translate: 0 0; }
+  82% { translate: 0 -0.12em; }
+  90% { translate: 0 0.03em; }
+}
+
+.swing { transform-origin: 50% 0; animation: balanca 4.6s ease-in-out infinite; }
+@keyframes balanca { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+
+.flee-down { transform: translateY(0); transition: transform 1.4s cubic-bezier(.3, 1.5, .5, 1); }
+.flee-up { transform: translateY(-340px); transition: transform .45s ease-in; }
+
+.spider-btn { transition: transform .15s ease; }
+.spider-btn:hover { transform: scale(1.12) rotate(-6deg); }
+
+.crawl { animation: anda 22s linear infinite; }
+@keyframes anda { from { transform: translateX(-60px) rotate(90deg); } to { transform: translateX(calc(100vw + 60px)) rotate(90deg); } }
+
+.strip { display: flex; align-items: center; gap: 30px; width: max-content; white-space: nowrap; }
+.strip-l { animation: corre-esq 36s linear infinite; }
+.strip-r { animation: corre-dir 32s linear infinite; }
+@keyframes corre-esq { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes corre-dir { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+
+.gira { animation: gira 6s linear infinite; }
+@keyframes gira { to { transform: rotate(360deg); } }
+
+.pisca { animation: pisca 2.4s ease-in-out infinite; }
+@keyframes pisca { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(.6) rotate(25deg); opacity: .6; } }
+
+.rec { animation: rec 1s steps(2) infinite; }
+@keyframes rec { 50% { opacity: 0; } }
+
+.flutua { animation: flutua 4s ease-in-out infinite; }
+@keyframes flutua { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+
+.pop { animation: pop .5s cubic-bezier(.3, 1.5, .5, 1) both; }
+@keyframes pop { from { opacity: 0; transform: translateY(46px) skewX(-8deg) scale(.9); } }
+
+.footer-spider { transform: translateY(-240px); transition: transform .9s cubic-bezier(.3, 1.5, .5, 1); }
+footer:hover .footer-spider { transform: translateY(0); }
+
+@supports (animation-timeline: view()) {
+  .reveal { animation: entra linear both; animation-timeline: view(); animation-range: entry 0% cover 26%; }
+  .reveal-l { animation: entra-esq linear both; animation-timeline: view(); animation-range: entry 0% cover 32%; }
+  .reveal-r { animation: entra-dir linear both; animation-timeline: view(); animation-range: entry 0% cover 32%; }
+  .risca { animation: risca linear both; animation-timeline: view(); animation-range: entry 20% cover 42%; }
+  .stamp-in { animation: carimbo linear both; animation-timeline: view(); animation-range: entry 15% cover 35%; }
+}
+@keyframes entra { from { opacity: 0; transform: translateY(60px) skewY(3deg); } }
+@keyframes entra-esq { from { opacity: 0; transform: translateX(-160px) skewX(-10deg); } }
+@keyframes entra-dir { from { opacity: 0; transform: translateX(160px) skewX(10deg); } }
+@keyframes risca { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes carimbo { from { opacity: 0; transform: scale(2.4) rotate(-20deg); } 70% { opacity: 1; transform: scale(.94) rotate(-5deg); } to { opacity: 1; transform: scale(1) rotate(-6deg); } }
+
+.intro { position: fixed; inset: 0; z-index: 100; display: none; }
+.intro-on .intro { display: block; cursor: pointer; }
+.intro-metade { position: absolute; inset: 0; background: var(--preto); }
+.intro-cima { clip-path: polygon(0 0, 100% 0, 100% 38%, 0 62%); animation: sai-cima .8s cubic-bezier(.7, 0, .3, 1) 2.3s forwards; }
+.intro-baixo { clip-path: polygon(0 62%, 100% 38%, 100% 100%, 0 100%); animation: sai-baixo .8s cubic-bezier(.7, 0, .3, 1) 2.3s forwards; }
+@keyframes sai-cima { to { transform: translate(-6%, -110%); } }
+@keyframes sai-baixo { to { transform: translate(6%, 110%); } }
+.intro-faixa {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: 46%;
+  height: 120px;
+  margin-top: -60px;
+  background: var(--vermelho);
+  transform: rotate(-12deg) scaleX(0);
+  transform-origin: left center;
+  animation: faixa-entra .45s cubic-bezier(.7, 0, .2, 1) .15s forwards, some .3s ease 2.15s forwards;
+}
+@keyframes faixa-entra { to { transform: rotate(-12deg) scaleX(1); } }
+.intro-meio {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  animation: some .3s ease 2.05s forwards;
+}
+.intro-nome { font-family: var(--f-display); font-size: clamp(110px, 24vw, 280px); line-height: .9; color: var(--branco-puro); text-shadow: 0.05em 0.05em 0 var(--preto); }
+.intro-nome .l { display: inline-block; }
+.intro-nome .l { opacity: 0; animation: carimba .28s cubic-bezier(.3, 1.8, .5, 1) forwards; }
+@keyframes carimba { from { opacity: 0; scale: 2.2; } to { opacity: 1; scale: 1; } }
+.intro-legenda { font-size: 26px; color: var(--branco); background: var(--preto); padding: 2px 14px; }
+@keyframes some { to { opacity: 0; } }
+.intro-pulando .intro-cima { animation: sai-cima .4s cubic-bezier(.7, 0, .3, 1) forwards; }
+.intro-pulando .intro-baixo { animation: sai-baixo .4s cubic-bezier(.7, 0, .3, 1) forwards; }
+.intro-pulando .intro-meio, .intro-pulando .intro-faixa { animation: some .15s ease forwards; }
+
+.ink-cursor { position: fixed; left: 0; top: 0; z-index: 90; pointer-events: none; will-change: transform; }
+.cursor-on, .cursor-on a, .cursor-on button, .cursor-on [role="tab"] { cursor: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .swing, .crawl, .letras-pulam .l, .strip-l, .strip-r, .gira, .pisca, .rec, .flutua, .pop, .reveal, .reveal-l, .reveal-r, .risca, .stamp-in { animation: none; }
+  .flee-up, .flee-down, .footer-spider, .spider-btn { transition: none; }
+  .intro { display: none !important; }
+}

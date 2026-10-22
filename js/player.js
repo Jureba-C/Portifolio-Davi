@@ -8,7 +8,7 @@ function formatar(segundos) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-export function criarPlayer() {
+export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   const raiz = document.querySelector('[data-player]');
   if (!raiz) return { abrir() {} };
   const caixa = raiz.querySelector('[role="dialog"]');
@@ -38,7 +38,7 @@ export function criarPlayer() {
 
   const desenhar = () => {
     const fracao = duracao ? Math.min(1, atual / duracao) : 0;
-    progresso.setAttribute('stroke-dashoffset', String(1000 - fracao * 1000));
+    progresso.style.width = `${(fracao * 100).toFixed(2)}%`;
     tempo.textContent = `${formatar(atual)} / ${formatar(duracao)}`;
     raiz.classList.toggle('tocando', tocando);
     play.setAttribute('aria-label', t(tocando ? 'player.pausar' : 'player.reproduzir'));
@@ -125,6 +125,7 @@ export function criarPlayer() {
     }
     desenhar();
     raiz.hidden = false;
+    aoAbrir();
     document.documentElement.style.overflow = 'hidden';
     document.addEventListener('keydown', prenderFoco);
     window.addEventListener('message', aoMensagem);
@@ -141,6 +142,7 @@ export function criarPlayer() {
     document.removeEventListener('keydown', prenderFoco);
     window.removeEventListener('message', aoMensagem);
     if (origemFoco?.focus) origemFoco.focus();
+    aoFechar();
   }
 
   raiz.querySelectorAll('[data-fechar]').forEach((el) => el.addEventListener('click', fechar));

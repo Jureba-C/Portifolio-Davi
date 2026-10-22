@@ -7,6 +7,7 @@ const $ = (seletor, raiz = document) => raiz.querySelector(seletor);
 const $$ = (seletor, raiz = document) => [...raiz.querySelectorAll(seletor)];
 
 const ERROS = {
+  'armazenamento-cheio': 'no modo local o navegador não aguenta arquivos grandes. Com o Supabase ligado funciona.',
   credenciais: 'credenciais incorretas!',
   'nao-admin': 'esse e-mail não tem acesso de admin!',
   'nuvem-nao-configurada': 'o painel ainda não está ligado na nuvem.',
@@ -18,6 +19,12 @@ let painelPronto = false;
 let tipoNovo = null;
 let editandoCliente = null;
 let fotoArquivo = null;
+const arquivos = { 'foto-sobre': null, clipe: null, capa: null };
+const LIMITES = {
+  'foto-sobre': { tipos: /^image\//, mb: 3, rotulo: 'enviar foto do "sobre mim"' },
+  clipe: { tipos: /^video\/(mp4|webm)$/, mb: 15, rotulo: 'enviar clipe de prévia (mp4 ou webm, até 15 MB)' },
+  capa: { tipos: /^image\//, mb: 3, rotulo: 'enviar capa (opcional)' },
+};
 let timerToast;
 
 function erroAmigavel(erro) {
@@ -207,9 +214,41 @@ function renderTudo() {
   renderClientes();
 }
 
+function mostrarFotoSobre(url) {
+  const img = $('[data-foto-sobre-img]');
+  img.src = url || 'assets/avatar-exemplo.svg';
+}
+
+function escolherArquivo(tipo, arquivo) {
+  if (!arquivo) return;
+  const limite = LIMITES[tipo];
+  if (!limite.tipos.test(arquivo.type)) return toast(tipo === 'clipe' ? 'o clipe precisa ser mp4 ou webm' : 'isso não é uma imagem', 'erro');
+  if (arquivo.size > limite.mb * 1024 * 1024) return toast(`arquivo grande demais (máx. ${limite.mb} MB)`, 'erro');
+  arquivos[tipo] = arquivo;
+  $(`[data-rotulo="${tipo}"]`).textContent = `✓ ${arquivo.name}`;
+  $(`[data-solta="${tipo}"]`).classList.add('escolhido');
+  if (tipo === 'foto-sobre') {
+    $('[data-form="textos"]').foto_url.value = '';
+    mostrarFotoSobre(URL.createObjectURL(arquivo));
+  }
+  if (tipo !== 'foto-sobre') atualizarPrevia();
+}
+
+function limparArquivo(tipo) {
+  arquivos[tipo] = null;
+  const rotulo = $(`[data-rotulo="${tipo}"]`);
+  if (rotulo) rotulo.textContent = LIMITES[tipo].rotulo;
+  $(`[data-solta="${tipo}"]`)?.classList.remove('escolhido');
+  const entrada = $(`[data-solta="${tipo}"] input[type="file"]`);
+  if (entrada) entrada.value = '';
+}
+
 function preencherTextos() {
   const form = $('[data-form="textos"]');
   const s = db.settings;
+  form.foto_url.value = s.foto_url && /^https?:/.test(s.foto_url) ? s.foto_url : '';
+  mostrarFotoSobre(s.foto_url);
+  limparArquivo('foto-sobre');
   form.nome.value = s.nome ?? '';
   form.email.value = s.email ?? '';
   form.sobre_pt.value = s.sobre_pt ?? '';
@@ -229,7 +268,7 @@ function renderCategorias() {
   ul.textContent = '';
   db.categories.forEach((cat) => {
     const total = db.videos.filter((v) => v.category_id === cat.id).length;
-    const li = el('li', { class: 'scrap item-ordem', 'data-id': cat.id });
+    const li = el('li', { class: 'corte-c item-ordem', 'data-id': cat.id });
     const mostrar = () => {
       li.textContent = '';
       li.append(
@@ -281,7 +320,7 @@ function renderFiltros() {
   if (!db.longform_filters.length) ul.append(el('li', { class: 'lista-vazia', text: 'nenhum filtro ainda' }));
   db.longform_filters.forEach((f, i) => {
     const usados = db.videos.filter((v) => v.filter_id === f.id).length;
-    ul.append(el('li', { class: `chip-filtro ${i % 2 ? 'rough2' : 'rough'}`, 'data-id': f.id },
+    ul.append(el('li', { class: `chip-filtro ${i % 2 ? 'chanfro-inv' : 'chanfro'}`, 'data-id': f.id },
       alca(`Mover ${f.nome_pt}`, () => ul, 'longform_filters'),
       el('span', { text: f.nome_pt }),
       el('button', {
@@ -316,7 +355,7 @@ function renderTipos() {
     alvo.append(el('button', {
       type: 'button',
       role: 'radio',
-      class: `tipo ${i % 2 ? 'rough2' : 'rough'}`,
+      class: `tipo ${i % 2 ? 'chanfro-inv' : 'chanfro'}`,
       'aria-checked': String(marcado),
       tabindex: marcado ? '0' : '-1',
       'data-tipo': cat.slug,
@@ -348,6 +387,19 @@ function atualizarPrevia() {
   const vertical = cat?.formato === 'vertical' || ehLinkDeShort(form.link.value);
   const thumb = $('[data-previa-thumb]');
   const img = $('[data-previa-img]');
+  const video = $('[data-previa-video]');
+  if (arquivos.clipe) {
+    if (video.dataset.nome !== arquivos.clipe.name) {
+      video.dataset.nome = arquivos.clipe.name;
+      video.src = URL.createObjectURL(arquivos.clipe);
+      video.play().catch(() => {});
+    }
+    video.hidden = false;
+  } else {
+    video.hidden = true;
+    video.removeAttribute('src');
+    delete video.dataset.nome;
+  }
   thumb.classList.toggle('vertical', vertical);
   $('[data-previa-tag]').textContent = (cat?.nome_pt ?? '').toUpperCase();
   $('[data-previa-tag]').hidden = vertical;
@@ -364,7 +416,11 @@ function atualizarPrevia() {
     ajuda.textContent = 'não reconheci esse link do YouTube';
     ajuda.className = 'campo-ajuda erro';
   }
-  if (id) {
+  if (arquivos.capa && !arquivos.clipe) {
+    img.src = URL.createObjectURL(arquivos.capa);
+    img.hidden = false;
+    delete img.dataset.id;
+  } else if (id) {
     if (img.dataset.id !== id) {
       img.dataset.id = id;
       img.hidden = true;
@@ -404,16 +460,26 @@ async function adicionarVideo(e) {
   }
   const cat = categoria(tipoNovo);
   const menor = Math.min(0, ...db.videos.map((v) => v.ordem ?? 0));
-  const novo = await acao(() => api.inserir('videos', {
-    ...dados,
-    category_id: tipoNovo,
-    filter_id: usaFiltros(cat) ? form.filter_id.value || null : null,
-    destaque: false,
-    ordem: menor - 1,
-  }), 'vídeo adicionado ✓');
+  const botao = $('button[type="submit"]', form);
+  botao.disabled = true;
+  const novo = await acao(async () => {
+    const preview_url = arquivos.clipe ? await api.enviarArquivo(arquivos.clipe, 'previas') : '';
+    const poster_url = arquivos.capa ? await api.enviarArquivo(arquivos.capa, 'capas') : '';
+    return api.inserir('videos', {
+      ...dados,
+      preview_url,
+      poster_url,
+      category_id: tipoNovo,
+      filter_id: usaFiltros(cat) ? form.filter_id.value || null : null,
+      destaque: form.destaque.checked,
+      ordem: menor - 1,
+    });
+  }, 'vídeo adicionado ✓');
+  botao.disabled = false;
   if (!novo) return;
-  if (form.destaque.checked) await acao(() => api.definirDestaque(novo.id));
   form.reset();
+  limparArquivo('clipe');
+  limparArquivo('capa');
   await recarregar();
 }
 
@@ -439,11 +505,11 @@ function renderTrabalhos() {
 
 function itemTrabalho(v, ul) {
   const cat = categoria(v.category_id);
-  const destaque = db.settings.video_destaque_id === v.id;
-  const li = el('li', { class: 'scrap item-trabalho', 'data-id': v.id });
-  const mini = el('span', { class: `scrap2 mini-thumb${cat?.formato === 'vertical' ? ' vertical' : ''}`, 'aria-hidden': 'true' });
-  if (v.youtube_id) {
-    const img = el('img', { src: thumbYoutube(v.youtube_id, 'mqdefault'), alt: '', loading: 'lazy' });
+  const destaque = Boolean(v.destaque);
+  const li = el('li', { class: 'corte-c item-trabalho', 'data-id': v.id });
+  const mini = el('span', { class: `corte-c mini-thumb${cat?.formato === 'vertical' ? ' vertical' : ''}`, 'aria-hidden': 'true' });
+  if (v.poster_url || v.youtube_id) {
+    const img = el('img', { src: v.poster_url || thumbYoutube(v.youtube_id, 'mqdefault'), alt: '', loading: 'lazy' });
     img.addEventListener('error', () => img.remove());
     mini.append(img);
   }
@@ -455,8 +521,9 @@ function itemTrabalho(v, ul) {
       el('span', { class: 'item-textos' },
         el('span', { class: 'item-titulo', text: v.titulo }),
         el('span', { class: 'item-sub', text: sub }))),
-    destaque ? el('span', { class: 'selo-destaque', text: 'showreel' }) : null,
-    el('span', { class: 'rough selo-cat', text: (cat?.nome_pt ?? '?').toUpperCase() }),
+    v.preview_url ? el('span', { class: 'selo-clipe', text: 'clipe' }) : null,
+    destaque ? el('span', { class: 'selo-destaque', text: 'destaque' }) : null,
+    el('span', { class: 'chanfro selo-cat', text: (cat?.nome_pt ?? '?').toUpperCase() }),
     el('div', { class: 'item-acoes' },
       botaoIcone('lapis', `Editar ${v.titulo}`, '', () => editarVideo(li, v)),
       botaoIcone('xis', `Excluir ${v.titulo}`, 'excluir', async () => {
@@ -472,17 +539,19 @@ function editarVideo(li, v) {
   if ($('.form-edicao', li)) return;
   const form = el('form', { class: 'form-edicao', novalidate: true });
   const campo = (rotulo, entrada) => el('label', { class: 'campo' }, rotulo, entrada);
-  const titulo = el('input', { name: 'titulo', class: 'rough', value: v.titulo, maxlength: '120' });
-  const cat = el('select', { name: 'category_id', class: 'rough2' }, db.categories.map((c) => el('option', { value: c.id, text: c.nome_pt })));
+  const titulo = el('input', { name: 'titulo', class: 'chanfro', value: v.titulo, maxlength: '120' });
+  const cat = el('select', { name: 'category_id', class: 'chanfro-inv' }, db.categories.map((c) => el('option', { value: c.id, text: c.nome_pt })));
   cat.value = v.category_id;
-  const filtro = el('select', { name: 'filter_id', class: 'rough' });
+  const filtro = el('select', { name: 'filter_id', class: 'chanfro' });
   renderFiltrosSelect(filtro, v.filter_id ?? '');
   const filtroCampo = campo('filtro', filtro);
-  const link = el('input', { name: 'link', class: 'rough2', value: v.youtube_id ? `https://youtu.be/${v.youtube_id}` : '' });
-  const descPt = el('input', { name: 'descricao_pt', class: 'rough', value: v.descricao_pt ?? '', maxlength: '160' });
-  const descEn = el('input', { name: 'descricao_en', class: 'rough2', value: v.descricao_en ?? '', maxlength: '160' });
+  const link = el('input', { name: 'link', class: 'chanfro-inv', value: v.youtube_id ? `https://youtu.be/${v.youtube_id}` : '' });
+  const descPt = el('input', { name: 'descricao_pt', class: 'chanfro', value: v.descricao_pt ?? '', maxlength: '160' });
+  const descEn = el('input', { name: 'descricao_en', class: 'chanfro-inv', value: v.descricao_en ?? '', maxlength: '160' });
   const destaque = el('input', { type: 'checkbox', name: 'destaque' });
-  destaque.checked = db.settings.video_destaque_id === v.id;
+  destaque.checked = Boolean(v.destaque);
+  const clipe = el('input', { type: 'file', name: 'clipe', accept: 'video/mp4,video/webm' });
+  const semClipe = el('input', { type: 'checkbox', name: 'sem_clipe' });
   const erro = el('p', { class: 'form-erro rabisco', role: 'alert' });
   const ajustarFiltro = () => { filtroCampo.hidden = !usaFiltros(categoria(cat.value)); };
   cat.addEventListener('change', ajustarFiltro);
@@ -490,7 +559,9 @@ function editarVideo(li, v) {
   form.append(
     campo('título', titulo), campo('categoria', cat), filtroCampo, campo('link do YouTube', link),
     campo('descrição (PT)', descPt), campo('descrição (EN)', descEn),
-    el('label', { class: 'checagem' }, destaque, ' showreel em destaque'),
+    campo(v.preview_url ? 'trocar clipe de prévia' : 'clipe de prévia (mp4/webm)', clipe),
+    v.preview_url ? el('label', { class: 'checagem' }, semClipe, ' tirar o clipe atual') : null,
+    el('label', { class: 'checagem' }, destaque, ' mostrar nos destaques'),
     erro,
     el('div', { class: 'linha-acoes' },
       el('button', { type: 'submit', class: 'botao-pequeno', text: 'salvar' }),
@@ -501,15 +572,22 @@ function editarVideo(li, v) {
     const dados = camposVideo(form);
     if (!dados.titulo) return void (erro.textContent = 'falta o título!');
     if (!dados.youtube_id) return void (erro.textContent = 'link do YouTube inválido!');
+    const novoClipe = clipe.files?.[0];
+    if (novoClipe && (!LIMITES.clipe.tipos.test(novoClipe.type) || novoClipe.size > LIMITES.clipe.mb * 1024 * 1024)) {
+      erro.textContent = 'o clipe precisa ser mp4 ou webm de até 15 MB';
+      return;
+    }
     const ok = await acao(async () => {
+      let preview_url = v.preview_url ?? '';
+      if (novoClipe) preview_url = await api.enviarArquivo(novoClipe, 'previas');
+      else if (semClipe.checked) preview_url = '';
       await api.atualizar('videos', v.id, {
         ...dados,
+        preview_url,
+        destaque: destaque.checked,
         category_id: cat.value,
         filter_id: usaFiltros(categoria(cat.value)) ? filtro.value || null : null,
       });
-      const eraDestaque = db.settings.video_destaque_id === v.id;
-      if (destaque.checked && !eraDestaque) await api.definirDestaque(v.id);
-      if (!destaque.checked && eraDestaque) await api.definirDestaque(null);
       return true;
     }, 'vídeo salvo ✓');
     if (ok) await recarregar();
@@ -609,7 +687,7 @@ async function salvarCliente(e) {
   }
   const ok = await acao(async () => {
     let foto = urlCompleta(form.foto_url.value);
-    if (fotoArquivo) foto = await api.enviarFoto(fotoArquivo);
+    if (fotoArquivo) foto = await api.enviarArquivo(fotoArquivo, 'clientes');
     else if (!foto && editandoCliente) foto = editandoCliente.foto_url?.startsWith('data:') ? editandoCliente.foto_url : '';
     const dados = { nome, canal_url: urlCompleta(form.canal_url.value), foto_url: foto };
     if (editandoCliente) await api.atualizar('clients', editandoCliente.id, dados);
@@ -631,7 +709,7 @@ function iniciarMenuAtivo() {
       links.forEach((a) => {
         const ativo = a.getAttribute('href') === `#${entrada.target.id}`;
         a.classList.toggle('ativo', ativo);
-        a.classList.toggle('rough', ativo);
+        a.classList.toggle('chanfro', ativo);
         if (ativo) a.setAttribute('aria-current', 'true');
         else a.removeAttribute('aria-current');
       });
@@ -681,8 +759,15 @@ function ligarEventos() {
     const form = e.currentTarget;
     const nome = form.nome.value.trim();
     if (!nome) return form.nome.focus();
+    let foto_url = urlCompleta(form.foto_url.value) || (db.settings.foto_url ?? '');
+    if (arquivos['foto-sobre']) {
+      const enviada = await acao(() => api.enviarArquivo(arquivos['foto-sobre'], 'sobre'));
+      if (!enviada) return;
+      foto_url = enviada;
+    }
     const patch = {
       nome,
+      foto_url,
       email: form.email.value.trim(),
       sobre_pt: form.sobre_pt.value.trim(),
       sobre_en: form.sobre_en.value.trim(),
@@ -725,6 +810,25 @@ function ligarEventos() {
     const ok = await acao(() => api.inserir('longform_filters', { nome_pt: nome, nome_en: nome, ordem: db.longform_filters.length }), 'filtro criado ✓');
     if (ok) form.reset();
     await recarregar();
+  });
+
+  Object.keys(LIMITES).forEach((tipo) => {
+    const caixa = $(`[data-solta="${tipo}"]`);
+    if (!caixa) return;
+    $('input[type="file"]', caixa).addEventListener('change', (e) => escolherArquivo(tipo, e.target.files?.[0]));
+    ['dragenter', 'dragover'].forEach((ev) => caixa.addEventListener(ev, (e) => {
+      e.preventDefault();
+      caixa.classList.add('solta');
+    }));
+    ['dragleave', 'drop'].forEach((ev) => caixa.addEventListener(ev, () => caixa.classList.remove('solta')));
+    caixa.addEventListener('drop', (e) => {
+      e.preventDefault();
+      escolherArquivo(tipo, e.dataTransfer?.files?.[0]);
+    });
+  });
+  $('[data-form="textos"]').foto_url.addEventListener('input', (e) => {
+    limparArquivo('foto-sobre');
+    mostrarFotoSobre(urlCompleta(e.target.value) || db.settings.foto_url);
   });
 
   const formVideo = $('[data-form="video"]');

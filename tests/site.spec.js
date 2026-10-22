@@ -77,7 +77,7 @@ test.describe('site público', () => {
     await expect(page.locator('.grade .card')).toHaveCount(4);
     await page.getByRole('button', { name: 'Vlog' }).click();
     await expect(page.locator('.grade .card')).toHaveCount(1);
-    await expect(page.locator('.grade .card-titulo')).toHaveText('Um dia na Paulista');
+    await expect(page.locator('.grade .quadro-titulo')).toHaveText('Um dia na Paulista');
     await page.getByRole('button', { name: 'todos' }).click();
     await expect(page.locator('.grade .card')).toHaveCount(4);
   });
@@ -136,15 +136,48 @@ test.describe('site público', () => {
     await expect(page.locator('.ei')).toBeHidden();
   });
 
-  test('o olho segue o mouse', async ({ page }, testInfo) => {
-    test.skip(ehCelular(testInfo), 'mouse só no computador');
+  test('destaques da abertura tocam sozinhos, sem som e sem botão de play', async ({ page }) => {
     await page.goto('/?intro=0');
-    await page.locator('#sobre').scrollIntoViewIfNeeded();
-    const olho = await page.locator('.olho-svg').boundingBox();
-    await page.mouse.move(olho.x + olho.width + 300, olho.y + olho.height / 2);
-    await expect.poll(() => page.locator('.pupil').evaluate((g) => new DOMMatrix(getComputedStyle(g).transform).m41)).toBeGreaterThan(40);
-    await page.mouse.move(olho.x - 300, olho.y + olho.height / 2);
-    await expect.poll(() => page.locator('.pupil').evaluate((g) => new DOMMatrix(getComputedStyle(g).transform).m41)).toBeLessThan(-40);
+    const destaques = page.locator('[data-lista="destaques"] .quadro');
+    await expect(destaques).toHaveCount(4);
+    await expect(destaques.first().locator('.quadro-rec')).toBeVisible();
+    const video = destaques.first().locator('video');
+    await expect(video).toHaveJSProperty('muted', true);
+    await expect(video).toHaveJSProperty('loop', true);
+    await expect(video).not.toHaveAttribute('controls', /.*/);
+    await expect.poll(() => video.evaluate((v) => !v.paused && v.currentTime > 0), { timeout: 8000 }).toBe(true);
+    await expect(page.locator('.quadro button, .quadro .thumb-play')).toHaveCount(0);
+  });
+
+  test('prévias dos trabalhos tocam só quando aparecem e pausam ao abrir o player', async ({ page }) => {
+    await page.goto('/?intro=0');
+    const card = page.locator('.grade .card').first();
+    const video = card.locator('video');
+    await expect(video).toHaveJSProperty('paused', true);
+    await card.scrollIntoViewIfNeeded();
+    await expect.poll(() => video.evaluate((v) => !v.paused), { timeout: 8000 }).toBe(true);
+    await card.click();
+    await expect(page.locator('[data-player]')).toBeVisible();
+    await expect.poll(() => video.evaluate((v) => v.paused)).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect.poll(() => video.evaluate((v) => !v.paused), { timeout: 8000 }).toBe(true);
+  });
+
+  test('vídeo sem clipe mostra a capa, sem botão de play', async ({ page }) => {
+    await page.goto('/?intro=0');
+    const semClipe = page.locator('.grade .card', { hasText: 'Vinheta de live' });
+    await expect(semClipe.locator('video')).toHaveCount(0);
+    await expect(semClipe.locator('img.previa-midia, .previa-sem')).toHaveCount(1);
+  });
+
+  test('sobre mim tem foto e texto curto', async ({ page }) => {
+    await page.goto('/?intro=0');
+    const foto = page.locator('[data-campo="foto"]');
+    await expect(foto).toHaveAttribute('alt', 'Foto de DAVI');
+    expect(await foto.evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
+    const texto = await page.locator('[data-campo="sobre"]').textContent();
+    expect(texto.length).toBeLessThan(320);
+    await expect(page.locator('.olho, .olho-svg')).toHaveCount(0);
   });
 
   test('âncoras do menu levam às seções', async ({ page }, testInfo) => {
@@ -182,14 +215,19 @@ test.describe('movimento reduzido', () => {
     await expect(page.locator('.intro')).toBeHidden();
     await expect(page.locator('.ink-cursor')).toHaveCount(0);
     const animadas = await page.evaluate(() => {
-      const nomes = ['.letter', '.swing', '.strip-l', '.walker', '.float', '.blink', '.crawl', '.rec'];
+      const nomes = ['.letras-pulam .l', '.swing', '.strip-l', '.flutua', '.rec', '.gira', '.pisca'];
       return nomes.filter((s) => {
         const el = document.querySelector(s);
         return el && getComputedStyle(el).animationName !== 'none';
       });
     });
     expect(animadas).toEqual([]);
-    const filtro = await page.locator('.hero-nome').evaluate((el) => getComputedStyle(el).filter);
+    const filtro = await page.locator('.abertura-nome').evaluate((el) => getComputedStyle(el).filter);
     expect(filtro).toBe('none');
+    const video = page.locator('[data-lista="destaques"] video').first();
+    await page.waitForTimeout(1200);
+    await expect(video).toHaveJSProperty('paused', true);
+    expect(await video.getAttribute('src')).toBeNull();
+    expect(await video.getAttribute('poster')).toContain('assets/exemplos/');
   });
 });

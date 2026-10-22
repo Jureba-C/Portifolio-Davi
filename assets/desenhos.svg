@@ -1,21 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg">
   <symbol id="aranha" viewBox="-40 -40 80 80" overflow="visible">
-    <g fill="none" stroke-linecap="round" style="stroke: var(--perna, #F5E6C4); stroke-width: var(--traco, 2.6)">
+    <g fill="none" stroke-linecap="round" style="stroke: var(--perna, #F4F1EC); stroke-width: var(--traco, 2.6)">
       <path d="M-7 -3 C -18 -16, -27 -10, -33 -22"/><path d="M-9 1 C -22 -5, -30 1, -38 -4"/><path d="M-9 5 C -21 8, -29 14, -34 24"/><path d="M-6 9 C -13 19, -18 25, -22 36"/><path d="M7 -3 C 18 -16, 27 -10, 33 -22"/><path d="M9 1 C 22 -5, 30 1, 38 -4"/><path d="M9 5 C 21 8, 29 14, 34 24"/><path d="M6 9 C 13 19, 18 25, 22 36"/>
     </g>
-    <ellipse cx="0" cy="9" rx="11" ry="13" style="fill: var(--corpo, #7C33CF); stroke: var(--contorno, #F5E6C4); stroke-width: var(--traco-corpo, 2.4)"/>
+    <ellipse cx="0" cy="9" rx="11" ry="13" style="fill: var(--corpo, #E3162B); stroke: var(--contorno, #F4F1EC); stroke-width: var(--traco-corpo, 2.4)"/>
     <path d="M-3.5 4 L3.5 4 L-3.5 13 L3.5 13 Z" style="fill: var(--marca, transparent)"/>
-    <circle cx="0" cy="-7" r="7" style="fill: var(--cabeca, #141112); stroke: var(--contorno-cabeca, var(--contorno, #F5E6C4)); stroke-width: var(--traco-corpo, 2.4)"/>
+    <circle cx="0" cy="-7" r="7" style="fill: var(--cabeca, #0B0B0C); stroke: var(--contorno-cabeca, var(--contorno, #F4F1EC)); stroke-width: var(--traco-corpo, 2.4)"/>
     <circle cx="-2.6" cy="-8" r="1.7" style="fill: var(--olhos, transparent)"/>
     <circle cx="2.6" cy="-8" r="1.7" style="fill: var(--olhos, transparent)"/>
   </symbol>
   <symbol id="teia" viewBox="0 0 200 200">
-    <g fill="none" stroke-linecap="round" style="stroke: var(--fio, #F5E6C4); stroke-opacity: var(--fio-opacidade, 0.5); stroke-width: var(--fio-traco, 1.6)">
+    <g fill="none" stroke-linecap="round" style="stroke: var(--fio, #F4F1EC); stroke-opacity: var(--fio-opacidade, 0.5); stroke-width: var(--fio-traco, 1.6)">
       <path d="M200 0 L0 0"/><path d="M200 0 L30 90"/><path d="M200 0 L85 150"/><path d="M200 0 L150 190"/><path d="M200 0 L200 200"/><path d="M140 0 Q 150 14 149 27 Q 160 38 165.5 45 Q 178 53 185 57 Q 194 60 200 60"/><path d="M90 0 Q 104 26 106.5 49.5 Q 124 68 136.75 82.5 Q 158 96 172.5 104.5 Q 188 110 200 110"/><path d="M40 0 Q 60 38 64 72 Q 90 98 108 120 Q 138 140 160 152 Q 182 160 200 160"/>
     </g>
   </symbol>
   <symbol id="estrela" viewBox="0 0 40 40">
     <path d="M20 2 L24 15 L38 16 L27 24 L31 38 L20 30 L9 38 L13 24 L2 16 L16 15 Z" fill="none" stroke="currentColor" stroke-linejoin="round" style="stroke-width: var(--traco, 3)"/>
+  </symbol>
+  <symbol id="faisca" viewBox="0 0 40 40">
+    <path d="M20 0 L24 15 L40 20 L24 25 L20 40 L16 25 L0 20 L16 15 Z" fill="currentColor"/>
   </symbol>
   <symbol id="play" viewBox="0 0 24 24">
     <path d="M7 4 Q 14 8 20 12 Q 14 16 7 20 Q 8 12 7 4 Z" fill="currentColor"/>

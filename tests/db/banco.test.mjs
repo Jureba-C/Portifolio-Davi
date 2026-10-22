@@ -46,8 +46,8 @@ before(async () => {
 test('schema roda duas vezes sem erro e o seed carrega os exemplos', async () => {
   const { rows } = await db.query('select count(*)::int as n from public.videos');
   assert.equal(rows[0].n, 12);
-  const destaque = await db.query('select video_destaque_id from public.settings where id = 1');
-  assert.ok(destaque.rows[0].video_destaque_id);
+  const destaques = await db.query('select count(*)::int as n from public.videos where destaque');
+  assert.equal(destaques.rows[0].n, 4);
 });
 
 test('visitante lê o conteúdo público', async () => {
@@ -70,11 +70,11 @@ test('usuário logado que não é admin não consegue alterar nada', async () =>
     db.query("select public.reordenar('videos', array[]::uuid[])")));
 });
 
-test('admin cria, reordena, destaca e exclui', async () => {
+test('admin cria vídeo com clipe, reordena, destaca e exclui', async () => {
   await como('authenticated', ADMIN, async () => {
     const cat = await db.query("select id from public.categories where slug = 'motion'");
     const novo = await db.query(
-      "insert into public.videos (titulo, youtube_id, category_id, ordem) values ('Teste', 'dQw4w9WgXcQ', $1, -1) returning id",
+      "insert into public.videos (titulo, youtube_id, preview_url, category_id, ordem) values ('Teste', 'dQw4w9WgXcQ', 'https://exemplo.supabase.co/storage/v1/object/public/midia/previas/a.mp4', $1, -1) returning id",
       [cat.rows[0].id]);
     const id = novo.rows[0].id;
     const todos = await db.query('select id from public.videos order by ordem');
@@ -82,12 +82,9 @@ test('admin cria, reordena, destaca e exclui', async () => {
     await db.query("select public.reordenar('videos', $1::uuid[])", [ids]);
     const primeiro = await db.query('select id from public.videos order by ordem limit 1');
     assert.equal(primeiro.rows[0].id, ids[0]);
-    await db.query('select public.definir_destaque($1)', [id]);
-    const s = await db.query('select video_destaque_id from public.settings');
-    assert.equal(s.rows[0].video_destaque_id, id);
-    await db.query('select public.definir_destaque(null)');
-    const nenhum = await db.query('select count(*)::int as n from public.videos where destaque');
-    assert.equal(nenhum.rows[0].n, 0);
+    await db.query('update public.videos set destaque = true where id = $1', [id]);
+    const d = await db.query('select count(*)::int as n from public.videos where destaque');
+    assert.equal(d.rows[0].n, 5);
     await db.query('delete from public.videos where id = $1', [id]);
   });
 });
@@ -95,6 +92,11 @@ test('admin cria, reordena, destaca e exclui', async () => {
 test('admin lê o próprio e-mail na tabela de admins', async () => {
   const r = await como('authenticated', ADMIN, () => db.query('select email from public.admins'));
   assert.deepEqual(r.rows.map((x) => x.email), [ADMIN]);
+});
+
+test('link de clipe ou foto precisa ser https', async () => {
+  await assert.rejects(como('authenticated', ADMIN, () => db.query("update public.videos set preview_url = 'javascript:alert(1)' where destaque")));
+  await assert.rejects(como('authenticated', ADMIN, () => db.query("update public.settings set foto_url = 'http://inseguro.com/a.jpg' where id = 1")));
 });
 
 test('reordenar recusa tabela fora da lista', async () => {
