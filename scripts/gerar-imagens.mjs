@@ -33,7 +33,7 @@ const og = pagina(`
   <svg viewBox="0 0 200 200" style="position:absolute;right:0;top:0;width:240px;height:240px"><use href="#teia" width="200" height="200"/></svg>
   <div style="position:absolute;left:150px;top:0;display:flex;flex-direction:column;align-items:center;transform:rotate(-4deg);transform-origin:top">
     <span style="width:2px;height:190px;background:rgba(245,230,196,.55)"></span>
-    <svg viewBox="-40 -40 80 80" style="width:84px;height:84px;margin-top:-10px;overflow:visible;--corpo:#141112;--marca:#7C33CF;--olhos:#E8505B"><use href="#aranha" x="-40" y="-40" width="80" height="80"/></svg>
+    <svg viewBox="-40 -40 80 80" style="width:84px;height:84px;margin-top:-10px;overflow:visible;--corpo:#141112;--marca:#7C33CF;--olhos:#E3162B"><use href="#aranha" x="-40" y="-40" width="80" height="80"/></svg>
   </div>
   <div class="torn" style="position:absolute;left:-30px;right:-30px;bottom:70px;height:78px;background:#7C33CF;transform:rotate(-3deg)"></div>
   <div class="torn2" style="position:absolute;left:-30px;right:-30px;bottom:46px;height:52px;background:#F2E3C1;transform:rotate(2deg);display:flex;align-items:center;gap:34px;padding-left:80px;font-family:'Permanent Marker';font-size:30px;color:#141112;white-space:nowrap">corta ★ cola ★ acelera ★ respira ★ surpreende ★ prende ★ entrega</div>
@@ -44,8 +44,8 @@ const og = pagina(`
 </div>`);
 
 const icone = pagina(`
-<div style="width:180px;height:180px;background:#0A0909;display:flex;align-items:center;justify-content:center">
-  <svg viewBox="-40 -40 80 80" style="width:140px;height:140px;overflow:visible;--traco:3.4;--traco-corpo:3;--olhos:#E8505B"><use href="#aranha" x="-40" y="-40" width="80" height="80"/></svg>
+<div style="width:180px;height:180px;background:#0B0B0C;display:flex;align-items:center;justify-content:center">
+  <svg viewBox="-40 -40 80 80" style="width:140px;height:140px;overflow:visible;--traco:3.4;--traco-corpo:3;--olhos:#E3162B"><use href="#aranha" x="-40" y="-40" width="80" height="80"/></svg>
 </div>`);
 
 const navegador = await chromium.launch(process.env.PLAYWRIGHT_CHROMIUM ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM } : {});
