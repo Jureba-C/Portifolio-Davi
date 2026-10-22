@@ -73,7 +73,7 @@ footer:hover .footer-spider .aranha-viva .pd1, .rodape.tocado .footer-spider .ar
 .flee-down { transform: translateY(0); transition: transform 1.4s cubic-bezier(.3, 1.5, .5, 1); }
 .flee-up { transform: translateY(-340px); transition: transform .45s ease-in; }
 
-.spider-btn { transition: transform .15s ease; }
+.spider-btn { transform-origin: 50% 0; transition: transform .15s ease; }
 .spider-btn:hover { transform: scale(1.12) rotate(-6deg); }
 
 .crawl { animation: anda 22s linear infinite; }

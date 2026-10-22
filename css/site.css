@@ -185,12 +185,13 @@ main, footer { position: relative; z-index: 1; }
 .aranha-fio { position: absolute; z-index: 4; right: clamp(12px, 2.4vw, 40px); top: 0; pointer-events: none; }
 .fuga { display: flex; flex-direction: column; align-items: center; }
 .fio { display: block; width: 2px; background: rgba(244, 241, 236, 0.6); }
+.fio-ponta { stroke: rgba(244, 241, 236, 0.6); stroke-width: 2px; }
 .aranha-fio .fio { --fio-h: 70px; height: var(--fio-h); }
 .aranha-hero {
   pointer-events: auto;
   width: 54px;
   height: 54px;
-  margin-top: -6px;
+  margin-top: 0;
   padding: 0;
   border: 0;
   background: none;
@@ -477,7 +478,7 @@ a.ficha:hover, a.ficha:focus-visible { background: var(--vermelho-escuro); trans
   pointer-events: none;
 }
 .aranha-trabalhos .fio { --fio-h: 140px; height: var(--fio-h); }
-.aranha-trabalhos svg { width: 54px; height: 54px; margin-top: -6px; --corpo: var(--vermelho); --olhos: var(--branco); }
+.aranha-trabalhos svg { width: 54px; height: 54px; margin-top: 0; --corpo: var(--vermelho); --olhos: var(--branco); }
 
 .abas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 10px; }
 .chip {
@@ -636,7 +637,7 @@ a.ficha:hover, a.ficha:focus-visible { background: var(--vermelho-escuro); trans
 }
 .footer-spider { position: absolute; left: 50%; top: 0; margin-left: -30px; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
 .footer-spider .fio { height: 64px; }
-.footer-spider svg { width: 60px; height: 60px; margin-top: -8px; --corpo: var(--vermelho); --olhos: var(--branco); }
+.footer-spider svg { width: 60px; height: 60px; margin-top: 0; --corpo: var(--vermelho); --olhos: var(--branco); }
 .tchau { font-size: 18px; transform: rotate(-6deg); margin-top: 2px; }
 .rodape.tocado .footer-spider { transform: translateY(0); }
 .psiu { font-size: 18px; color: var(--cinza); transition: opacity .3s; }
