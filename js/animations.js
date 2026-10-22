@@ -72,37 +72,17 @@ export function letrasSoltas(el, texto, { atraso = 0, passo = 0 } = {}) {
   });
 }
 
-const ESTILOS_RECORTE = ['r1', 'r2', 'r3', 'r4', 'r5'];
-const TAMANHOS = [1, 1.18, 0.9, 1.08, 0.96, 1.22, 0.88];
-const GIROS = [-6, 4, -2, 7, -5, 3, -8, 5];
+const ESTILOS_RECORTE = ['r1', 'r2', 'r5'];
+const GIROS = [-3, 2.5, -1.5, 3];
 
 export function recorte(el, texto) {
   el.textContent = '';
-  let n = 0;
-  let palavra = null;
-  [...texto].forEach((ch) => {
-    if (ch === ' ') {
-      palavra = null;
-      const espaco = document.createElement('span');
-      espaco.className = 'espaco';
-      espaco.setAttribute('aria-hidden', 'true');
-      el.append(espaco);
-      return;
-    }
-    if (!palavra) {
-      palavra = document.createElement('span');
-      palavra.className = 'palavra';
-      palavra.setAttribute('aria-hidden', 'true');
-      el.append(palavra);
-    }
+  texto.trim().split(/\s+/).forEach((palavra, n) => {
     const span = document.createElement('span');
-    const semente = (n * 7 + ch.charCodeAt(0)) % 97;
-    span.className = `r ${ESTILOS_RECORTE[semente % ESTILOS_RECORTE.length]}`;
-    span.textContent = n % 3 === 1 || n % 5 === 3 ? ch.toLowerCase() : ch.toUpperCase();
-    span.style.setProperty('--t', `${TAMANHOS[semente % TAMANHOS.length]}em`);
-    span.style.setProperty('--g', `${GIROS[(semente + n) % GIROS.length]}deg`);
-    span.style.setProperty('--y', `${((semente % 5) - 2) * 0.03}em`);
-    palavra.append(span);
-    n += 1;
+    span.className = `r ${ESTILOS_RECORTE[n % ESTILOS_RECORTE.length]}`;
+    span.setAttribute('aria-hidden', 'true');
+    span.textContent = palavra.toUpperCase();
+    span.style.setProperty('--g', `${GIROS[n % GIROS.length]}deg`);
+    el.append(span);
   });
 }
