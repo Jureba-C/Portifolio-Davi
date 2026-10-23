@@ -85,7 +85,7 @@ function renderNome() {
   h1.setAttribute('aria-label', nome);
   letrasSoltas(h1, nome, { passo: 0.12 });
   const intro = document.querySelector('[data-campo="intro-nome"]');
-  if (intro && intro.textContent !== nome) letrasSoltas(intro, nome, { atraso: 0.45, passo: 0.15 });
+  if (intro && intro.textContent !== nome) letrasSoltas(intro, nome, { atraso: 0.45, passo: 0.12 });
   document.querySelector('[data-campo="ano"]').textContent = String(new Date().getFullYear());
 }
 

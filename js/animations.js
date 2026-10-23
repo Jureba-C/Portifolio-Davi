@@ -39,7 +39,7 @@ export async function aranhasVivas() {
       svg.setAttribute('viewBox', simbolo.getAttribute('viewBox'));
       svg.classList.add('aranha-viva');
       svg.replaceChildren(...[...simbolo.children].map((no) => document.importNode(no, true)));
-      if (svg.closest('.aranha-fio, .aranha-trabalhos, .footer-spider')) {
+      if (svg.closest('.aranha-fio, .aranha-trabalhos, .footer-spider, .intro-aranha')) {
         const ponta = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         Object.entries({ class: 'fio-ponta', x1: 0, y1: -40, x2: 0, y2: -11, 'vector-effect': 'non-scaling-stroke' }).forEach(([k, v]) => ponta.setAttribute(k, v));
         svg.prepend(ponta);

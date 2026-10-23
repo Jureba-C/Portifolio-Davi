@@ -29,5 +29,18 @@
   };
   window.addEventListener('keydown', pular);
   window.addEventListener('pointerdown', pular);
-  setTimeout(fim, 3300);
+  var inicio = Date.now();
+  var relogio = function () {
+    if (terminou) return;
+    var tc = document.querySelector('[data-intro-tc]');
+    if (tc) {
+      var quadros = Math.floor((Date.now() - inicio) * 0.024);
+      var seg = Math.floor(quadros / 24);
+      var q = quadros % 24;
+      tc.textContent = '00:00:' + (seg < 10 ? '0' : '') + seg + ':' + (q < 10 ? '0' : '') + q;
+    }
+    requestAnimationFrame(relogio);
+  };
+  requestAnimationFrame(relogio);
+  setTimeout(fim, 3050);
 })();
