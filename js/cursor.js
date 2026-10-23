@@ -1,58 +1,59 @@
 import { reduzMovimento, temMouse } from './animations.js';
 
-const TAMANHOS = [12, 10, 8, 6];
-const CORES = ['var(--branco-puro)', 'var(--vermelho)', 'var(--vermelho)', 'var(--vermelho)'];
-const OPACIDADES = [1, 0.75, 0.6, 0.45];
-
-function criar(tamanho, extra = {}) {
-  const el = document.createElement('span');
-  el.className = 'ink-cursor';
-  el.setAttribute('aria-hidden', 'true');
-  Object.assign(el.style, { width: `${tamanho}px`, height: `${tamanho}px`, ...extra });
-  return el;
-}
+const ALVOS = 'a[href], button, [role="tab"], .card, input, select, textarea, label';
+const TAM = 34;
+const FOLGA = 7;
 
 export function iniciarCursor() {
   if (!temMouse() || reduzMovimento()) return;
-  const pingos = TAMANHOS.map((t, i) =>
-    criar(t, { borderRadius: '50%', background: CORES[i], opacity: String(OPACIDADES[i]) }),
-  );
-  const anel = criar(44, { mixBlendMode: 'difference', color: 'var(--branco-puro)' });
-  anel.innerHTML = '<svg viewBox="0 0 44 44" style="width:100%;height:100%;overflow:visible"><path d="M22 2 L42 22 L22 42 L2 22 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="miter"/></svg>';
-  [...pingos].reverse().forEach((p) => document.body.append(p));
-  document.body.append(anel);
-  [...pingos, anel].forEach((p) => { p.style.opacity = '0'; });
+  const mira = document.createElement('div');
+  mira.className = 'mira';
+  mira.setAttribute('aria-hidden', 'true');
+  ['ne', 'nd', 'se', 'sd'].forEach((canto) => {
+    const span = document.createElement('span');
+    span.className = `mira-canto mira-${canto}`;
+    mira.append(span);
+  });
+  document.body.append(mira);
 
-  const alvo = { x: -200, y: -200 };
-  const centro = { x: -200, y: -200 };
-  const pontos = TAMANHOS.map(() => ({ x: -200, y: -200 }));
-  let escala = 1;
-  let quente = false;
+  const ponteiro = { x: -200, y: -200 };
+  const atual = { x: -200, y: -200, w: TAM, h: TAM };
+  let travado = null;
   let visivel = false;
+  let batida = 0;
   let raf = 0;
 
-  const passo = () => {
-    centro.x += (alvo.x - centro.x) * 0.35;
-    centro.y += (alvo.y - centro.y) * 0.35;
-    escala += ((quente ? 1.8 : 1) - escala) * 0.2;
-    anel.style.transform = `translate(${centro.x - 22}px, ${centro.y - 22}px) scale(${escala.toFixed(3)})`;
-    let anterior = alvo;
-    pontos.forEach((pt, i) => {
-      pt.x += (anterior.x - pt.x) * 0.32;
-      pt.y += (anterior.y - pt.y) * 0.32;
-      pingos[i].style.transform = `translate(${pt.x - TAMANHOS[i] / 2}px, ${pt.y - TAMANHOS[i] / 2}px)`;
-      anterior = pt;
-    });
-    const parado = Math.abs(alvo.x - pontos[3].x) < 0.3 && Math.abs(alvo.y - pontos[3].y) < 0.3 && Math.abs(escala - (quente ? 1.8 : 1)) < 0.01;
-    raf = parado ? 0 : requestAnimationFrame(passo);
+  const destino = () => {
+    if (travado && travado.isConnected) {
+      const r = travado.getBoundingClientRect();
+      return { x: r.left - FOLGA, y: r.top - FOLGA, w: r.width + FOLGA * 2, h: r.height + FOLGA * 2 };
+    }
+    const lado = TAM * (1 - batida * 0.35);
+    return { x: ponteiro.x - lado / 2, y: ponteiro.y - lado / 2, w: lado, h: lado };
   };
+
+  const passo = () => {
+    const d = destino();
+    const k = travado ? 0.28 : 0.34;
+    let parado = true;
+    ['x', 'y', 'w', 'h'].forEach((eixo) => {
+      const delta = d[eixo] - atual[eixo];
+      atual[eixo] += delta * k;
+      if (Math.abs(delta) > 0.2) parado = false;
+    });
+    batida *= 0.82;
+    if (batida > 0.01) parado = false;
+    mira.style.transform = `translate(${atual.x.toFixed(1)}px, ${atual.y.toFixed(1)}px)`;
+    mira.style.width = `${atual.w.toFixed(1)}px`;
+    mira.style.height = `${atual.h.toFixed(1)}px`;
+    raf = parado && !travado ? 0 : requestAnimationFrame(passo);
+  };
+  const animar = () => { if (!raf) raf = requestAnimationFrame(passo); };
 
   const mostrar = (sim) => {
     if (visivel === sim) return;
     visivel = sim;
-    const opacidade = sim ? '' : '0';
-    anel.style.opacity = opacidade;
-    pingos.forEach((p, i) => { p.style.opacity = sim ? String(OPACIDADES[i]) : '0'; });
+    mira.classList.toggle('visivel', sim);
   };
 
   window.addEventListener('pointermove', (e) => {
@@ -61,12 +62,35 @@ export function iniciarCursor() {
       mostrar(false);
       return;
     }
-    alvo.x = e.clientX;
-    alvo.y = e.clientY;
-    quente = Boolean(e.target?.closest?.('a, button, .card, [role="tab"], input, label'));
-    mostrar(true);
-    if (!raf) raf = requestAnimationFrame(passo);
+    ponteiro.x = e.clientX;
+    ponteiro.y = e.clientY;
+    const alvo = e.target?.closest?.(ALVOS) ?? null;
+    if (alvo !== travado) {
+      travado = alvo;
+      mira.classList.toggle('travada', Boolean(alvo));
+    }
+    if (!visivel) {
+      Object.assign(atual, destino());
+      mostrar(true);
+    }
+    animar();
+  }, { passive: true });
+  window.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse' || !visivel) return;
+    batida = 1;
+    mira.classList.remove('clique');
+    void mira.offsetWidth;
+    mira.classList.add('clique');
+    animar();
+  });
+  window.addEventListener('scroll', () => {
+    if (!visivel) return;
+    const alvo = document.elementFromPoint(ponteiro.x, ponteiro.y)?.closest?.(ALVOS) ?? null;
+    if (alvo !== travado) {
+      travado = alvo;
+      mira.classList.toggle('travada', Boolean(alvo));
+    }
+    animar();
   }, { passive: true });
   document.documentElement.addEventListener('pointerleave', () => mostrar(false));
-  document.documentElement.classList.add('cursor-on');
 }

@@ -262,7 +262,20 @@ footer:hover .footer-spider { transform: translateY(0); }
 .intro-pulando .intro-caco-3 { animation: caco-3 .42s cubic-bezier(.7, 0, .25, 1) forwards; }
 .intro-pulando .intro-meio, .intro-pulando .intro-faixa, .intro-pulando .intro-hud, .intro-pulando .intro-explosao, .intro-pulando .intro-aranha, .intro-pulando .intro-corte { animation: some .15s ease forwards; }
 
-.ink-cursor { position: fixed; left: 0; top: 0; z-index: 90; pointer-events: none; will-change: transform; }
+.mira { position: fixed; left: 0; top: 0; z-index: 90; width: 34px; height: 34px; pointer-events: none; opacity: 0; transition: opacity .2s ease; will-change: transform, width, height; }
+.mira.visivel { opacity: 1; }
+.mira-canto { position: absolute; width: 9px; height: 9px; border: 0 solid var(--branco-puro); filter: drop-shadow(0 0 1px var(--preto)) drop-shadow(0 0 1px var(--preto)); transition: width .25s ease, height .25s ease, border-color .2s ease, filter .2s ease; }
+.mira-ne { left: 0; top: 0; border-width: 2px 0 0 2px; }
+.mira-nd { right: 0; top: 0; border-width: 2px 2px 0 0; }
+.mira-se { left: 0; bottom: 0; border-width: 0 0 2px 2px; }
+.mira-sd { right: 0; bottom: 0; border-width: 0 2px 2px 0; }
+.mira.travada .mira-canto { width: 14px; height: 14px; border-width: 3px; filter: drop-shadow(0 0 1px var(--preto)) drop-shadow(0 0 8px rgba(255, 42, 61, .95)); }
+.mira.travada .mira-ne { border-right-width: 0; border-bottom-width: 0; }
+.mira.travada .mira-nd { border-left-width: 0; border-bottom-width: 0; }
+.mira.travada .mira-se { border-right-width: 0; border-top-width: 0; }
+.mira.travada .mira-sd { border-left-width: 0; border-top-width: 0; }
+.mira.clique::after { content: ""; position: absolute; inset: 0; background: var(--branco-puro); opacity: 0; animation: flash-foto .28s ease-out; }
+@keyframes flash-foto { 0% { opacity: .35; } 100% { opacity: 0; } }
 
 @media (max-width: 700px) { .reveal-l, .reveal-r { --desloca: 48px; } }
 

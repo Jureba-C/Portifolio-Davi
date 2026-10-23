@@ -258,11 +258,20 @@ test.describe('site público', () => {
     await expect(page.locator('.selo')).not.toHaveClass(/off/);
   });
 
-  test('cursor de tinta só existe com mouse', async ({ page }, testInfo) => {
+  test('mira do cursor só existe com mouse e trava em botões', async ({ page }, testInfo) => {
     await page.goto('/?intro=0');
-    const total = await page.locator('.ink-cursor').count();
-    if (ehCelular(testInfo)) expect(total).toBe(0);
-    else expect(total).toBe(5);
+    const mira = page.locator('.mira');
+    if (ehCelular(testInfo)) {
+      await expect(mira).toHaveCount(0);
+      return;
+    }
+    await expect(mira).toHaveCount(1);
+    await page.mouse.move(700, 500);
+    await expect(mira).toHaveClass(/visivel/);
+    await page.locator('.abertura-cta').hover();
+    await expect(mira).toHaveClass(/travada/);
+    const caixa = await page.locator('.abertura-cta').boundingBox();
+    await expect.poll(async () => (await mira.boundingBox()).width).toBeGreaterThan(caixa.width);
   });
 });
 
@@ -273,7 +282,7 @@ test.describe('movimento reduzido', () => {
     await page.goto('/');
     await expect(page.locator('html')).not.toHaveClass(/intro-on/);
     await expect(page.locator('.intro')).toBeHidden();
-    await expect(page.locator('.ink-cursor')).toHaveCount(0);
+    await expect(page.locator('.mira')).toHaveCount(0);
     const animadas = await page.evaluate(() => {
       const nomes = ['.letras-pulam .l', '.swing', '.strip-l', '.flutua', '.rec', '.gira', '.pisca'];
       return nomes.filter((s) => {
