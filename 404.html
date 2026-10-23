@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0B0B0C">
+<title>Página não encontrada — Decxz Editor</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<style>
+@font-face { font-family: 'New Rocker'; src: url(/assets/fonts/new-rocker-400-latin.woff2) format('woff2'); font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; font-weight: 800; src: url(/assets/fonts/barlow-condensed-800-latin.woff2) format('woff2'); font-display: swap; }
+@font-face { font-family: 'Space Mono'; font-weight: 700; src: url(/assets/fonts/space-mono-700-latin.woff2) format('woff2'); font-display: swap; }
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #E3162B radial-gradient(rgba(11, 11, 12, .16) 1.4px, transparent 1.6px) 0 0 / 12px 12px;
+  color: #FFFFFF;
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  text-align: center;
+}
+.diagonal { position: fixed; inset: 0; background: #0B0B0C; clip-path: polygon(64% 0, 100% 0, 100% 100%, 48% 100%); }
+.miolo { position: relative; display: flex; flex-direction: column; align-items: center; gap: 22px; padding: 24px 16px; }
+.selo { padding: 6px 16px; background: #0B0B0C; color: #F4F1EC; font-family: 'Space Mono', 'Courier New', monospace; font-weight: 700; font-size: clamp(14px, 2vw, 18px); transform: rotate(-3deg); }
+.numero { margin: 0; font-family: 'New Rocker', 'Impact', serif; font-weight: 400; font-size: clamp(120px, 30vw, 300px); line-height: .8; text-shadow: .05em .05em 0 #0B0B0C, .09em .09em 0 #8A0E1A; }
+.frase { margin: 0; max-width: 22ch; font-weight: 800; font-size: clamp(24px, 4vw, 40px); line-height: 1.05; text-transform: uppercase; letter-spacing: .03em; text-shadow: 0 3px 0 #0B0B0C; }
+.botao { display: inline-flex; padding: 4px; background: #FFFFFF; color: #FFFFFF; text-decoration: none; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); transition: transform .15s ease; }
+.botao span { display: inline-flex; align-items: center; min-height: 54px; padding: 0 32px; background: #0B0B0C; font-weight: 800; font-size: 22px; letter-spacing: .08em; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+.botao:hover, .botao:focus-visible { transform: translateY(-2px) rotate(-1deg); }
+.botao:focus-visible { outline: 3px solid #FF2A3D; outline-offset: 4px; }
+.aranha { position: fixed; right: 16%; top: 0; display: flex; flex-direction: column; align-items: center; transform-origin: 50% 0; animation: balanca 4s ease-in-out infinite; }
+.aranha .fio { width: 2px; height: 34vh; background: rgba(244, 241, 236, .6); }
+.aranha svg { width: 70px; height: 70px; margin-top: -2px; overflow: visible; }
+@keyframes balanca { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+@media (prefers-reduced-motion: reduce) { .aranha { animation: none; } .botao { transition: none; } }
+@media (max-width: 600px) { .aranha { right: 8%; } .aranha .fio { height: 14vh; } .diagonal { clip-path: polygon(78% 0, 100% 0, 100% 100%, 62% 100%); } }
+</style>
+</head>
+<body>
+<div class="diagonal" aria-hidden="true"></div>
+<div class="aranha" aria-hidden="true">
+  <span class="fio"></span>
+  <svg viewBox="-40 -40 80 80">
+    <g fill="none" stroke="#F4F1EC" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M-3.5 -8 C -9 -19, -15 -26, -20 -27 L -29 -37"/><path d="M-5.5 -5 C -13 -11, -20 -15, -26 -15 L -38 -21"/><path d="M-5.5 -1 C -13 0, -20 3, -25 7 L -36 17"/><path d="M-4 2 C -10 8, -14 15, -17 21 L -24 35"/>
+      <path d="M3.5 -8 C 9 -19, 15 -26, 20 -27 L 29 -37"/><path d="M5.5 -5 C 13 -11, 20 -15, 26 -15 L 38 -21"/><path d="M5.5 -1 C 13 0, 20 3, 25 7 L 36 17"/><path d="M4 2 C 10 8, 14 15, 17 21 L 24 35"/>
+      <path d="M0 -40 L0 -11"/>
+    </g>
+    <path d="M0 1 C 9 1, 13 9, 13 16 C 13 25, 7 31, 0 31 C -7 31, -13 25, -13 16 C -13 9, -9 1, 0 1 Z" fill="#E3162B" stroke="#F4F1EC" stroke-width="2.4"/>
+    <ellipse cx="0" cy="-4.5" rx="6.6" ry="7.4" fill="#0B0B0C" stroke="#F4F1EC" stroke-width="2.4"/>
+    <circle cx="-2.4" cy="-7" r="1.7" fill="#E3162B"/><circle cx="2.4" cy="-7" r="1.7" fill="#E3162B"/>
+  </svg>
+</div>
+<main class="miolo">
+  <span class="selo">&gt;&gt; erro_404.exe</span>
+  <h1 class="numero">404</h1>
+  <p class="frase">Essa página fugiu pra teia. Bora voltar pro portfólio?</p>
+  <a class="botao" href="/"><span>VOLTAR PRO INÍCIO</span></a>
+</main>
+</body>
+</html>

@@ -1,49 +1,51 @@
-# Notas de design — "papel e tinta"
+# Notas de design — cartaz Decxz
 
-Fonte da verdade: `design/*.dc.html` e `design/paper.css`. Os SVGs e paths foram copiados exatamente. A marcação da ferramenta de design (`<x-dc>`, `<sc-for>`, `{{…}}`) foi reescrita em HTML, CSS e JS puros.
+Referências do briefing: Persona 5 (cartaz vermelho, cortes diagonais, letras recortadas), Deadlock (preto pesado, sujeira de impressão), fonte Goblin e o 3proutspace (janelas anos 2000). Guia visual ao vivo: `styleguide.html`.
+
+**Regra que guia tudo:** um ponto de destaque por seção; o resto fica quieto.
 
 ## Tokens (`css/base.css`)
 | Token | Cor | Uso |
 |---|---|---|
-| `--fundo` | #0A0909 | fundo, com riscos de `feTurbulence` (`.textura`, fixa) |
-| `--papel` | #F2E3C1 | cabeçalho, bilhete, moldura, abas inativas |
-| `--creme` | #F5E6C4 | texto sobre o fundo escuro |
-| `--tinta` | #141112 | texto no papel, contorno dos botões |
-| `--roxo` / `--roxo-hover` | #7C33CF / #9147E8 | botões, aba ativa, sombra dos avatares, risco |
-| `--coral` | #E8505B | título TRABALHOS, rabisco do play, sublinhados |
-| `--cinza-papel` / `--cinza-papel-2` | #BFB39A / #9C917C | legendas e filtros inativos |
-| `--verde` | #3DDC84 | carimbo COMMISSIONS: ON |
+| `--vermelho` | #E3162B | cartaz (abertura, clientes), botões, aba ativa, sombra das janelas |
+| `--vermelho-vivo` | #FF2A3D | brilho pontual (hover, REC, mira travada) |
+| `--vermelho-escuro` | #8A0E1A | segunda sombra dos títulos, avisos sobre fundo claro |
+| `--preto` / `--preto-2` / `--preto-3` | #0B0B0C / #151517 / #222225 | fundo, faixas, cards |
+| `--branco` / `--branco-puro` | #F4F1EC / #FFFFFF | texto sobre preto, corpo das janelas |
+| `--cinza` / `--cinza-claro` | #A3A09A / #D9D5CE | legendas |
 
-Contraste: todo texto fica acima de 4,5:1. No cabeçalho, o idioma inativo usa `--marrom` (#5C5246), porque o #8E826C do mockup ficava em 3:1 sobre o papel.
+Contraste: todo texto fica acima de 4,5:1 (axe sem violações no site e no painel).
 
 ## Fontes
-Londrina Solid 900 (títulos e botões) · Kalam 400/700 (texto, menu, interface) · Permanent Marker (carimbo e toast) · Covered By Your Grace (anotações). Todas hospedadas no próprio site.
+| Fonte | Uso |
+|---|---|
+| New Rocker 400 | nome DECXZ, títulos de seção, intro, 404 |
+| Space Mono 700 | barras das janelas (`>> contato.exe`), HUD da intro, etiquetas |
+| Barlow Condensed 600/800 | menu, botões, rótulos, abas |
+| Barlow 500/700 | texto corrido |
 
 ## Componentes
-- **Papel rasgado:** `.torn`, `.torn2` (grandes), `.scrap`, `.scrap2` (cards), `.rough`, `.rough2` (botões e campos). Polígonos de `clip-path` do `paper.css`.
-- **Botão de pincel:** `.ink-btn.rough2` preto com `.ink-fill.rough` roxo dentro, levemente girado. O roxo clareia no hover.
-- **Card com fita:** `.card` + `.fita.tape` + `.scrap.thumb`. As inclinações alternam entre `tilt-l`, `tilt-r` e `tilt-0`.
-- **Aranha:** símbolo único `assets/desenhos.svg#aranha`, pintado por variáveis CSS (`--perna`, `--corpo`, `--marca`, `--olhos`, `--traco`), o que dá as seis variações do design com um desenho só.
-- **Teia, estrela, play, alça, lápis, X:** também símbolos em `desenhos.svg`.
-- **Filtros SVG:** `#rough` (borda irregular parada), `#boil` (o `seed` troca a cada 0,12 s), `#streaks` e `#grain` (textura do fundo).
+- **Janela anos 2000** (`.janela`): borda preta, barra em Space Mono com três quadradinhos e corpo branco. Usada no Sobre mim, na frase da abertura, no Contato, nos filtros do Long Form, em "Como eu trabalho" e na janela de orçamento.
+- **Sombra torta** (`.caixa-sombra`): bloco vermelho inclinado atrás da foto e do texto do Sobre mim.
+- **Botão de corte** (`.botao`): paralelogramo com miolo deslocado; o vermelho acende no hover.
+- **Quadro de vídeo** (`.quadro`): moldura com sombra deslocada, REC piscando e rótulo; o clipe de prévia toca dentro.
+- **Letras recortadas** (`.recorte`): só nos nomes dos clientes ("procurados").
+- **Aranha:** símbolo `assets/desenhos.svg#aranha` com partes separadas (pernas, palpos, cabeça, abdômen, olhos). O site coloca o desenho dentro da página para animar cada parte. O fio sai de dentro do próprio desenho (`.fio-ponta`), então sempre encosta na cabeça.
+- **Outros símbolos:** teia, teia-traje, estrela, faísca, play, alça, lápis, X.
+- **Mira** (`.mira`): quatro cantoneiras de visor de câmera.
 
-## Animações (seção 3 do prompt)
-| # | O quê | Como |
-|---|---|---|
-| 1 | Intro: aranha cai, nome se desenha, tela rasga | `boot.js` liga `.intro-on`; `stroke-dashoffset` no `<text>`, metades `.torn` saem com `tearUp` e `tearDown`; uma vez por sessão (`sessionStorage`); pula com clique ou tecla |
-| 2 | Cabeçalho de papel fixo, links tremendo, PT/EN no oval, CONTRATAR | `position: sticky`, `.shake-hover`, SVG do oval com `non-scaling-stroke` |
-| 3 | Nome com letras pulando, estrelas piscando, moldura, REC, aranha na moldura | `.letter` com atraso de 0,12 s por letra; `.twinkle`; `.rec` em `steps(2)`; `.walker` com `offset-path` recalculado por `ResizeObserver` |
-| 4 | Aranha pendurada que foge ("ei!!") | `.swing` + troca `.flee-down` / `.flee-up`; volta em 2,6 s com mola |
-| 5 | Risco roxo com pingos e aranha atravessando | path serrilhado, pingos com `scaleY`, `.crawl` (26 s) |
-| 6 | Faixas em X | `.strip-l` e `.strip-r` (`translateX(-50%)`), palavras repetidas 4 vezes para emendar sem buraco; estrelas `.spin` |
-| 7 | Clientes flutuando | `.float` com atraso de 0,45 s por cliente; avatar gira no hover |
-| 8 | Abas, sub-filtros, cards pulando | `.pop` com atraso de 0,08 s por card; no hover a fita descola, o play gira, o rabisco `.scrib` se desenha e a thumb ganha `#boil` |
-| 9 | Olho que segue o mouse e pisca | `pointermove` em `requestAnimationFrame` move `.pupil`; `.blink` a cada 5 s; bilhetes `.reveal-l` e `.reveal-r` |
-| 10 | CONTATO tremendo, carimbo, ícones, toast | letras `.shake-hover`; `.stamp-in` (escala 2,6 → 1); toast de papel `.rough` |
-| 11 | Aranha do rodapé ("tchau!") | `footer:hover`; no toque, `.tocado` |
-| 12 | Cursor de tinta | 4 pingos + anel com `mix-blend-mode: difference`, só `transform` em `requestAnimationFrame`; para quando o mouse para |
-| 13 | Entrada ao rolar | `animation-timeline: view()` com fallback `IntersectionObserver` (`.io` + `.visto`) |
-| 14 | Player | modal com teia e aranha, iframe `youtube-nocookie` criado só ao abrir, barra roxa por `stroke-dashoffset`, ESC, clique fora, prende o foco, 9:16 para Shorts |
+## Animações
+| O quê | Como |
+|---|---|
+| Intro | claquete com timecode a 24 fps, REC e `decxz_edit.prproj`; aranha desce, letras do nome entram uma a uma, a agulha da linha do tempo corre, palavras CORTA/COLA/ACELERA batem, a tela se corta e quebra em três cacos (2,2 s). Uma vez por sessão; pula com clique ou tecla |
+| Nome DECXZ | cada letra balança devagar (`onda`, 4,2 s) e pula com mola no hover, inclinando as vizinhas |
+| Aranhas | balançam no fio (`balanca` + `contrapeso`), sobem e descem (`ioio`), mexem as patas (`pata`) e respiram (`respira`). Clique: susto, encolhe as patas e foge. No rodapé, acena |
+| Entrada ao rolar | `animation-timeline: view()`, com fallback `IntersectionObserver` |
+| Números | contam do zero quando aparecem |
+| Troca de abas | duas faixas diagonais varrem a tela com o nome da categoria (`varre`) |
+| Player | troca de vídeo com corte (`troca-video`); anterior/próximo pelas setas |
+| Mira | segue o mouse e se ajusta ao tamanho do botão, link ou card; pisca ao clicar |
+| Orçamento | a janela entra com mola (`orc-entra`) |
 
-**Movimento reduzido:** desliga intro, cursor, `#boil` e todas as animações e transições. O site fica completo parado.
-**Celular:** sem cursor, `#boil` vira `#rough`, menos aranhas.
+**Movimento reduzido** (sistema ou botão de pausa no cabeçalho): sem intro, sem mira, sem varredura de abas e sem animações contínuas. Os clipes de prévia pausam. O site fica completo parado.
+**Celular:** sem mira, aranhas menores, títulos e nome em tamanho de tela, sem rolagem lateral.

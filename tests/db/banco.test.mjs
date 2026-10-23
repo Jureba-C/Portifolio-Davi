@@ -112,6 +112,25 @@ test('rodar o schema de novo não apaga dados nem dá erro', async () => {
   assert.equal(depois.rows[0].n, antes.rows[0].n);
 });
 
+test('depoimentos: visitante lê, só admin escreve e reordena', async () => {
+  const lidos = await como('anon', null, () => db.query('select nome from public.testimonials order by ordem'));
+  assert.equal(lidos.rows.length, 3);
+  await assert.rejects(como('anon', null, () => db.query("insert into public.testimonials (nome, texto_pt) values ('X', 'Y')")));
+  await como('authenticated', ADMIN, async () => {
+    const novo = await db.query("insert into public.testimonials (nome, canal, texto_pt) values ('Teste', 'Canal', 'Muito bom') returning id");
+    const ids = (await db.query('select id from public.testimonials order by ordem')).rows.map((r) => r.id).reverse();
+    await db.query('select public.reordenar($1, $2::uuid[])', ['testimonials', ids]);
+    await db.query('delete from public.testimonials where id = $1', [novo.rows[0].id]);
+  });
+});
+
+test('números do site são uma lista curta', async () => {
+  await assert.rejects(como('authenticated', ADMIN, () => db.query(`update public.settings set numeros = '{"a":1}'::jsonb where id = 1`)));
+  await assert.rejects(como('authenticated', ADMIN, () => db.query(`update public.settings set numeros = '[1,2,3,4,5,6,7]'::jsonb where id = 1`)));
+  const lido = await como('anon', null, () => db.query('select numeros from public.settings where id = 1'));
+  assert.equal(lido.rows[0].numeros.length, 4);
+});
+
 test('reordenar recusa tabela fora da lista', async () => {
   await assert.rejects(como('authenticated', ADMIN, () => db.query("select public.reordenar('admins', array[]::uuid[])")));
 });

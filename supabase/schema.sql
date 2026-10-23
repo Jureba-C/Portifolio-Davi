@@ -45,6 +45,15 @@ create table if not exists public.clients (
   ordem integer not null default 0
 );
 
+create table if not exists public.testimonials (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null check (char_length(nome) between 1 and 60),
+  canal text not null default '' check (char_length(canal) <= 60),
+  texto_pt text not null check (char_length(texto_pt) between 1 and 400),
+  texto_en text not null default '' check (char_length(texto_en) <= 400),
+  ordem integer not null default 0
+);
+
 create table if not exists public.settings (
   id smallint primary key default 1 check (id = 1),
   nome text not null default 'DECXZ' check (char_length(nome) between 1 and 40),
@@ -71,8 +80,13 @@ as $$
     );
 $$;
 
+alter table public.settings add column if not exists numeros jsonb not null default '[]'::jsonb;
+
 do $$
 begin
+  if not exists (select 1 from pg_constraint where conname = 'settings_numeros_lista') then
+    alter table public.settings add constraint settings_numeros_lista check (jsonb_typeof(numeros) = 'array' and jsonb_array_length(numeros) <= 6);
+  end if;
   if not exists (select 1 from pg_constraint where conname = 'settings_redes_https') then
     alter table public.settings add constraint settings_redes_https check (public.redes_validas(redes));
   end if;
@@ -103,6 +117,7 @@ alter table public.categories enable row level security;
 alter table public.longform_filters enable row level security;
 alter table public.videos enable row level security;
 alter table public.clients enable row level security;
+alter table public.testimonials enable row level security;
 alter table public.settings enable row level security;
 
 drop policy if exists "admin ve o proprio email" on public.admins;
@@ -114,7 +129,7 @@ do $$
 declare
   tabela text;
 begin
-  foreach tabela in array array['categories', 'longform_filters', 'videos', 'clients', 'settings'] loop
+  foreach tabela in array array['categories', 'longform_filters', 'videos', 'clients', 'testimonials', 'settings'] loop
     execute format('drop policy if exists "leitura publica" on public.%I', tabela);
     execute format('create policy "leitura publica" on public.%I for select to anon, authenticated using (true)', tabela);
     execute format('drop policy if exists "admin insere" on public.%I', tabela);
@@ -128,8 +143,8 @@ end
 $$;
 
 revoke all on public.admins from anon;
-grant select on public.categories, public.longform_filters, public.videos, public.clients, public.settings to anon;
-grant select, insert, update, delete on public.categories, public.longform_filters, public.videos, public.clients, public.settings to authenticated;
+grant select on public.categories, public.longform_filters, public.videos, public.clients, public.testimonials, public.settings to anon;
+grant select, insert, update, delete on public.categories, public.longform_filters, public.videos, public.clients, public.testimonials, public.settings to authenticated;
 grant select on public.admins to authenticated;
 
 create or replace function public.reordenar(tabela text, ids uuid[])
@@ -142,7 +157,7 @@ begin
   if not public.eh_admin() then
     raise exception 'sem permissao' using errcode = '42501';
   end if;
-  if tabela not in ('categories', 'longform_filters', 'videos', 'clients') then
+  if tabela not in ('categories', 'longform_filters', 'videos', 'clients', 'testimonials') then
     raise exception 'tabela invalida' using errcode = '22023';
   end if;
   execute format(

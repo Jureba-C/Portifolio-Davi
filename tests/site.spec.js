@@ -116,6 +116,23 @@ test.describe('site público', () => {
     await expect(player).toBeHidden();
   });
 
+  test('player passa para o próximo e volta pro anterior', async ({ page }) => {
+    await page.goto('/?intro=0');
+    const cards = page.locator('.grade .card');
+    const total = await cards.count();
+    await cards.first().click();
+    const titulo = page.locator('[data-player-titulo]');
+    const posicao = page.locator('[data-player-posicao]');
+    await expect(posicao).toHaveText(`1 / ${total}`);
+    const primeiro = await titulo.textContent();
+    await page.locator('[data-player-proximo]').click();
+    await expect(posicao).toHaveText(`2 / ${total}`);
+    await expect(titulo).not.toHaveText(primeiro);
+    await page.keyboard.press('ArrowLeft');
+    await expect(posicao).toHaveText(`1 / ${total}`);
+    await expect(titulo).toHaveText(primeiro);
+  });
+
   test('clicar no Discord copia o nick e mostra o toast', async ({ page, context }, testInfo) => {
     if (!ehCelular(testInfo)) await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.goto('/?intro=0');
@@ -125,6 +142,30 @@ test.describe('site público', () => {
     if (!ehCelular(testInfo)) {
       expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('decxz.editor');
     }
+  });
+
+  test('pedir orçamento valida, monta a mensagem e fecha com ESC', async ({ page, context }, testInfo) => {
+    if (!ehCelular(testInfo)) await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    const erros = vigiarErros(page);
+    await page.goto('/?intro=0');
+    await page.locator('.orcamento-abrir').click();
+    const caixa = page.locator('[data-orcamento]');
+    await expect(caixa).toBeVisible();
+    await page.locator('[data-orc-discord]').click();
+    await expect(page.locator('[data-orc-aviso]')).not.toBeEmpty();
+    await caixa.locator('input[name="nome"]').fill('Canal Teste');
+    await caixa.locator('[data-orc-tipos] label').first().click();
+    await caixa.locator('textarea[name="detalhes"]').fill('Vídeo de 10 minutos.');
+    await page.locator('[data-orc-discord]').click();
+    await expect(page.locator('[data-orc-aviso]')).toContainText('Discord');
+    await page.keyboard.press('Escape');
+    await expect(caixa).toBeHidden();
+    if (!ehCelular(testInfo)) {
+      const texto = await page.evaluate(() => navigator.clipboard.readText());
+      expect(texto).toContain('Canal Teste');
+      expect(texto).toContain('Vídeo de 10 minutos.');
+    }
+    expect(erros).toEqual([]);
   });
 
   test('clientes mostram 6 no cartaz e o resto em ver todos', async ({ page }) => {

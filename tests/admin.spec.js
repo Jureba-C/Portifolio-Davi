@@ -156,6 +156,39 @@ test.describe('painel admin (modo local)', () => {
     await expect(page.locator('[data-lista="clientes"]')).toContainText('Canal Novo');
   });
 
+  test('depoimento novo aparece no site e pode ser excluído', async ({ page, context }) => {
+    await entrar(page);
+    const form = page.locator('[data-form="depoimento"]');
+    await form.locator('[name="nome"]').fill('Cliente Teste');
+    await form.locator('[name="canal"]').fill('Canal Teste');
+    await form.locator('[name="texto_pt"]').fill('Edição impecável e no prazo.');
+    await form.locator('button[type="submit"]').click();
+    await expect(page.locator('[data-toast]')).toContainText('depoimento adicionado');
+    await expect(page.locator('[data-lista="depoimentos"]')).toContainText('Cliente Teste');
+    const site = await context.newPage();
+    await site.goto('/?intro=0');
+    await expect(site.locator('[data-lista="depoimentos"]')).toContainText('Edição impecável e no prazo.');
+    await page.getByRole('button', { name: 'Excluir depoimento de Cliente Teste' }).click();
+    await page.locator('[data-confirmar] button[value="sim"]').click();
+    await expect(page.locator('[data-lista="depoimentos"]')).not.toContainText('Cliente Teste');
+  });
+
+  test('números do site são editados no painel', async ({ page, context }) => {
+    await entrar(page);
+    const form = page.locator('[data-form="textos"]');
+    await form.locator('[name="numero_valor_0"]').fill('+99');
+    await form.locator('[name="numero_pt_0"]').fill('cafés tomados');
+    await form.locator('[name="numero_valor_1"]').fill('');
+    await form.locator('[name="numero_pt_1"]').fill('');
+    await form.locator('button[type="submit"]').click();
+    await expect(page.locator('[data-salvo]')).toHaveText('salvo ✓');
+    const site = await context.newPage();
+    await site.goto('/?intro=0');
+    const itens = site.locator('[data-lista="numeros"] > li');
+    await expect(itens).toHaveCount(3);
+    await expect(itens.first()).toContainText('cafés tomados');
+  });
+
   test('sair volta para o login', async ({ page }) => {
     await entrar(page);
     await page.click('[data-sair]');

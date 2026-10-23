@@ -24,6 +24,10 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   const barra = raiz.querySelector('[data-player-barra]');
   const progresso = raiz.querySelector('[data-player-progresso]');
   const tempo = raiz.querySelector('[data-player-tempo]');
+  const nav = raiz.querySelector('[data-player-nav]');
+  const anterior = raiz.querySelector('[data-player-anterior]');
+  const proximo = raiz.querySelector('[data-player-proximo]');
+  const posicao = raiz.querySelector('[data-player-posicao]');
 
   let iframe = null;
   let origemFoco = null;
@@ -31,6 +35,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   let atual = 0;
   let tocando = false;
   let mudo = false;
+  let vizinhos = null;
 
   const enviar = (func, args = []) => {
     iframe?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
@@ -65,6 +70,11 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
       fechar();
       return;
     }
+    if (vizinhos && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.target.closest?.('[data-player-barra]')) {
+      e.preventDefault();
+      vizinhos.ir(e.key === 'ArrowLeft' ? -1 : 1);
+      return;
+    }
     if (e.key !== 'Tab') return;
     const itens = [...caixa.querySelectorAll(FOCAVEIS)].filter((el) => el.offsetParent !== null || el === iframe);
     if (!itens.length) return;
@@ -80,7 +90,11 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   };
 
   function abrir(item) {
-    origemFoco = document.activeElement;
+    const jaAberto = !raiz.hidden;
+    if (!jaAberto) origemFoco = document.activeElement;
+    vizinhos = item.vizinhos || null;
+    nav.hidden = !vizinhos;
+    if (vizinhos) posicao.textContent = vizinhos.posicao;
     duracao = 0;
     atual = 0;
     tocando = false;
@@ -105,7 +119,6 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
       iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(item.youtubeId)}?${params}`;
       iframe.title = item.titulo || 'YouTube';
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
       iframe.allowFullscreen = true;
       iframe.referrerPolicy = 'strict-origin-when-cross-origin';
       iframe.addEventListener('load', () => {
@@ -125,6 +138,12 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
       tela.classList.add('sem-video');
     }
     desenhar();
+    if (jaAberto) {
+      raiz.classList.remove('trocou');
+      void raiz.offsetWidth;
+      raiz.classList.add('trocou');
+      return;
+    }
     raiz.hidden = false;
     aoAbrir();
     document.documentElement.style.overflow = 'hidden';
@@ -139,6 +158,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     raiz.hidden = true;
     video.textContent = '';
     iframe = null;
+    vizinhos = null;
     document.documentElement.style.overflow = '';
     document.removeEventListener('keydown', prenderFoco);
     window.removeEventListener('message', aoMensagem);
@@ -147,6 +167,8 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   }
 
   raiz.querySelectorAll('[data-fechar]').forEach((el) => el.addEventListener('click', fechar));
+  anterior.addEventListener('click', () => vizinhos?.ir(-1));
+  proximo.addEventListener('click', () => vizinhos?.ir(1));
   play.addEventListener('click', () => {
     if (!iframe) return;
     tocando = !tocando;

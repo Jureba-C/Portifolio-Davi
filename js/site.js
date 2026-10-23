@@ -1,6 +1,6 @@
-import { carregarSite, linkYoutube, iniciais, urlSegura } from './data.js';
+import { carregarSite, linkYoutube, iniciais, urlSegura, thumbYoutube } from './data.js';
 import { t, campo, aplicar, definirIdioma, idioma, aoMudarIdioma } from './i18n.js';
-import { iniciarRevelacao, iniciarAranhaHero, iniciarRodape, aranhasVivas, letrasSoltas, recorte, temMouse } from './animations.js';
+import { iniciarRevelacao, iniciarAranhaHero, iniciarRodape, aranhasVivas, letrasSoltas, recorte, temMouse, reduzMovimento } from './animations.js';
 import { iniciarCursor } from './cursor.js';
 import { criarPlayer } from './player.js';
 import { montarPrevia, soltarPrevias, suspenderPrevias } from './previa.js';
@@ -42,13 +42,28 @@ function tagDoPlayer(video) {
   return partes.filter(Boolean).join(' · ');
 }
 
-function abrirVideo(video) {
+function videosDaGrade() {
+  const cat = estado.db.categories.find((c) => c.id === estado.categoria);
+  let lista = estado.db.videos.filter((v) => v.category_id === estado.categoria);
+  if (usaFiltros(cat) && estado.filtro !== 'todos') lista = lista.filter((v) => v.filter_id === estado.filtro);
+  return lista;
+}
+
+function abrirVideo(video, lista = null) {
+  const grade = videosDaGrade();
+  const destaques = estado.db.videos.filter((v) => v.destaque).slice(0, 4);
+  const sequencia = lista || (grade.includes(video) ? grade : destaques.includes(video) ? destaques : [video]);
+  const indice = sequencia.indexOf(video);
   player.abrir({
     titulo: video.titulo,
     descricao: campo(video, 'descricao'),
     youtubeId: video.youtube_id,
     vertical: ehVertical(categoriaDe(video)),
     tag: tagDoPlayer(video),
+    vizinhos: sequencia.length > 1 ? {
+      posicao: `${indice + 1} / ${sequencia.length}`,
+      ir: (passo) => abrirVideo(sequencia[(indice + passo + sequencia.length) % sequencia.length], sequencia),
+    } : null,
   });
 }
 
@@ -205,6 +220,68 @@ function renderClientes() {
   botao.querySelector('.botao-miolo').textContent = aberto ? t('clientes.verMenos') : t('clientes.verTodos', { n: clients.length });
 }
 
+function iniciarOrcamento() {
+  const dialogo = document.querySelector('[data-orcamento]');
+  if (!dialogo?.showModal) return;
+  const form = dialogo.querySelector('[data-orc-form]');
+  const aviso = dialogo.querySelector('[data-orc-aviso]');
+  const montarTipos = () => {
+    const alvo = dialogo.querySelector('[data-orc-tipos]');
+    const marcado = form.querySelector('input[name="tipo"]:checked')?.value;
+    alvo.textContent = '';
+    [...estado.db.categories.map((c) => nomeDaCategoria(c)), t('orc.outro')].forEach((nome) => {
+      const radio = el('input', { type: 'radio', name: 'tipo', value: nome, class: 'sr-only' });
+      if (nome === marcado) radio.checked = true;
+      alvo.append(el('label', { class: 'orc-tipo' }, radio, el('span', { text: nome })));
+    });
+  };
+  const abrir = (e) => {
+    e.preventDefault();
+    montarTipos();
+    const { settings } = estado.db;
+    dialogo.querySelector('[data-orc-email]').hidden = !settings.email;
+    dialogo.querySelector('[data-orc-discord]').hidden = !settings.discord_nick;
+    aviso.textContent = '';
+    dialogo.showModal();
+    form.nome.focus();
+  };
+  document.querySelectorAll('[data-abrir-orcamento]').forEach((b) => b.addEventListener('click', abrir));
+  dialogo.querySelector('[data-orc-fechar]').addEventListener('click', () => dialogo.close());
+  dialogo.addEventListener('click', (e) => { if (e.target === dialogo) dialogo.close(); });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const { settings } = estado.db;
+    const nome = form.nome.value.trim();
+    const tipo = form.querySelector('input[name="tipo"]:checked')?.value;
+    if (!nome || !tipo) {
+      aviso.textContent = t('orc.faltou');
+      aviso.classList.add('erro');
+      return;
+    }
+    aviso.classList.remove('erro');
+    const prazo = form.prazo.selectedOptions[0]?.textContent ?? '';
+    const referencia = urlSegura(form.referencia.value);
+    const detalhes = form.detalhes.value.trim();
+    const linhas = [
+      t('orc.ola'),
+      '',
+      `${t('orc.rotNome')}: ${nome}`,
+      `${t('orc.rotTipo')}: ${tipo}`,
+      `${t('orc.rotPrazo')}: ${prazo}`,
+      referencia ? `${t('orc.rotRef')}: ${referencia}` : null,
+      detalhes ? `\n${t('orc.rotDetalhes')}:\n${detalhes}` : null,
+    ].filter((l) => l !== null).join('\n');
+    if (e.submitter?.value === 'discord') {
+      const ok = await copiar(linhas);
+      aviso.textContent = t(ok ? 'orc.copiado' : 'orc.copiaFalhou', { nick: settings.discord_nick });
+      return;
+    }
+    const assunto = t('orc.assunto', { tipo });
+    aviso.textContent = t('orc.abrindoEmail', { email: settings.email });
+    location.href = `mailto:${settings.email}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(linhas)}`;
+  });
+}
+
 function iniciarMovimento() {
   const raiz = document.documentElement;
   const botao = document.querySelector('[data-movimento]');
@@ -231,7 +308,19 @@ function iniciarClientes() {
   });
 }
 
+function varrer(texto) {
+  const v = document.querySelector('[data-varredura]');
+  if (!v || reduzMovimento()) return;
+  v.querySelector('[data-varredura-palavra]').textContent = texto;
+  v.classList.remove('ativa');
+  void v.offsetWidth;
+  v.classList.add('ativa');
+  clearTimeout(varrer.timer);
+  varrer.timer = setTimeout(() => v.classList.remove('ativa'), 700);
+}
+
 function escolherCategoria(id, focar = false) {
+  if (id !== estado.categoria) varrer(nomeDaCategoria(estado.db.categories.find((c) => c.id === id)).toUpperCase());
   estado.categoria = id;
   estado.filtro = 'todos';
   renderAbas(focar);
@@ -295,8 +384,7 @@ function renderVideos() {
   soltarPrevias(grade);
   grade.className = `grade${vertical ? ' grade-vertical' : ''}`;
   grade.textContent = '';
-  let lista = estado.db.videos.filter((v) => v.category_id === estado.categoria);
-  if (usaFiltros(cat) && estado.filtro !== 'todos') lista = lista.filter((v) => v.filter_id === estado.filtro);
+  const lista = videosDaGrade();
   if (!lista.length) {
     grade.append(aranhaVazia(t('trabalhos.vazio')));
     return;
@@ -379,6 +467,86 @@ function renderOffline(origem) {
   if (mostrar) aviso.textContent = t('rodape.offline');
 }
 
+function contar(alvo, valor) {
+  const partes = String(valor).match(/^(\D*)(\d+(?:[.,]\d+)?)(.*)$/);
+  if (!partes || reduzMovimento() || !('IntersectionObserver' in window)) {
+    alvo.textContent = valor;
+    return;
+  }
+  const [, antes, numero, depois] = partes;
+  const fim = Number(numero.replace(',', '.'));
+  const casas = (numero.split(/[.,]/)[1] || '').length;
+  const formatar = (n) => `${antes}${n.toFixed(casas).replace('.', numero.includes(',') ? ',' : '.')}${depois}`;
+  alvo.textContent = formatar(0);
+  const obs = new IntersectionObserver((entradas) => {
+    if (!entradas.some((e) => e.isIntersecting)) return;
+    obs.disconnect();
+    const inicio = performance.now();
+    const passo = (agora) => {
+      const t = Math.min(1, (agora - inicio) / 1300);
+      const suave = 1 - (1 - t) ** 4;
+      alvo.textContent = formatar(fim * suave);
+      if (t < 1) requestAnimationFrame(passo);
+      else alvo.textContent = valor;
+    };
+    requestAnimationFrame(passo);
+  }, { threshold: 0.6 });
+  obs.observe(alvo);
+}
+
+function renderNumeros() {
+  const lista = document.querySelector('[data-lista="numeros"]');
+  const numeros = (estado.db.settings.numeros || []).filter((n) => n?.valor);
+  lista.closest('[data-secao]').hidden = numeros.length === 0;
+  lista.textContent = '';
+  numeros.forEach((n, i) => {
+    const valor = el('span', { class: 'numero-valor', 'aria-hidden': 'true' });
+    const rotulo = campo(n, 'rotulo');
+    lista.append(el('li', { class: `numero ${TILTS[i % 3]}` },
+      valor,
+      el('span', { class: 'numero-rotulo', 'aria-hidden': 'true', text: rotulo }),
+      el('span', { class: 'sr-only', text: `${n.valor} ${rotulo}` })));
+    contar(valor, n.valor);
+  });
+}
+
+function renderDepoimentos() {
+  const lista = document.querySelector('[data-lista="depoimentos"]');
+  const depoimentos = estado.db.testimonials || [];
+  lista.closest('[data-secao]').hidden = depoimentos.length === 0;
+  lista.textContent = '';
+  depoimentos.forEach((d, i) => {
+    const texto = campo(d, 'texto') || d.texto_pt;
+    lista.append(el('li', { class: `depo ${TILTS[(i + 1) % 3]} reveal` },
+      el('blockquote', { class: 'depo-balao' }, el('p', { text: `“${texto}”` })),
+      el('p', { class: 'depo-quem' },
+        el('span', { class: 'depo-nome', text: d.nome }),
+        d.canal ? el('span', { class: 'depo-canal', text: d.canal }) : null)));
+  });
+}
+
+function dadosDosVideos() {
+  const itens = estado.db.videos.filter((v) => v.youtube_id).map((v, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    item: {
+      '@type': 'VideoObject',
+      name: v.titulo,
+      description: campo(v, 'descricao') || v.titulo,
+      thumbnailUrl: urlSegura(v.poster_url) || thumbYoutube(v.youtube_id),
+      uploadDate: v.created_at,
+      embedUrl: `https://www.youtube-nocookie.com/embed/${v.youtube_id}`,
+      url: linkYoutube(v.youtube_id),
+    },
+  }));
+  let bloco = document.getElementById('dados-videos');
+  if (!bloco) {
+    bloco = el('script', { type: 'application/ld+json', id: 'dados-videos' });
+    document.head.append(bloco);
+  }
+  bloco.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: itens });
+}
+
 function renderTudo() {
   document.title = t('pagina.titulo');
   renderNome();
@@ -386,11 +554,14 @@ function renderTudo() {
   renderSobre();
   renderFaixas();
   renderClientes();
+  renderNumeros();
+  renderDepoimentos();
   renderAbas();
   renderFiltros();
   renderVideos();
   renderContato();
   renderOffline(estado.db.origem);
+  dadosDosVideos();
   observarNovos();
 }
 
@@ -443,6 +614,7 @@ async function iniciar() {
   iniciarAbasTeclado();
   iniciarClientes();
   iniciarMovimento();
+  iniciarOrcamento();
   iniciarAranhaHero();
   aranhasVivas();
   iniciarRodape();

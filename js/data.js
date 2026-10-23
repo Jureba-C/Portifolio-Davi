@@ -4,7 +4,7 @@ import { nuvemConfigurada, obterCliente } from './supabase.js';
 
 const CHAVE_CACHE = 'portfolio-cache';
 const CHAVE_LOCAL = 'portfolio-local';
-const TABELAS = ['categories', 'longform_filters', 'videos', 'clients'];
+const TABELAS = ['categories', 'longform_filters', 'videos', 'clients', 'testimonials'];
 const LOGIN_LOCAL = { email: 'demo@local', senha: 'demo1234' };
 
 export function extrairIdYoutube(texto) {
@@ -66,7 +66,9 @@ function normalizar(db) {
     longform_filters: [...(db?.longform_filters ?? base.longform_filters)].sort(porOrdem),
     videos: [...(db?.videos ?? base.videos)].map((v) => ({ preview_url: '', poster_url: '', ...v })).sort(porOrdem),
     clients: [...(db?.clients ?? base.clients)].sort(porOrdem),
+    testimonials: [...(db?.testimonials ?? base.testimonials)].sort(porOrdem),
   };
+  saida.settings.numeros = Array.isArray(saida.settings.numeros) ? saida.settings.numeros : [];
   saida.settings.redes = { instagram: '', x: '', youtube: '', ...(saida.settings.redes ?? {}) };
   saida.settings.foto_url = saida.settings.foto_url ?? '';
   return saida;
@@ -106,8 +108,8 @@ async function buscarNuvem() {
   const respostas = await Promise.all(pedidos);
   const erro = respostas.find((r) => r.error);
   if (erro) throw erro.error;
-  const [settings, categories, longform_filters, videos, clients] = respostas.map((r) => r.data);
-  return normalizar({ settings: settings ?? {}, categories, longform_filters, videos, clients });
+  const [settings, categories, longform_filters, videos, clients, testimonials] = respostas.map((r) => r.data);
+  return normalizar({ settings: settings ?? {}, categories, longform_filters, videos, clients, testimonials });
 }
 
 function bancoLocal() {

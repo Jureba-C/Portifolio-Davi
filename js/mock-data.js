@@ -18,6 +18,12 @@ export const MOCK = {
     },
     discord_nick: 'decxz.editor',
     comissoes_abertas: true,
+    numeros: [
+      { valor: '3', rotulo_pt: 'anos editando', rotulo_en: 'years editing' },
+      { valor: '+120', rotulo_pt: 'vídeos entregues', rotulo_en: 'videos delivered' },
+      { valor: '+15M', rotulo_pt: 'views somadas', rotulo_en: 'combined views' },
+      { valor: '16', rotulo_pt: 'canais atendidos', rotulo_en: 'channels served' },
+    ],
   },
   categories: [
     { id: 'c-motion', nome_pt: 'Motion', nome_en: 'Motion', slug: 'motion', ordem: 0, formato: 'horizontal' },
@@ -42,6 +48,11 @@ export const MOCK = {
     { id: 'v-long-2', titulo: 'A história da lan house', descricao_pt: 'Bit a Bit · roteiro e edição', descricao_en: 'Bit a Bit · script and edit', youtube_id: 'pKmSdY56VtY', ...previa('previa-longform'), category_id: 'c-long', filter_id: 'f-doc', destaque: false, ordem: 9, created_at: '2026-03-03T12:00:00Z' },
     { id: 'v-long-3', titulo: 'Um dia na Paulista', descricao_pt: 'Lua de Lata', descricao_en: 'Lua de Lata', youtube_id: 'aqz-KE-bpKQ', ...previa('previa-motion'), category_id: 'c-long', filter_id: 'f-vlog', destaque: false, ordem: 10, created_at: '2026-03-05T12:00:00Z' },
     { id: 'v-long-4', titulo: 'Speedrun comentado', descricao_pt: 'Pixel Torto · com Rota 77', descricao_en: 'Pixel Torto · with Rota 77', youtube_id: 'eRsGyueVLvQ', ...semPrevia, category_id: 'c-long', filter_id: 'f-gameplay', destaque: false, ordem: 11, created_at: '2026-03-07T12:00:00Z' },
+  ],
+  testimonials: [
+    { id: 'dp-1', nome: 'Rafa', canal: 'Pixel Torto', texto_pt: 'Mandei o bruto numa sexta e na segunda tinha um vídeo com ritmo de trailer. A retenção subiu na hora.', texto_en: 'I sent the raw footage on a Friday and by Monday I had a video paced like a trailer. Retention went up right away.', ordem: 0 },
+    { id: 'dp-2', nome: 'Bia', canal: 'Fala Mano', texto_pt: 'Ele entende o timing da piada. Corta no lugar certo e o som entra junto, parece que foi ensaiado.', texto_en: 'He gets the timing of a joke. Cuts in the right place and the sound lands with it, like it was rehearsed.', ordem: 1 },
+    { id: 'dp-3', nome: 'Léo', canal: 'Clã Vermelho', texto_pt: 'Os shorts dele viraram a nossa vitrine. Identidade própria em cada um, sem cara de modelo pronto.', texto_en: 'His shorts became our storefront. Each one has its own identity, nothing looks like a template.', ordem: 2 },
   ],
   clients: [
     { id: 'cl-1', nome: 'Pixel Torto', canal_url: 'https://www.youtube.com/@exemplo', foto_url: '', ordem: 0 },

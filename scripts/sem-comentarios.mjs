@@ -5,7 +5,7 @@ import { parse } from 'acorn';
 
 const raiz = fileURLToPath(new URL('..', import.meta.url));
 const PASTAS = ['css', 'js', 'assets', 'scripts', 'tests'];
-const ARQUIVOS = ['index.html', 'admin.html', 'styleguide.html', 'playwright.config.js'];
+const ARQUIVOS = ['index.html', 'admin.html', 'styleguide.html', '404.html', 'playwright.config.js'];
 const IGNORAR = new Set(['node_modules', 'design', 'test-results', 'playwright-report', 'fonts']);
 
 async function listar(pasta) {

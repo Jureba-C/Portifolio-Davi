@@ -65,6 +65,7 @@
       <a href="#novo-video">novo vídeo</a>
       <a href="#trabalhos">seus trabalhos</a>
       <a href="#clientes">clientes</a>
+      <a href="#depoimentos">depoimentos</a>
     </nav>
 
     <main class="admin-principal">
@@ -113,6 +114,29 @@
             <label class="campo">x / twitter<input name="x" class="chanfro" placeholder="x.com/…"></label>
             <label class="campo">youtube<input name="youtube" class="chanfro-inv" placeholder="youtube.com/@…"></label>
           </div>
+          <fieldset class="numeros-campos">
+            <legend class="campo-legenda">números do site (deixe em branco pra esconder)</legend>
+              <div class="numero-linha">
+                <label class="campo">valor<input name="numero_valor_0" class="chanfro" placeholder="+120" maxlength="12"></label>
+                <label class="campo">rótulo (PT)<input name="numero_pt_0" class="chanfro-inv" placeholder="vídeos entregues" maxlength="40"></label>
+                <label class="campo">rótulo (EN)<input name="numero_en_0" class="chanfro" placeholder="videos delivered" maxlength="40"></label>
+              </div>
+              <div class="numero-linha">
+                <label class="campo">valor<input name="numero_valor_1" class="chanfro" placeholder="+120" maxlength="12"></label>
+                <label class="campo">rótulo (PT)<input name="numero_pt_1" class="chanfro-inv" placeholder="vídeos entregues" maxlength="40"></label>
+                <label class="campo">rótulo (EN)<input name="numero_en_1" class="chanfro" placeholder="videos delivered" maxlength="40"></label>
+              </div>
+              <div class="numero-linha">
+                <label class="campo">valor<input name="numero_valor_2" class="chanfro" placeholder="+120" maxlength="12"></label>
+                <label class="campo">rótulo (PT)<input name="numero_pt_2" class="chanfro-inv" placeholder="vídeos entregues" maxlength="40"></label>
+                <label class="campo">rótulo (EN)<input name="numero_en_2" class="chanfro" placeholder="videos delivered" maxlength="40"></label>
+              </div>
+              <div class="numero-linha">
+                <label class="campo">valor<input name="numero_valor_3" class="chanfro" placeholder="+120" maxlength="12"></label>
+                <label class="campo">rótulo (PT)<input name="numero_pt_3" class="chanfro-inv" placeholder="vídeos entregues" maxlength="40"></label>
+                <label class="campo">rótulo (EN)<input name="numero_en_3" class="chanfro" placeholder="videos delivered" maxlength="40"></label>
+              </div>
+          </fieldset>
           <div class="linha-acoes">
             <button type="submit" class="botao chanfro-inv"><span class="botao-miolo chanfro">SALVAR NA NUVEM</span></button>
             <span class="salvo rabisco" role="status" data-salvo></span>
@@ -241,6 +265,30 @@
           <h2 id="clientes-titulo" class="bloco-titulo menor rough-text">CLIENTES CADASTRADOS</h2>
           <p class="bloco-dica">arraste pra mudar a ordem.</p>
           <ul class="grade-clientes" data-lista="clientes"></ul>
+        </section>
+      </div>
+
+      <div id="depoimentos" class="grade-blocos">
+        <section class="corte-a bloco" aria-labelledby="novo-depo-titulo">
+          <h2 id="novo-depo-titulo" class="bloco-titulo menor rough-text">NOVO DEPOIMENTO</h2>
+          <form class="bloco-form" data-form="depoimento" novalidate>
+            <div class="grade-2">
+              <label class="campo">nome<input name="nome" class="chanfro" placeholder="quem falou" required maxlength="60"></label>
+              <label class="campo">canal<input name="canal" class="chanfro-inv" placeholder="nome do canal" maxlength="60"></label>
+            </div>
+            <label class="campo">depoimento (PT)<textarea name="texto_pt" rows="3" class="chanfro" required maxlength="400"></textarea></label>
+            <label class="campo">depoimento (EN)<textarea name="texto_en" rows="3" class="chanfro-inv" maxlength="400"></textarea></label>
+            <p class="form-erro rabisco" role="alert" data-depo-erro></p>
+            <div class="linha-acoes">
+              <button type="submit" class="botao chanfro-inv"><span class="botao-miolo chanfro">ADICIONAR DEPOIMENTO</span></button>
+            </div>
+          </form>
+        </section>
+
+        <section class="corte-b bloco" aria-labelledby="depos-titulo">
+          <h2 id="depos-titulo" class="bloco-titulo menor rough-text">DEPOIMENTOS</h2>
+          <p class="bloco-dica">arraste pela alça pra mudar a ordem.</p>
+          <ul class="lista-depos" data-lista="depoimentos"></ul>
         </section>
       </div>
     </main>

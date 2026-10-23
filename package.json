@@ -10,7 +10,8 @@
     "check:comments": "node scripts/sem-comentarios.mjs",
     "seed": "node scripts/gerar-seed.mjs",
     "imagens": "node scripts/gerar-imagens.mjs",
-    "vendor": "node scripts/vendor.mjs"
+    "vendor": "node scripts/vendor.mjs",
+    "endereco": "node scripts/trocar-endereco.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.2",

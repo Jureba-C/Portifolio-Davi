@@ -20,7 +20,7 @@ function inserir(tabela, colunas, linhas) {
   return `insert into public.${tabela} (${colunas.join(', ')}) values\n${valores}\non conflict (id) do nothing;\n`;
 }
 
-const { settings, categories, longform_filters, videos, clients } = MOCK;
+const { settings, categories, longform_filters, videos, clients, testimonials } = MOCK;
 
 const partes = [
   'begin;\n',
@@ -32,10 +32,12 @@ const partes = [
     videos.map((v) => [uuid(v.id), v.titulo, v.descricao_pt, v.descricao_en, v.youtube_id, uuid(v.category_id), v.filter_id ? uuid(v.filter_id) : null, v.destaque, v.ordem])),
   inserir('clients', ['id', 'nome', 'canal_url', 'foto_url', 'ordem'],
     clients.map((c) => [uuid(c.id), c.nome, c.canal_url, c.foto_url, c.ordem])),
+  inserir('testimonials', ['id', 'nome', 'canal', 'texto_pt', 'texto_en', 'ordem'],
+    testimonials.map((d) => [uuid(d.id), d.nome, d.canal, d.texto_pt, d.texto_en, d.ordem])),
   [
-    'insert into public.settings (id, nome, email, sobre_pt, sobre_en, redes, discord_nick, comissoes_abertas) values',
-    `  (1, ${[settings.nome, settings.email, settings.sobre_pt, settings.sobre_en].map(sql).join(', ')}, ${sql(JSON.stringify(settings.redes))}::jsonb, ${sql(settings.discord_nick)}, ${sql(settings.comissoes_abertas)})`,
-    'on conflict (id) do update set nome = excluded.nome, email = excluded.email, sobre_pt = excluded.sobre_pt, sobre_en = excluded.sobre_en, redes = excluded.redes, discord_nick = excluded.discord_nick, comissoes_abertas = excluded.comissoes_abertas;\n',
+    'insert into public.settings (id, nome, email, sobre_pt, sobre_en, redes, discord_nick, comissoes_abertas, numeros) values',
+    `  (1, ${[settings.nome, settings.email, settings.sobre_pt, settings.sobre_en].map(sql).join(', ')}, ${sql(JSON.stringify(settings.redes))}::jsonb, ${sql(settings.discord_nick)}, ${sql(settings.comissoes_abertas)}, ${sql(JSON.stringify(settings.numeros))}::jsonb)`,
+    'on conflict (id) do update set nome = excluded.nome, email = excluded.email, sobre_pt = excluded.sobre_pt, sobre_en = excluded.sobre_en, redes = excluded.redes, discord_nick = excluded.discord_nick, comissoes_abertas = excluded.comissoes_abertas, numeros = excluded.numeros;\n',
   ].join('\n'),
   'commit;\n',
 ];

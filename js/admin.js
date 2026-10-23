@@ -200,6 +200,7 @@ async function abrirPainel() {
     ligarArraste($('[data-lista="filtros"]'), 'longform_filters');
     ligarArraste($('[data-lista="trabalhos"]'), 'videos');
     ligarArraste($('[data-lista="clientes"]'), 'clients', '.cliente-avatar');
+    ligarArraste($('[data-lista="depoimentos"]'), 'testimonials');
     iniciarMenuAtivo();
   }
 }
@@ -214,6 +215,7 @@ function renderTudo() {
   atualizarPrevia();
   renderTrabalhos();
   renderClientes();
+  renderDepoimentos();
 }
 
 function mostrarFotoSobre(url) {
@@ -259,6 +261,64 @@ function preencherTextos() {
   form.instagram.value = s.redes?.instagram ?? '';
   form.x.value = s.redes?.x ?? '';
   form.youtube.value = s.redes?.youtube ?? '';
+  for (let i = 0; i < 4; i += 1) {
+    const n = (s.numeros || [])[i] || {};
+    form[`numero_valor_${i}`].value = n.valor ?? '';
+    form[`numero_pt_${i}`].value = n.rotulo_pt ?? '';
+    form[`numero_en_${i}`].value = n.rotulo_en ?? '';
+  }
+}
+
+function lerNumeros(form) {
+  const numeros = [];
+  for (let i = 0; i < 4; i += 1) {
+    const valor = form[`numero_valor_${i}`].value.trim();
+    const rotulo_pt = form[`numero_pt_${i}`].value.trim();
+    if (!valor || !rotulo_pt) continue;
+    numeros.push({ valor, rotulo_pt, rotulo_en: form[`numero_en_${i}`].value.trim() });
+  }
+  return numeros;
+}
+
+function renderDepoimentos() {
+  const ul = $('[data-lista="depoimentos"]');
+  ul.textContent = '';
+  const lista = db.testimonials || [];
+  if (!lista.length) ul.append(el('li', { class: 'lista-vazia', text: 'nenhum depoimento ainda' }));
+  lista.forEach((d) => {
+    ul.append(el('li', { class: 'corte-c item-ordem', 'data-id': d.id },
+      alca(`Mover depoimento de ${d.nome}`, () => ul, 'testimonials'),
+      el('span', { class: 'item-nome', text: d.canal ? `${d.nome} · ${d.canal}` : d.nome }),
+      el('span', { class: 'item-meta', text: d.texto_pt.length > 60 ? `${d.texto_pt.slice(0, 60)}…` : d.texto_pt }),
+      botaoIcone('xis', `Excluir depoimento de ${d.nome}`, 'excluir', async () => {
+        if (!(await confirmar(`Excluir o depoimento de "${d.nome}"?`))) return;
+        await acao(() => api.excluir('testimonials', d.id), 'depoimento excluído');
+        await recarregar();
+      })));
+  });
+}
+
+async function salvarDepoimento(e) {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const erro = $('[data-depo-erro]');
+  const nome = form.nome.value.trim();
+  const texto_pt = form.texto_pt.value.trim();
+  erro.textContent = '';
+  if (!nome || !texto_pt) {
+    erro.textContent = 'preenche o nome e o depoimento em português!';
+    return;
+  }
+  const ok = await acao(() => api.inserir('testimonials', {
+    nome,
+    canal: form.canal.value.trim(),
+    texto_pt,
+    texto_en: form.texto_en.value.trim(),
+    ordem: (db.testimonials || []).length,
+  }), 'depoimento adicionado ✓');
+  if (ok === undefined) return;
+  form.reset();
+  await recarregar();
 }
 
 function renderComissoes() {
@@ -774,6 +834,7 @@ function ligarEventos() {
       sobre_pt: form.sobre_pt.value.trim(),
       sobre_en: form.sobre_en.value.trim(),
       discord_nick: form.discord_nick.value.trim(),
+      numeros: lerNumeros(form),
       redes: {
         instagram: urlCompleta(form.instagram.value),
         x: urlCompleta(form.x.value),
@@ -839,6 +900,8 @@ function ligarEventos() {
   formVideo.addEventListener('submit', adicionarVideo);
 
   $('[data-busca]').addEventListener('input', renderTrabalhos);
+
+  $('[data-form="depoimento"]').addEventListener('submit', salvarDepoimento);
 
   const formCliente = $('[data-form="cliente"]');
   formCliente.addEventListener('submit', salvarCliente);

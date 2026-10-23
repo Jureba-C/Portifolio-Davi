@@ -74,7 +74,7 @@
         <button type="button" class="idioma" data-idioma="pt" aria-pressed="true" lang="pt-BR">PT</button>
         <button type="button" class="idioma" data-idioma="en" aria-pressed="false" lang="en">EN</button>
       </div>
-      <a href="#contato" class="botao contratar"><span class="botao-miolo" data-i18n="btn.contratar">CONTRATAR</span></a>
+      <a href="#contato" class="botao contratar" data-abrir-orcamento><span class="botao-miolo" data-i18n="btn.contratar">CONTRATAR</span></a>
     </div>
   </header>
 </div>
@@ -136,6 +136,10 @@
     </div>
   </section>
 
+  <section class="numeros" aria-label="Em números" data-i18n-aria="numeros.aria" data-secao="numeros">
+    <ul class="numeros-lista" data-lista="numeros"></ul>
+  </section>
+
   <section class="faixas" aria-hidden="true">
     <div class="faixa faixa-a"><div class="faixa-fundo faixa-vermelha"><div class="strip strip-l" data-faixa="a"></div></div></div>
     <div class="faixa faixa-b"><div class="faixa-fundo faixa-branca"><div class="strip strip-r" data-faixa="b"></div></div></div>
@@ -154,6 +158,11 @@
     <div class="listras" aria-hidden="true"></div>
   </section>
 
+  <section id="depoimentos" class="depoimentos" aria-labelledby="depo-titulo" data-secao="depoimentos">
+    <h2 id="depo-titulo" class="titulo depo-titulo boil" data-i18n="depo.titulo">O QUE DIZEM</h2>
+    <ul class="depo-lista" data-lista="depoimentos"></ul>
+  </section>
+
   <section id="trabalhos" class="trabalhos" aria-labelledby="trabalhos-titulo">
     <div aria-hidden="true" class="aranha-trabalhos swing">
       <span class="fio"></span>
@@ -163,6 +172,24 @@
     <div class="abas" role="tablist" aria-label="Categorias" data-i18n-aria="trabalhos.categorias" data-lista="abas"></div>
     <div class="filtros" data-lista="filtros" hidden></div>
     <div id="painel-trabalhos" class="grade" role="tabpanel" data-lista="videos" tabindex="-1"></div>
+  </section>
+
+  <section id="processo" class="processo" aria-labelledby="processo-titulo">
+    <h2 id="processo-titulo" class="titulo processo-titulo boil" data-i18n="processo.titulo">COMO EU TRABALHO</h2>
+    <ol class="processo-lista">
+      <li class="janela passo reveal">
+        <div class="janela-barra"><span>&gt;&gt; briefing.txt</span><span class="janela-botoes" aria-hidden="true"><span></span><span></span><span></span></span></div>
+        <div class="janela-corpo"><h3 class="passo-titulo" data-i18n="processo.p1t">BRIEFING</h3><p class="passo-texto" data-i18n="processo.p1">Você me manda o material bruto e a ideia. Eu pergunto o que importa: público, ritmo, referências e prazo.</p></div>
+      </li>
+      <li class="janela passo reveal">
+        <div class="janela-barra"><span>&gt;&gt; edicao.prproj</span><span class="janela-botoes" aria-hidden="true"><span></span><span></span><span></span></span></div>
+        <div class="janela-corpo"><h3 class="passo-titulo" data-i18n="processo.p2t">EDIÇÃO</h3><p class="passo-texto" data-i18n="processo.p2">Corte, motion, cor e sound design. Você vê uma prévia e pede ajustes sem burocracia.</p></div>
+      </li>
+      <li class="janela passo reveal">
+        <div class="janela-barra"><span>&gt;&gt; entrega.mp4</span><span class="janela-botoes" aria-hidden="true"><span></span><span></span><span></span></span></div>
+        <div class="janela-corpo"><h3 class="passo-titulo" data-i18n="processo.p3t">ENTREGA</h3><p class="passo-texto" data-i18n="processo.p3">Arquivo final no formato certo pra cada plataforma, no prazo combinado e pronto pra subir.</p></div>
+      </li>
+    </ol>
   </section>
 
   <section id="contato" class="contato" aria-labelledby="contato-titulo">
@@ -178,6 +205,7 @@
         <span class="stamp-in selo" data-campo="comissoes"><span aria-hidden="true" class="rec selo-ponto"></span><span class="selo-texto" lang="en">COMMISSIONS: ON</span></span>
         <div class="redes" data-lista="redes"></div>
         <p class="redes-legenda nota" data-i18n="contato.redes">ENTRE EM CONTATO POR UMA DESSAS REDES</p>
+        <button type="button" class="botao botao-escuro orcamento-abrir" data-abrir-orcamento><span class="botao-miolo" data-i18n="orc.abrir">PEDIR ORÇAMENTO</span></button>
         <p class="contato-email" data-campo="email-linha" hidden><span data-i18n="contato.ouEscreva">ou escreve direto:</span> <span class="contato-email-texto" data-campo="email-texto"></span></p>
       </div>
     </div>
@@ -197,11 +225,46 @@
 
 <div class="toast" role="status" aria-live="polite"></div>
 
+<dialog class="orcamento janela" data-orcamento aria-labelledby="orc-titulo">
+  <div class="janela-barra"><span data-i18n="orc.janela">&gt;&gt; orcamento.exe</span><button type="button" class="orcamento-fechar" data-orc-fechar data-i18n-aria="orc.fechar" aria-label="Fechar"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="square"><path d="M5 5 L19 19"/><path d="M19 5 L5 19"/></svg></button></div>
+  <form class="janela-corpo orcamento-form" data-orc-form novalidate>
+    <h2 id="orc-titulo" class="orcamento-titulo" data-i18n="orc.titulo">BORA FAZER SEU PRÓXIMO VÍDEO?</h2>
+    <label class="orc-campo"><span data-i18n="orc.nome">seu nome ou canal</span><input name="nome" required maxlength="80" autocomplete="name"></label>
+    <fieldset class="orc-campo orc-tipos">
+      <legend data-i18n="orc.tipo">tipo de vídeo</legend>
+      <div class="orc-opcoes" data-orc-tipos></div>
+    </fieldset>
+    <label class="orc-campo"><span data-i18n="orc.prazo">prazo</span>
+      <select name="prazo">
+        <option value="semPressa" data-i18n="orc.prazo1">sem pressa</option>
+        <option value="duasSemanas" data-i18n="orc.prazo2">até 2 semanas</option>
+        <option value="umaSemana" data-i18n="orc.prazo3">até 1 semana</option>
+        <option value="urgente" data-i18n="orc.prazo4">urgente (até 3 dias)</option>
+      </select>
+    </label>
+    <label class="orc-campo"><span data-i18n="orc.referencia">link de referência (opcional)</span><input name="referencia" type="url" inputmode="url" maxlength="300" placeholder="https://youtube.com/…"></label>
+    <label class="orc-campo"><span data-i18n="orc.detalhes">conta mais (opcional)</span><textarea name="detalhes" rows="3" maxlength="600"></textarea></label>
+    <p class="orc-aviso" role="status" data-orc-aviso></p>
+    <div class="orc-acoes">
+      <button type="submit" class="botao" value="email" data-orc-email><span class="botao-miolo" data-i18n="orc.email">ENVIAR POR E-MAIL</span></button>
+      <button type="submit" class="botao botao-escuro" value="discord" data-orc-discord><span class="botao-miolo" data-i18n="orc.discord">COPIAR PRO DISCORD</span></button>
+    </div>
+  </form>
+</dialog>
+
+<div class="varredura" aria-hidden="true" data-varredura><span class="varredura-faixa varredura-1"></span><span class="varredura-faixa varredura-2"></span><span class="varredura-palavra" data-varredura-palavra></span></div>
+
 <div class="player" data-player hidden>
   <div class="player-fundo" data-fechar></div>
   <div class="player-caixa" role="dialog" aria-modal="true" aria-labelledby="player-titulo">
     <div class="player-topo">
       <span class="etiqueta etiqueta-vermelha player-tag" data-player-tag></span>
+      <span class="player-espaco"></span>
+      <div class="player-nav" data-player-nav hidden>
+        <button type="button" class="player-seta chanfro" data-player-anterior data-i18n-aria="player.anterior" aria-label="Vídeo anterior"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path d="M17 3 L5 12 L17 21 Z" fill="currentColor"/></svg></button>
+        <span class="player-posicao" data-player-posicao aria-live="polite"></span>
+        <button type="button" class="player-seta chanfro" data-player-proximo data-i18n-aria="player.proximo" aria-label="Próximo vídeo"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path d="M7 3 L19 12 L7 21 Z" fill="currentColor"/></svg></button>
+      </div>
       <button type="button" class="player-fechar chanfro" data-fechar data-i18n-aria="player.fechar" aria-label="Fechar player">
         <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="square"><path d="M5 5 L19 19"/><path d="M19 5 L5 19"/></svg>
       </button>
