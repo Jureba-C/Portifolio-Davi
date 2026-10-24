@@ -107,6 +107,7 @@ test.describe('site público', () => {
   test('player fecha clicando fora e Shorts abre em 9:16', async ({ page }) => {
     await page.goto('/?intro=0');
     await page.click('[data-categoria="vertical"]');
+    await expect(page.locator('.grade')).toHaveClass(/grade-vertical/);
     await page.locator('.grade .card').first().click();
     const player = page.locator('[data-player]');
     await expect(player).toHaveClass(/vertical/);
@@ -339,6 +340,8 @@ test.describe('movimento reduzido', () => {
     await page.waitForTimeout(1200);
     await expect(video).toHaveJSProperty('paused', true);
     expect(await video.getAttribute('src')).toBeNull();
-    expect(await video.getAttribute('poster')).toContain('assets/exemplos/');
+    const capa = page.locator('[data-lista="showreel"] img.previa-midia').first();
+    await expect(capa).toBeVisible();
+    expect(await capa.getAttribute('src')).toContain('assets/exemplos/');
   });
 });

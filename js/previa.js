@@ -49,6 +49,7 @@ function imagem(tela, src, texto) {
 }
 
 function controleDeVideo(tela, video, poster) {
+  imagem(tela, poster, '');
   const v = document.createElement('video');
   v.className = 'previa-midia';
   v.muted = true;
@@ -62,7 +63,7 @@ function controleDeVideo(tela, video, poster) {
   v.setAttribute('aria-hidden', 'true');
   v.setAttribute('tabindex', '-1');
   v.dataset.previa = 'video';
-  if (poster) v.poster = poster;
+  v.addEventListener('playing', () => v.classList.add('pronto'), { once: true });
   tela.append(v);
   return {
     visivel: false,

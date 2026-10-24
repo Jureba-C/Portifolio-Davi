@@ -37,11 +37,12 @@ Contraste: todo texto fica acima de 4,5:1 (axe sem violações no site e no pain
 ## Animações
 | O quê | Como |
 |---|---|
-| Intro | claquete com timecode a 24 fps, REC e `decxz_edit.prproj`; aranha desce, letras do nome entram uma a uma, a agulha da linha do tempo corre, palavras CORTA/COLA/ACELERA batem, a tela se corta e quebra em três cacos (2,2 s). Uma vez por sessão; pula com clique ou tecla |
+| Intro | claquete com timecode a 24 fps, REC e `decxz_edit.prproj`; aranha desce, letras do nome entram uma a uma, a agulha da linha do tempo corre, palavras CORTA/COLA/ACELERA batem, um corte diagonal risca a tela e ela abre em duas metades (2,2 s). Uma vez por sessão; pula com clique ou tecla |
 | Nome DECXZ | cada letra balança devagar (`onda`, 4,2 s) e pula com mola no hover, inclinando as vizinhas |
 | Aranhas | balançam no fio (`balanca` + `contrapeso`), sobem e descem (`ioio`), mexem as patas (`pata`) e respiram (`respira`). Clique: susto, encolhe as patas e foge. No rodapé, acena |
-| Entrada ao rolar | `animation-timeline: view()`, com fallback `IntersectionObserver` |
-| Troca de abas | duas faixas diagonais varrem a tela com o nome da categoria (`varre`) |
+| Entrada ao rolar | `animation-timeline: view()` terminando 200–240 px depois de entrar na tela (blocos altos não ficam apagados), com fallback `IntersectionObserver` |
+| Prévias | a capa fica por baixo e o clipe aparece suave quando começa a tocar (sem tela preta) |
+| Troca de abas | faixa vermelha e faixa preta cobrem a tela com o nome da categoria, os vídeos trocam por baixo e as faixas saem (`varre`, 1,15 s) |
 | Player | troca de vídeo com corte (`troca-video`); anterior/próximo pelas setas |
 | Mira | segue o mouse e se ajusta ao tamanho do botão, link ou card; pisca ao clicar |
 | Orçamento | a janela entra com mola (`orc-entra`) |

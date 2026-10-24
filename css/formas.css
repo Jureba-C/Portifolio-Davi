@@ -104,9 +104,9 @@ footer:hover .footer-spider .aranha-viva .pd1, .rodape.tocado .footer-spider .ar
 footer:hover .footer-spider { transform: translateY(0); }
 
 @supports (animation-timeline: view()) {
-  .reveal { animation: entra linear both; animation-timeline: view(); animation-range: entry 0% cover 26%; }
-  .reveal-l { animation: entra-esq linear both; animation-timeline: view(); animation-range: entry 0% cover 32%; }
-  .reveal-r { animation: entra-dir linear both; animation-timeline: view(); animation-range: entry 0% cover 32%; }
+  .reveal { animation: entra linear both; animation-timeline: view(); animation-range: entry 0% entry 200px; }
+  .reveal-l { animation: entra-esq linear both; animation-timeline: view(); animation-range: entry 0% entry 240px; }
+  .reveal-r { animation: entra-dir linear both; animation-timeline: view(); animation-range: entry 0% entry 240px; }
   .risca { animation: risca linear both; animation-timeline: view(); animation-range: entry 20% cover 42%; }
   .stamp-in { animation: carimbo linear both; animation-timeline: view(); animation-range: entry 15% cover 35%; }
 }
@@ -120,12 +120,10 @@ footer:hover .footer-spider { transform: translateY(0); }
 .intro { position: fixed; inset: 0; z-index: 100; display: none; overflow: hidden; }
 .intro-on .intro { display: block; cursor: pointer; }
 .intro-caco { position: absolute; inset: -2px; background: var(--preto); will-change: transform; }
-.intro-caco-1 { clip-path: polygon(0 0, 58.4% 0, 40.4% 100%, 0 100%); animation: caco-1 .75s cubic-bezier(.7, 0, .25, 1) 2.2s forwards; }
-.intro-caco-2 { clip-path: polygon(57.8% 0, 100% 0, 100% 39.6%, 47.8% 55.4%); animation: caco-2 .75s cubic-bezier(.7, 0, .25, 1) 2.24s forwards; }
-.intro-caco-3 { clip-path: polygon(47.9% 54.6%, 100% 39.4%, 100% 100%, 39.8% 100%); animation: caco-3 .75s cubic-bezier(.7, 0, .25, 1) 2.28s forwards; }
-@keyframes caco-1 { to { transform: translate(-70%, 12%) rotate(-9deg); } }
-@keyframes caco-2 { to { transform: translate(45%, -85%) rotate(11deg); } }
-@keyframes caco-3 { to { transform: translate(40%, 80%) rotate(-7deg); } }
+.intro-caco-1 { clip-path: polygon(0 0, 58% 0, 40% 100%, 0 100%); animation: caco-1 .72s cubic-bezier(.65, 0, .35, 1) 2.22s forwards; }
+.intro-caco-2 { clip-path: polygon(57.6% 0, 100% 0, 100% 100%, 39.6% 100%); animation: caco-2 .72s cubic-bezier(.65, 0, .35, 1) 2.22s forwards; }
+@keyframes caco-1 { to { transform: translate(-64%, -4%) rotate(-3deg); } }
+@keyframes caco-2 { to { transform: translate(64%, 4%) rotate(-3deg); } }
 
 .intro-explosao {
   position: absolute;
@@ -253,13 +251,11 @@ footer:hover .footer-spider { transform: translateY(0); }
 
 .intro-corte { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%; fill: none; stroke: var(--branco-puro); stroke-width: .45; stroke-linecap: round; pointer-events: none; filter: drop-shadow(0 0 8px rgba(255, 255, 255, .9)); animation: some .2s ease 2.3s forwards; }
 .intro-corte line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: corte-risca .16s cubic-bezier(.7, 0, .3, 1) 2.04s forwards; }
-.intro-corte line + line { animation-delay: 2.1s; }
 @keyframes corte-risca { to { stroke-dashoffset: 0; } }
 @keyframes some { to { opacity: 0; } }
 
-.intro-pulando .intro-caco-1 { animation: caco-1 .42s cubic-bezier(.7, 0, .25, 1) forwards; }
-.intro-pulando .intro-caco-2 { animation: caco-2 .42s cubic-bezier(.7, 0, .25, 1) forwards; }
-.intro-pulando .intro-caco-3 { animation: caco-3 .42s cubic-bezier(.7, 0, .25, 1) forwards; }
+.intro-pulando .intro-caco-1 { animation: caco-1 .42s cubic-bezier(.65, 0, .35, 1) forwards; }
+.intro-pulando .intro-caco-2 { animation: caco-2 .42s cubic-bezier(.65, 0, .35, 1) forwards; }
 .intro-pulando .intro-meio, .intro-pulando .intro-faixa, .intro-pulando .intro-hud, .intro-pulando .intro-explosao, .intro-pulando .intro-aranha, .intro-pulando .intro-corte { animation: some .15s ease forwards; }
 
 .mira { position: fixed; left: 0; top: 0; z-index: 90; width: 34px; height: 34px; pointer-events: none; opacity: 0; transition: opacity .2s ease; will-change: transform, width, height; }

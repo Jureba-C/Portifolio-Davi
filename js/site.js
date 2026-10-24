@@ -308,24 +308,33 @@ function iniciarClientes() {
   });
 }
 
-function varrer(texto) {
+function varrer(texto, trocar) {
   const v = document.querySelector('[data-varredura]');
-  if (!v || reduzMovimento()) return;
+  clearTimeout(varrer.troca);
+  clearTimeout(varrer.fim);
+  if (!v || reduzMovimento()) {
+    trocar();
+    return;
+  }
   v.querySelector('[data-varredura-palavra]').textContent = texto;
   v.classList.remove('ativa');
   void v.offsetWidth;
   v.classList.add('ativa');
-  clearTimeout(varrer.timer);
-  varrer.timer = setTimeout(() => v.classList.remove('ativa'), 700);
+  varrer.troca = setTimeout(trocar, 450);
+  varrer.fim = setTimeout(() => v.classList.remove('ativa'), 1300);
 }
 
 function escolherCategoria(id, focar = false) {
-  if (id !== estado.categoria) varrer(nomeDaCategoria(estado.db.categories.find((c) => c.id === id)).toUpperCase());
+  const mudou = id !== estado.categoria;
   estado.categoria = id;
   estado.filtro = 'todos';
   renderAbas(focar);
-  renderFiltros();
-  renderVideos();
+  const trocar = () => {
+    renderFiltros();
+    renderVideos();
+  };
+  if (mudou) varrer(nomeDaCategoria(estado.db.categories.find((c) => c.id === id)).toUpperCase(), trocar);
+  else trocar();
 }
 
 function renderAbas(focar = false) {

@@ -64,6 +64,7 @@ test.describe('painel admin (modo local)', () => {
     await expect(page.locator('[data-lista="trabalhos"]')).not.toContainText('Vídeo de teste');
     await site.reload();
     await site.click('[data-categoria="long-form"]');
+    await expect(site.locator('[data-lista="filtros"]')).toBeVisible();
     await expect(site.locator('.grade')).not.toContainText('Vídeo de teste');
   });
 

@@ -21,10 +21,10 @@ Decisões tomadas durante a construção, com o motivo de cada uma.
 14. **Qual categoria tem sub-filtros:** a de slug `long-form`. Renomear a categoria não muda o slug.
 15. **Reordenar numa chamada só:** função `reordenar(tabela, ids[])` no banco, que só aceita as tabelas reordenáveis (inclusive depoimentos) e só roda para admins.
 16. **Player** sem o script `iframe_api` do YouTube: o iframe (`youtube-nocookie.com`, só criado ao abrir) recebe comandos por `postMessage`. Tem **anterior/próximo** (botões e setas do teclado) que seguem a lista de onde o vídeo foi aberto: a aba atual, os destaques ou só aquele vídeo.
-17. **Troca de abas** com um corte diagonal em duas faixas e o nome da categoria (some com movimento reduzido).
+17. **Troca de abas** com duas faixas diagonais (vermelha e preta) que cobrem a tela com o nome da categoria; os vídeos trocam por baixo da faixa e aparecem quando ela sai (cerca de 1,2 s). Com movimento reduzido, troca na hora.
 18. **Depoimentos** numa tabela própria (`testimonials`), com as mesmas regras de segurança das outras.
 19. **Pedido de orçamento** sem guardar nada: a janela monta a mensagem e o cliente manda por e-mail (`mailto:`) ou copia para o Discord. Assim não há formulário para spam nem dado pessoal guardado.
-20. **Intro** controlada por `js/boot.js`, um script pequeno no `<head>`: claquete de edição (timecode, REC, cortes) que se quebra em cacos. Aparece uma vez por sessão, sai sozinha em cerca de 3 s e pode ser pulada com clique ou tecla. Se o script falhar, ela simplesmente não aparece.
+20. **Intro** controlada por `js/boot.js`, um script pequeno no `<head>`: claquete de edição (timecode, REC, cortes) que termina com um corte na diagonal abrindo a tela em duas metades. A intro fica logo no começo do `<body>`, para o site não aparecer antes dela. Aparece uma vez por sessão, sai sozinha em cerca de 3 s e pode ser pulada com clique ou tecla. Se o script falhar, ela simplesmente não aparece.
 21. **Botão de pausar animações** no cabeçalho, além do "reduzir movimento" do sistema. A escolha fica salva no navegador.
 22. **Entrada ao rolar:** CSS `animation-timeline: view()`. Nos navegadores que ainda não suportam, entra o fallback com `IntersectionObserver`.
 23. **Links seguros:** `urlSegura()` só aceita `http(s)`, arquivos do próprio site e `blob:`; `data:` só para imagem e vídeo enviados no modo local. O banco também recusa redes sem `https://` e e-mail inválido.
