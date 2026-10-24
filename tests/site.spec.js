@@ -151,6 +151,7 @@ test.describe('site público', () => {
     await page.locator('.orcamento-abrir').click();
     const caixa = page.locator('[data-orcamento]');
     await expect(caixa).toBeVisible();
+    expect(await caixa.evaluate((d) => d.scrollWidth - d.clientWidth)).toBeLessThanOrEqual(0);
     await page.locator('[data-orc-discord]').click();
     await expect(page.locator('[data-orc-aviso]')).not.toBeEmpty();
     await caixa.locator('input[name="nome"]').fill('Canal Teste');

@@ -895,7 +895,7 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
 .passo-texto { margin: 0; font-size: 18px; line-height: 1.5; color: var(--preto); }
 
 .orcamento-abrir .botao-miolo { min-height: 54px; padding: 0 30px; font-size: 22px; }
-.orcamento { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; overflow: auto; color: var(--preto); box-shadow: 12px 12px 0 var(--vermelho); }
+.orcamento { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; overflow: hidden auto; color: var(--preto); box-shadow: 12px 12px 0 var(--vermelho); }
 .orcamento::backdrop { background: rgba(6, 6, 7, .86); }
 .orcamento:not([open]) { display: none; }
 .orcamento[open] { animation: orc-entra .35s cubic-bezier(.3, 1.4, .5, 1); }
@@ -911,6 +911,7 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
 .orc-campo textarea { resize: vertical; }
 .orc-campo input:focus-visible, .orc-campo select:focus-visible, .orc-campo textarea:focus-visible { outline: 3px solid var(--vermelho); outline-offset: 2px; }
 .orc-opcoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.orc-tipo { position: relative; }
 .orc-tipo span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; background: var(--preto); color: var(--branco); clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); cursor: pointer; transition: background .15s ease, transform .15s ease; }
 .orc-tipo input:checked + span { background: var(--vermelho); color: var(--branco-puro); transform: rotate(-2deg) scale(1.05); }
 .orc-tipo input:focus-visible + span { outline: 3px solid var(--vermelho-vivo); outline-offset: 3px; }
