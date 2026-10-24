@@ -8,7 +8,7 @@ Decisões tomadas durante a construção, com o motivo de cada uma.
 3. **Nenhum comentário no código** (HTML, CSS, JS, SVG e SQL), nem no que aparece no "inspecionar". O `npm run check:comments` confere isso.
 4. **Identidade de cartaz** (briefing do editor: Persona 5 + Deadlock): vermelho #E3162B, preto e branco. Títulos em New Rocker (a mais parecida com a Goblin entre as fontes livres), janelas anos 2000 (`.janela`) só nas caixas de texto, e um único ponto de destaque por seção.
 5. **Abertura limpa:** nome, frase em janela, botão e showreel. O "papel e tinta" do primeiro protótipo saiu inteiro (`paper.css` e os mockups de `design/` foram apagados).
-6. **Mira de câmera só nos alvos.** A seta do sistema fica sempre visível e sozinha quando o mouse anda solto. Ao passar por botões, links e cards, as quatro cantoneiras saem da ponta da seta e abraçam o elemento. Some com movimento reduzido e não existe em tela de toque.
+6. **Mira de câmera no lugar do cursor de tinta.** A seta do sistema continua visível; a mira acompanha o mouse e "trava" em botões, links e cards, abraçando o elemento. Some com movimento reduzido e não existe em tela de toque.
 7. **Antes e depois** (comparar o bruto com o editado) e a seção de **números** ficaram de fora, a pedido.
 
 ## Técnicas

@@ -1,7 +1,7 @@
 import { reduzMovimento, temMouse } from './animations.js';
 
 const ALVOS = 'a[href], button, [role="tab"], .card, input, select, textarea, label';
-const TAM = 18;
+const TAM = 34;
 const FOLGA = 7;
 
 export function iniciarCursor() {
@@ -20,26 +20,29 @@ export function iniciarCursor() {
   const atual = { x: -200, y: -200, w: TAM, h: TAM };
   let travado = null;
   let visivel = false;
+  let batida = 0;
   let raf = 0;
-
-  const naPonta = () => ({ x: ponteiro.x - TAM / 2, y: ponteiro.y - TAM / 2, w: TAM, h: TAM });
 
   const destino = () => {
     if (travado && travado.isConnected) {
       const r = travado.getBoundingClientRect();
       return { x: r.left - FOLGA, y: r.top - FOLGA, w: r.width + FOLGA * 2, h: r.height + FOLGA * 2 };
     }
-    return naPonta();
+    const lado = TAM * (1 - batida * 0.35);
+    return { x: ponteiro.x - lado / 2, y: ponteiro.y - lado / 2, w: lado, h: lado };
   };
 
   const passo = () => {
     const d = destino();
+    const k = travado ? 0.28 : 0.34;
     let parado = true;
     ['x', 'y', 'w', 'h'].forEach((eixo) => {
       const delta = d[eixo] - atual[eixo];
-      atual[eixo] += delta * 0.26;
+      atual[eixo] += delta * k;
       if (Math.abs(delta) > 0.2) parado = false;
     });
+    batida *= 0.82;
+    if (batida > 0.01) parado = false;
     mira.style.transform = `translate(${atual.x.toFixed(1)}px, ${atual.y.toFixed(1)}px)`;
     mira.style.width = `${atual.w.toFixed(1)}px`;
     mira.style.height = `${atual.h.toFixed(1)}px`;
@@ -53,35 +56,41 @@ export function iniciarCursor() {
     mira.classList.toggle('visivel', sim);
   };
 
-  const mirar = (alvo) => {
-    if (alvo === travado) return;
-    if (alvo && !visivel) Object.assign(atual, naPonta());
-    travado = alvo;
-    mira.classList.toggle('travada', Boolean(alvo));
-    mostrar(Boolean(alvo));
-    animar();
-  };
-
   window.addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse') return;
     if (reduzMovimento()) {
-      mirar(null);
+      mostrar(false);
       return;
     }
     ponteiro.x = e.clientX;
     ponteiro.y = e.clientY;
-    mirar(e.target?.closest?.(ALVOS) ?? null);
+    const alvo = e.target?.closest?.(ALVOS) ?? null;
+    if (alvo !== travado) {
+      travado = alvo;
+      mira.classList.toggle('travada', Boolean(alvo));
+    }
+    if (!visivel) {
+      Object.assign(atual, destino());
+      mostrar(true);
+    }
     animar();
   }, { passive: true });
   window.addEventListener('pointerdown', (e) => {
     if (e.pointerType !== 'mouse' || !visivel) return;
+    batida = 1;
     mira.classList.remove('clique');
     void mira.offsetWidth;
     mira.classList.add('clique');
+    animar();
   });
   window.addEventListener('scroll', () => {
-    if (ponteiro.x < 0) return;
-    mirar(document.elementFromPoint(ponteiro.x, ponteiro.y)?.closest?.(ALVOS) ?? null);
+    if (!visivel) return;
+    const alvo = document.elementFromPoint(ponteiro.x, ponteiro.y)?.closest?.(ALVOS) ?? null;
+    if (alvo !== travado) {
+      travado = alvo;
+      mira.classList.toggle('travada', Boolean(alvo));
+    }
+    animar();
   }, { passive: true });
-  document.documentElement.addEventListener('pointerleave', () => mirar(null));
+  document.documentElement.addEventListener('pointerleave', () => mostrar(false));
 }

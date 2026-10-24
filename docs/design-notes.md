@@ -43,7 +43,7 @@ Contraste: todo texto fica acima de 4,5:1 (axe sem violações no site e no pain
 | Entrada ao rolar | `animation-timeline: view()`, com fallback `IntersectionObserver` |
 | Troca de abas | duas faixas diagonais varrem a tela com o nome da categoria (`varre`) |
 | Player | troca de vídeo com corte (`troca-video`); anterior/próximo pelas setas |
-| Mira | aparece só sobre botões, links e cards: sai da ponta da seta e abraça o elemento; pisca ao clicar e volta para a seta ao sair |
+| Mira | segue o mouse e se ajusta ao tamanho do botão, link ou card; pisca ao clicar |
 | Orçamento | a janela entra com mola (`orc-entra`) |
 
 **Movimento reduzido** (sistema ou botão de pausa no cabeçalho): sem intro, sem mira, sem varredura de abas e sem animações contínuas. Os clipes de prévia pausam. O site fica completo parado.
