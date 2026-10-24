@@ -467,49 +467,6 @@ function renderOffline(origem) {
   if (mostrar) aviso.textContent = t('rodape.offline');
 }
 
-function contar(alvo, valor) {
-  const partes = String(valor).match(/^(\D*)(\d+(?:[.,]\d+)?)(.*)$/);
-  if (!partes || reduzMovimento() || !('IntersectionObserver' in window)) {
-    alvo.textContent = valor;
-    return;
-  }
-  const [, antes, numero, depois] = partes;
-  const fim = Number(numero.replace(',', '.'));
-  const casas = (numero.split(/[.,]/)[1] || '').length;
-  const formatar = (n) => `${antes}${n.toFixed(casas).replace('.', numero.includes(',') ? ',' : '.')}${depois}`;
-  alvo.textContent = formatar(0);
-  const obs = new IntersectionObserver((entradas) => {
-    if (!entradas.some((e) => e.isIntersecting)) return;
-    obs.disconnect();
-    const inicio = performance.now();
-    const passo = (agora) => {
-      const t = Math.min(1, (agora - inicio) / 1300);
-      const suave = 1 - (1 - t) ** 4;
-      alvo.textContent = formatar(fim * suave);
-      if (t < 1) requestAnimationFrame(passo);
-      else alvo.textContent = valor;
-    };
-    requestAnimationFrame(passo);
-  }, { threshold: 0.6 });
-  obs.observe(alvo);
-}
-
-function renderNumeros() {
-  const lista = document.querySelector('[data-lista="numeros"]');
-  const numeros = (estado.db.settings.numeros || []).filter((n) => n?.valor);
-  lista.closest('[data-secao]').hidden = numeros.length === 0;
-  lista.textContent = '';
-  numeros.forEach((n, i) => {
-    const valor = el('span', { class: 'numero-valor', 'aria-hidden': 'true' });
-    const rotulo = campo(n, 'rotulo');
-    lista.append(el('li', { class: `numero ${TILTS[i % 3]}` },
-      valor,
-      el('span', { class: 'numero-rotulo', 'aria-hidden': 'true', text: rotulo }),
-      el('span', { class: 'sr-only', text: `${n.valor} ${rotulo}` })));
-    contar(valor, n.valor);
-  });
-}
-
 function renderDepoimentos() {
   const lista = document.querySelector('[data-lista="depoimentos"]');
   const depoimentos = estado.db.testimonials || [];
@@ -554,7 +511,6 @@ function renderTudo() {
   renderSobre();
   renderFaixas();
   renderClientes();
-  renderNumeros();
   renderDepoimentos();
   renderAbas();
   renderFiltros();

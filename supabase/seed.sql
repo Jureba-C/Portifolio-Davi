@@ -52,7 +52,7 @@ insert into public.testimonials (id, nome, canal, texto_pt, texto_en, ordem) val
   ('6e1fb5e4-35d1-5e8b-93f0-49eb7c253682', 'Léo', 'Clã Vermelho', 'Os shorts dele viraram a nossa vitrine. Identidade própria em cada um, sem cara de modelo pronto.', 'His shorts became our storefront. Each one has its own identity, nothing looks like a template.', 2)
 on conflict (id) do nothing;
 
-insert into public.settings (id, nome, email, sobre_pt, sobre_en, redes, discord_nick, comissoes_abertas, numeros) values
+insert into public.settings (id, nome, email, sobre_pt, sobre_en, redes, discord_nick, comissoes_abertas) values
   (1, 'DECXZ', 'contato@exemplo.com', 'Sou editor de vídeo e motion designer, com *3 anos de experiência profissional*. Especializado em cinematics, vídeos longos, conteúdos verticais e motion design, utilizo Premiere Pro e After Effects para criar projetos com identidade própria.
 
 Combino *movimento, ritmo e sound design* para transformar cada edição em uma experiência audiovisual única. Sem fórmulas prontas, sem padrões engessados.
@@ -61,7 +61,7 @@ Combino *movimento, ritmo e sound design* para transformar cada edição em uma 
 
 I combine *movement, rhythm and sound design* to turn every edit into a unique audiovisual experience. No ready-made formulas, no rigid templates.
 
-*Every project has its own identity. My job is to make you feel it.*', '{"instagram":"https://www.instagram.com/exemplo","x":"https://x.com/exemplo","youtube":"https://www.youtube.com/@exemplo"}'::jsonb, 'decxz.editor', true, '[{"valor":"3","rotulo_pt":"anos editando","rotulo_en":"years editing"},{"valor":"+120","rotulo_pt":"vídeos entregues","rotulo_en":"videos delivered"},{"valor":"+15M","rotulo_pt":"views somadas","rotulo_en":"combined views"},{"valor":"16","rotulo_pt":"canais atendidos","rotulo_en":"channels served"}]'::jsonb)
-on conflict (id) do update set nome = excluded.nome, email = excluded.email, sobre_pt = excluded.sobre_pt, sobre_en = excluded.sobre_en, redes = excluded.redes, discord_nick = excluded.discord_nick, comissoes_abertas = excluded.comissoes_abertas, numeros = excluded.numeros;
+*Every project has its own identity. My job is to make you feel it.*', '{"instagram":"https://www.instagram.com/exemplo","x":"https://x.com/exemplo","youtube":"https://www.youtube.com/@exemplo"}'::jsonb, 'decxz.editor', true)
+on conflict (id) do update set nome = excluded.nome, email = excluded.email, sobre_pt = excluded.sobre_pt, sobre_en = excluded.sobre_en, redes = excluded.redes, discord_nick = excluded.discord_nick, comissoes_abertas = excluded.comissoes_abertas;
 
 commit;

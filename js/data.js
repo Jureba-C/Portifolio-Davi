@@ -68,7 +68,6 @@ function normalizar(db) {
     clients: [...(db?.clients ?? base.clients)].sort(porOrdem),
     testimonials: [...(db?.testimonials ?? base.testimonials)].sort(porOrdem),
   };
-  saida.settings.numeros = Array.isArray(saida.settings.numeros) ? saida.settings.numeros : [];
   saida.settings.redes = { instagram: '', x: '', youtube: '', ...(saida.settings.redes ?? {}) };
   saida.settings.foto_url = saida.settings.foto_url ?? '';
   return saida;

@@ -872,11 +872,6 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
   .idioma[aria-pressed="true"], .chip[aria-selected="true"], .movimento[aria-pressed="true"], .filtro[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
 }
 
-.numeros { position: relative; padding: 24px clamp(16px, 4vw, 64px) 88px; }
-.numeros-lista { list-style: none; margin: 0 auto; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; max-width: 1160px; }
-.numero { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 26px 14px 22px; background: var(--preto-2); border: 3px solid var(--branco); box-shadow: 9px 9px 0 var(--vermelho); text-align: center; }
-.numero-valor { font-family: var(--f-display); font-size: clamp(54px, 6vw, 86px); line-height: .9; color: var(--branco-puro); text-shadow: .05em .05em 0 var(--vermelho); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.numero-rotulo { font-family: var(--f-ui); font-weight: 800; font-size: clamp(16px, 1.5vw, 20px); letter-spacing: .08em; text-transform: uppercase; color: var(--cinza-claro); }
 
 .depoimentos { position: relative; display: flex; flex-direction: column; align-items: center; gap: 48px; padding: 88px clamp(16px, 4vw, 64px) 96px; }
 .depo-titulo { font-size: clamp(64px, 9vw, 130px); text-align: center; }
@@ -934,7 +929,6 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
 @keyframes varre-palavra { 0% { opacity: 0; } 34% { opacity: 1; } 70% { opacity: 0; } }
 
 @media (max-width: 1100px) {
-  .numeros-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; }
   .depo-lista { grid-template-columns: 1fr; max-width: 640px; }
   .processo-lista { grid-template-columns: 1fr; max-width: 560px; gap: 54px; }
   .passo:nth-child(2) { transform: rotate(.8deg); }
@@ -942,11 +936,6 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
 }
 
 @media (max-width: 700px) {
-  .numeros { padding: 8px 16px 64px; }
-  .numeros-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 16px; }
-  .numero { padding: 18px 8px 16px; box-shadow: 6px 6px 0 var(--vermelho); }
-  .numero-valor { font-size: min(60px, 14vw); }
-  .numero-rotulo { font-size: 15px; }
   .depoimentos { padding: 64px 16px 72px; gap: 36px; }
   .depo-titulo { font-size: min(60px, 14vw); }
   .depo-lista { grid-template-columns: 1fr; gap: 40px; }

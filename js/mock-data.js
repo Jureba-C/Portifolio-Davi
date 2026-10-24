@@ -18,12 +18,6 @@ export const MOCK = {
     },
     discord_nick: 'decxz.editor',
     comissoes_abertas: true,
-    numeros: [
-      { valor: '3', rotulo_pt: 'anos editando', rotulo_en: 'years editing' },
-      { valor: '+120', rotulo_pt: 'vídeos entregues', rotulo_en: 'videos delivered' },
-      { valor: '+15M', rotulo_pt: 'views somadas', rotulo_en: 'combined views' },
-      { valor: '16', rotulo_pt: 'canais atendidos', rotulo_en: 'channels served' },
-    ],
   },
   categories: [
     { id: 'c-motion', nome_pt: 'Motion', nome_en: 'Motion', slug: 'motion', ordem: 0, formato: 'horizontal' },

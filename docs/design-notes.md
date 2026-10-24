@@ -41,10 +41,9 @@ Contraste: todo texto fica acima de 4,5:1 (axe sem violações no site e no pain
 | Nome DECXZ | cada letra balança devagar (`onda`, 4,2 s) e pula com mola no hover, inclinando as vizinhas |
 | Aranhas | balançam no fio (`balanca` + `contrapeso`), sobem e descem (`ioio`), mexem as patas (`pata`) e respiram (`respira`). Clique: susto, encolhe as patas e foge. No rodapé, acena |
 | Entrada ao rolar | `animation-timeline: view()`, com fallback `IntersectionObserver` |
-| Números | contam do zero quando aparecem |
 | Troca de abas | duas faixas diagonais varrem a tela com o nome da categoria (`varre`) |
 | Player | troca de vídeo com corte (`troca-video`); anterior/próximo pelas setas |
-| Mira | segue o mouse e se ajusta ao tamanho do botão, link ou card; pisca ao clicar |
+| Mira | aparece só sobre botões, links e cards: sai da ponta da seta e abraça o elemento; pisca ao clicar e volta para a seta ao sair |
 | Orçamento | a janela entra com mola (`orc-entra`) |
 
 **Movimento reduzido** (sistema ou botão de pausa no cabeçalho): sem intro, sem mira, sem varredura de abas e sem animações contínuas. Os clipes de prévia pausam. O site fica completo parado.

@@ -444,9 +444,5 @@
 .login-fundo { background: var(--vermelho); }
 .aviso-modo { border-color: var(--preto); color: var(--preto); background: var(--branco-puro); }
 .chip-filtro, .chip-filtro .icone-botao, .admin-menu a.ativo, .tipo[aria-checked="true"], .selo-cat { color: var(--branco-puro); }
-.numeros-campos { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 14px 16px 16px; border: 2px dashed var(--cinza-2); }
 .campo-legenda { padding: 0 6px; font-size: 17px; font-weight: 700; }
-.numero-linha { display: grid; grid-template-columns: minmax(80px, 120px) 1fr 1fr; gap: 10px; }
-.numero-linha .campo { font-size: 15px; }
 .lista-depos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-@media (max-width: 600px) { .numero-linha { grid-template-columns: 1fr; } }

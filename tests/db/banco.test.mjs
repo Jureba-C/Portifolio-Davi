@@ -124,13 +124,6 @@ test('depoimentos: visitante lê, só admin escreve e reordena', async () => {
   });
 });
 
-test('números do site são uma lista curta', async () => {
-  await assert.rejects(como('authenticated', ADMIN, () => db.query(`update public.settings set numeros = '{"a":1}'::jsonb where id = 1`)));
-  await assert.rejects(como('authenticated', ADMIN, () => db.query(`update public.settings set numeros = '[1,2,3,4,5,6,7]'::jsonb where id = 1`)));
-  const lido = await como('anon', null, () => db.query('select numeros from public.settings where id = 1'));
-  assert.equal(lido.rows[0].numeros.length, 4);
-});
-
 test('reordenar recusa tabela fora da lista', async () => {
   await assert.rejects(como('authenticated', ADMIN, () => db.query("select public.reordenar('admins', array[]::uuid[])")));
 });

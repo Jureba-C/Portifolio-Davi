@@ -261,23 +261,6 @@ function preencherTextos() {
   form.instagram.value = s.redes?.instagram ?? '';
   form.x.value = s.redes?.x ?? '';
   form.youtube.value = s.redes?.youtube ?? '';
-  for (let i = 0; i < 4; i += 1) {
-    const n = (s.numeros || [])[i] || {};
-    form[`numero_valor_${i}`].value = n.valor ?? '';
-    form[`numero_pt_${i}`].value = n.rotulo_pt ?? '';
-    form[`numero_en_${i}`].value = n.rotulo_en ?? '';
-  }
-}
-
-function lerNumeros(form) {
-  const numeros = [];
-  for (let i = 0; i < 4; i += 1) {
-    const valor = form[`numero_valor_${i}`].value.trim();
-    const rotulo_pt = form[`numero_pt_${i}`].value.trim();
-    if (!valor || !rotulo_pt) continue;
-    numeros.push({ valor, rotulo_pt, rotulo_en: form[`numero_en_${i}`].value.trim() });
-  }
-  return numeros;
 }
 
 function renderDepoimentos() {
@@ -834,7 +817,6 @@ function ligarEventos() {
       sobre_pt: form.sobre_pt.value.trim(),
       sobre_en: form.sobre_en.value.trim(),
       discord_nick: form.discord_nick.value.trim(),
-      numeros: lerNumeros(form),
       redes: {
         instagram: urlCompleta(form.instagram.value),
         x: urlCompleta(form.x.value),

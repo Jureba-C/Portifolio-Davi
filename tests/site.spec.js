@@ -307,12 +307,15 @@ test.describe('site público', () => {
       return;
     }
     await expect(mira).toHaveCount(1);
-    await page.mouse.move(700, 500);
-    await expect(mira).toHaveClass(/visivel/);
+    await page.locator('#nome-titulo').hover();
+    await expect(mira).not.toHaveClass(/visivel/);
     await page.locator('.abertura-cta').hover();
+    await expect(mira).toHaveClass(/visivel/);
     await expect(mira).toHaveClass(/travada/);
     const caixa = await page.locator('.abertura-cta').boundingBox();
     await expect.poll(async () => (await mira.boundingBox()).width).toBeGreaterThan(caixa.width);
+    await page.locator('#nome-titulo').hover();
+    await expect(mira).not.toHaveClass(/visivel/);
   });
 });
 

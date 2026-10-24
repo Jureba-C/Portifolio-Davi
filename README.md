@@ -39,10 +39,9 @@ Site-portfólio em cartaz vermelho, preto e branco (Persona 5 + Deadlock, janela
 - Em **depoimentos**, escreva o nome, o canal e o texto (PT e EN). Eles aparecem como balões de quadrinho.
 - Arraste para mudar a ordem. Sem nenhum depoimento, a seção some do site.
 
-### Textos, redes, números e comissões
+### Textos, redes e comissões
 - Em **textos e redes**: nome, e-mail, foto e texto do "sobre mim" (PT e EN), Discord, Instagram, X e YouTube. Clique em **SALVAR NA NUVEM**.
 - No "sobre mim", `*entre asteriscos*` fica em negrito e uma linha em branco separa parágrafos.
-- **Números do site**: até 4 linhas com número e legenda (ex.: `120+` · "vídeos entregues"). Os números contam do zero quando aparecem na tela. Linha em branco não aparece; tudo em branco esconde a seção.
 - A chave **comissões abertas** muda na hora o carimbo do site entre "COMMISSIONS: ON" e "OFF".
 
 ### Categorias e filtros
@@ -97,7 +96,7 @@ npm run check:comments           # garante que o código não tem comentários
 5. Em **Project Settings → API**, copie a **Project URL** e a chave **anon public** para `js/config.js`. Nunca use a chave `service_role` no site.
 6. Em **Authentication → URL Configuration**, coloque o endereço do site em **Site URL**.
 7. Em **Authentication → Sign In / Providers**, desligue **Allow new users to sign up**. Assim ninguém cria conta sozinho; só o admin que você cadastrou entra.
-8. Se já tinha rodado o `schema.sql` antes, rode de novo: ele só acrescenta o que falta (depoimentos, números, travas de links `https://` e de e-mail válido) sem apagar nada.
+8. Se já tinha rodado o `schema.sql` antes, rode de novo: ele só acrescenta o que falta (depoimentos, travas de links `https://` e de e-mail válido) sem apagar nada.
 
 Segurança: todas as tabelas têm Row Level Security. Qualquer pessoa lê. Só quem está logado **e** está na tabela `admins` escreve, reordena ou envia arquivos.
 

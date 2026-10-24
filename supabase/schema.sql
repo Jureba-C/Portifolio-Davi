@@ -80,13 +80,8 @@ as $$
     );
 $$;
 
-alter table public.settings add column if not exists numeros jsonb not null default '[]'::jsonb;
-
 do $$
 begin
-  if not exists (select 1 from pg_constraint where conname = 'settings_numeros_lista') then
-    alter table public.settings add constraint settings_numeros_lista check (jsonb_typeof(numeros) = 'array' and jsonb_array_length(numeros) <= 6);
-  end if;
   if not exists (select 1 from pg_constraint where conname = 'settings_redes_https') then
     alter table public.settings add constraint settings_redes_https check (public.redes_validas(redes));
   end if;
