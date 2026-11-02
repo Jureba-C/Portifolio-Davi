@@ -80,3 +80,19 @@ test('modo demonstração só com PERMITIR_DEMO=1', () => {
     rmSync(r.pasta, { recursive: true, force: true });
   }
 });
+
+test('os caminhos dos cabeçalhos do vercel.json usam só o formato que a Vercel aceita', () => {
+  const { headers } = JSON.parse(readFileSync(join(raiz, 'vercel.json'), 'utf8'));
+  for (const { source } of headers) {
+    let nivel = 0;
+    for (let i = 0; i < source.length; i += 1) {
+      if (source[i] === '\\') { i += 1; continue; }
+      if (source[i] === '(') {
+        assert.equal(nivel, 0, `grupo dentro de grupo em ${source}`);
+        nivel += 1;
+      }
+      if (source[i] === ')') nivel -= 1;
+    }
+    assert.equal(nivel, 0, `parênteses sem par em ${source}`);
+  }
+});
