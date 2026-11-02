@@ -12,42 +12,42 @@ Site-portfólio em cartaz vermelho, preto e branco (Persona 5 + Deadlock, janela
 
 ### Entrar no painel
 1. Abra `seusite.com/admin`.
-2. Entre com o e-mail e a senha que foram criados para você.
+2. Entre com o e-mail e a senha que foram criados para você. O olho ao lado da senha mostra o que você digitou.
 3. Errou? Aparece "credenciais incorretas!". É só tentar de novo.
 
-### Adicionar um vídeo
-1. No menu do painel, clique em **novo vídeo**.
-2. Escolha o **tipo**: Motion, Vertical (Shorts) ou Long Form.
-3. Escreva o **título** e cole o **link do YouTube** (vale `youtube.com/watch?v=…`, `youtu.be/…` ou `/shorts/…`). Vídeos não listados também funcionam.
-4. Se for Long Form, escolha o **filtro** (Gameplay, Documentário…), se quiser.
-5. Envie um **clipe de prévia** (mp4 ou webm, até 15 MB). Ele toca sozinho, sem som e em loop no card e nos destaques. Sem clipe, o site usa a miniatura do YouTube. A **capa** é opcional.
-6. Preencha a descrição em português e em inglês (ex.: o canal e quem participou).
-7. Marque **mostrar nos destaques da abertura** para ele aparecer no topo do site.
-8. Clique em **ADICIONAR VÍDEO**. A prévia ao lado mostra como vai ficar.
+O painel tem um menu com cinco telas: **Vídeos**, **Textos e redes**, **Clientes**, **Depoimentos** e **Categorias**. No celular, o menu fica embaixo. O número ao lado de cada item mostra quantos itens existem.
 
-### Reordenar, editar e excluir
-- Em **seus trabalhos**, arraste pela alça (os seis pontinhos). No teclado: foque a alça e use as setas.
-- O lápis abre a edição na própria linha. O **X** exclui (o painel pede confirmação).
-- A busca filtra a lista. Dá para reordenar com a busca ligada: a ordem dos outros vídeos não muda.
+### Vídeos
+- **Novo vídeo** abre uma gaveta do lado direito:
+  1. Escolha o **tipo** (Motion, Vertical/Shorts, Long Form).
+  2. Cole o **link do YouTube** (`youtube.com/watch?v=…`, `youtu.be/…` ou `/shorts/…`; vídeo não listado também vale). O painel avisa se reconheceu o link.
+  3. Escreva o **título**. No Long Form, escolha o **filtro** se quiser.
+  4. Envie o **clipe de prévia** (mp4 ou webm, até 15 MB) e, se quiser, a **capa**. A lixeira ao lado tira o arquivo.
+  5. Preencha a descrição em português e em inglês e ligue **Mostrar nos destaques** se ele deve aparecer no topo do site.
+  6. O cartão no topo da gaveta mostra como vai ficar. Clique em **Adicionar vídeo**.
+- Na lista, cada vídeo tem: **estrela** (coloca ou tira dos destaques), **lápis** (abre a mesma gaveta para editar) e **lixeira** (exclui, com confirmação).
+- Arraste pela alça (os seis pontinhos) para mudar a ordem. No teclado: foque a alça e use as setas.
+- A busca (atalho `/`) e os botões Todos / Motion / Vertical / Long Form filtram a lista.
+- Se você fechar a gaveta com algo mudado, o painel pergunta se quer descartar.
+
+### Textos e redes
+- **Perfil:** foto do "sobre mim" (enviar ou colar link), nome artístico, e-mail e a chave **Comissões abertas**. A chave muda o selo do site na hora.
+- **Sobre mim:** português e inglês lado a lado, com contador de letras. `*entre asteriscos*` fica em negrito e uma linha em branco separa parágrafos. **Ver como fica** mostra o texto já formatado.
+- **Redes:** Discord, Instagram, X e YouTube. Embaixo de cada link aparece para onde ele vai.
+- Quando algo muda, aparece a barra **Alterações não salvas** com **Descartar** e **Salvar alterações**. Se você tentar sair da tela ou fechar a aba sem salvar, o painel avisa.
 
 ### Clientes
-- Em **clientes**, preencha nome e link do canal. A foto pode ser enviada (até 3 MB) ou colada como link.
-- O site mostra 6 clientes no cartaz. Se houver mais, aparece o botão **ver todos**, que abre a lista completa.
-- Arraste para mudar a ordem: os 6 primeiros são os do cartaz.
+- **Novo cliente** abre uma janela com nome, link do canal e foto (enviar até 3 MB ou colar link). Sem foto, o site mostra as iniciais.
+- Os 6 primeiros têm a etiqueta **no cartaz**. Os outros ficam em **ver todos** no site. Arraste para mudar a ordem.
 
 ### Depoimentos
-- Em **depoimentos**, escreva o nome, o canal e o texto (PT e EN). Eles aparecem como balões de quadrinho.
-- Arraste para mudar a ordem. Sem nenhum depoimento, a seção some do site.
+- **Novo depoimento** abre uma janela com nome, canal e o texto em português e em inglês.
+- O lápis edita e a lixeira exclui. Arraste para mudar a ordem. Sem nenhum depoimento, a seção some do site.
+- Depoimento sem versão em inglês ganha um aviso na lista.
 
-### Textos, redes e comissões
-- Em **textos e redes**: nome, e-mail, foto e texto do "sobre mim" (PT e EN), Discord, Instagram, X e YouTube. Clique em **SALVAR NA NUVEM**.
-- No "sobre mim", `*entre asteriscos*` fica em negrito e uma linha em branco separa parágrafos.
-- A chave **comissões abertas** muda na hora o carimbo do site entre "COMMISSIONS: ON" e "OFF".
-
-### Categorias e filtros
-- **Ordem das categorias**: arraste, renomeie (lápis) ou exclua. Excluir uma categoria apaga os vídeos dela (o painel avisa quantos).
-- O formato 9:16 serve para categorias de vídeos verticais.
-- **Filtros do Long Form**: adicione, remova e arraste. Remover um filtro deixa os vídeos dele sem filtro.
+### Categorias
+- **Abas do site:** arraste para ordenar, renomeie (lápis, com nome em português e em inglês e o formato 16:9 ou 9:16) ou exclua. Excluir uma categoria apaga os vídeos dela (o painel avisa quantos).
+- **Filtros do Long Form:** adicione, remova e arraste. O número em cada filtro mostra quantos vídeos usam. Remover um filtro deixa os vídeos dele sem filtro.
 
 ### Pedidos de orçamento
 - Os botões **CONTRATAR** (cabeçalho) e **PEDIR ORÇAMENTO** (contato) abrem uma janela onde o cliente escreve nome, tipo de vídeo, prazo, referência e detalhes.
@@ -61,7 +61,7 @@ Site-portfólio em cartaz vermelho, preto e branco (Persona 5 + Deadlock, janela
 ### Estrutura
 ```
 index.html · admin.html · 404.html · styleguide.html (guia visual, não é publicado)
-css/      fonts.css · base.css (cores, fontes, janela) · formas.css (recortes, aranhas, intro, animações) · site.css · admin.css
+css/      fonts.css · base.css (cores, fontes, janela) · formas.css (recortes, aranhas, intro, animações) · site.css · admin.css (painel, independente do visual do site)
 js/       config.js (chaves públicas e endereço do site) · supabase.js · data.js (banco + modo local) · i18n.js (textos PT/EN)
           site.js · animations.js · cursor.js (mira) · player.js · previa.js (clipes) · admin.js · dom.js · boot.js (intro) · mock-data.js
           vendor/ (supabase-js e SortableJS empacotados; licenças em LICENCAS.txt)

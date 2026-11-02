@@ -1,10 +1,31 @@
 import { criarApi, extrairIdYoutube, ehLinkDeShort, thumbYoutube, iniciais, loginLocalPermitido } from './data.js';
 import { nuvemConfigurada } from './supabase.js';
-import { el, usoSvg } from './dom.js';
+import { el } from './dom.js';
 
 const api = criarApi();
 const $ = (seletor, raiz = document) => raiz.querySelector(seletor);
 const $$ = (seletor, raiz = document) => [...raiz.querySelectorAll(seletor)];
+
+const ICONES = {
+  videos: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5v5l4.5-2.5z"/>',
+  textos: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+  clientes: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .7 3.3 2.4 3.6 5.2"/>',
+  depoimentos: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+  categorias: '<rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/>',
+  mais: '<path d="M12 5v14M5 12h14"/>',
+  busca: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+  editar: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  lixo: '<path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>',
+  estrela: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  alca: '<circle cx="9" cy="6" r="1.2"/><circle cx="15" cy="6" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="9" cy="18" r="1.2"/><circle cx="15" cy="18" r="1.2"/>',
+  fechar: '<path d="M6 6l12 12M18 6L6 18"/>',
+  upload: '<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>',
+  olho: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  clipe: '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10.5l5-3v9l-5-3"/>',
+  imagem: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 16l5-4 4 3 3-2 6 4"/>',
+  ok: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  alerta: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.2v.1"/>',
+};
 
 const ERROS = {
   'armazenamento-cheio': 'no modo local o navegador não aguenta arquivos grandes. Com o Supabase ligado funciona.',
@@ -13,19 +34,38 @@ const ERROS = {
   'nuvem-nao-configurada': 'o painel ainda não está ligado na nuvem.',
 };
 
+const PAGINAS = ['videos', 'textos', 'clientes', 'depoimentos', 'categorias'];
+const NO_CARTAZ = 6;
+
 let db = null;
 let Sortable = null;
 let painelPronto = false;
+let paginaAtual = null;
 let tipoNovo = null;
+let filtroCategoria = 'todas';
+let editandoVideo = null;
 let editandoCliente = null;
+let editandoDepoimento = null;
 let fotoArquivo = null;
+let textosSalvos = '';
 const arquivos = { 'foto-sobre': null, clipe: null, capa: null };
+const removidos = { clipe: false, capa: false };
 const LIMITES = {
-  'foto-sobre': { tipos: /^image\//, mb: 3, rotulo: 'enviar foto do "sobre mim"' },
-  clipe: { tipos: /^video\/(mp4|webm)$/, mb: 15, rotulo: 'enviar clipe de prévia (mp4 ou webm, até 15 MB)' },
-  capa: { tipos: /^image\//, mb: 3, rotulo: 'enviar capa (opcional)' },
+  'foto-sobre': { tipos: /^image\//, mb: 3, rotulo: 'Trocar foto' },
+  clipe: { tipos: /^video\/(mp4|webm)$/, mb: 15, rotulo: 'Enviar clipe' },
+  capa: { tipos: /^image\//, mb: 3, rotulo: 'Enviar capa' },
 };
 let timerToast;
+
+function icone(nome, classe = 'ic') {
+  const caixa = document.createElement('span');
+  caixa.innerHTML = `<svg class="${classe}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONES[nome] ?? ''}</svg>`;
+  return caixa.firstElementChild;
+}
+
+function pintarIcones(raiz = document) {
+  $$('svg[data-ic]', raiz).forEach((svg) => { svg.innerHTML = ICONES[svg.dataset.ic] ?? ''; });
+}
 
 function erroAmigavel(erro) {
   return ERROS[erro?.message] ?? 'deu ruim! confere a internet e tenta de novo.';
@@ -33,11 +73,12 @@ function erroAmigavel(erro) {
 
 function toast(mensagem, tipo = 'ok') {
   const caixa = $('[data-toast]');
-  caixa.textContent = mensagem;
+  caixa.textContent = '';
+  caixa.append(icone(tipo === 'erro' ? 'alerta' : 'ok', 'ic toast-ic'), el('span', { text: mensagem }));
   caixa.classList.toggle('erro', tipo === 'erro');
   caixa.classList.add('visivel');
   clearTimeout(timerToast);
-  timerToast = setTimeout(() => caixa.classList.remove('visivel'), 2400);
+  timerToast = setTimeout(() => caixa.classList.remove('visivel'), tipo === 'erro' ? 6000 : 2800);
 }
 
 async function acao(fn, mensagem) {
@@ -52,10 +93,24 @@ async function acao(fn, mensagem) {
   }
 }
 
-function confirmar(texto, botao = 'EXCLUIR') {
+async function ocupado(botao, fn) {
+  if (!botao) return fn();
+  botao.disabled = true;
+  botao.setAttribute('aria-busy', 'true');
+  botao.classList.add('ocupado');
+  try {
+    return await fn();
+  } finally {
+    botao.disabled = false;
+    botao.removeAttribute('aria-busy');
+    botao.classList.remove('ocupado');
+  }
+}
+
+function confirmar(texto, botao = 'Excluir') {
   const dialogo = $('[data-confirmar]');
   $('[data-confirmar-texto]', dialogo).textContent = texto;
-  $('.perigo', dialogo).textContent = botao;
+  $('[data-confirmar-sim]', dialogo).textContent = botao;
   dialogo.returnValue = '';
   dialogo.showModal();
   return new Promise((resolver) => {
@@ -88,14 +143,19 @@ function usaFiltros(cat) {
   return cat?.slug === 'long-form';
 }
 
-function botaoIcone(simbolo, rotulo, classe, onclick) {
-  return el('button', { type: 'button', class: `icone-botao ${classe ?? ''}`, 'aria-label': rotulo, onclick }, usoSvg(simbolo, '', 'viewBox="0 0 24 24"'));
+function plural(n, um, varios) {
+  return `${n} ${n === 1 ? um : varios}`;
+}
+
+function botaoIcone(nome, rotulo, classe, onclick, extra = {}) {
+  return el('button', { type: 'button', class: `btn-icone ${classe ?? ''}`, 'aria-label': rotulo, title: rotulo, onclick, ...extra }, icone(nome));
 }
 
 function alca(rotulo, lista, tabela) {
   return el('button', {
     type: 'button',
     class: 'alca',
+    title: 'Arraste para mudar a ordem',
     'aria-label': `${rotulo} — use as setas pra cima e pra baixo`,
     onkeydown: (e) => {
       if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
@@ -103,13 +163,13 @@ function alca(rotulo, lista, tabela) {
       const item = e.currentTarget.closest('[data-id]');
       const subir = e.key === 'ArrowUp' || e.key === 'ArrowLeft';
       const vizinho = subir ? item.previousElementSibling : item.nextElementSibling;
-      if (!vizinho) return;
+      if (!vizinho?.dataset.id) return;
       if (subir) vizinho.before(item);
       else vizinho.after(item);
       e.currentTarget.focus();
       salvarOrdem(tabela, lista());
     },
-  }, usoSvg('alca', '', 'viewBox="0 0 24 24"'));
+  }, icone('alca'));
 }
 
 async function salvarOrdem(tabela, ul) {
@@ -127,6 +187,7 @@ async function salvarOrdem(tabela, ul) {
     const posicao = new Map(ids.map((id, i) => [id, i]));
     db[tabela] = db[tabela].map((r) => ({ ...r, ordem: posicao.get(r.id) ?? r.ordem })).sort((a, b) => a.ordem - b.ordem);
   }, 'ordem salva ✓');
+  if (tabela === 'clients') renderClientes();
 }
 
 function ligarArraste(ul, tabela, handle = '.alca') {
@@ -153,16 +214,17 @@ function mostrarAvisos() {
   const local = loginLocalPermitido();
   avisos.forEach((a) => {
     a.hidden = false;
-    a.innerHTML = '';
+    a.textContent = '';
     if (a.closest('[data-tela="login"]')) {
       a.append(
-        el('strong', { text: local ? 'modo local: ' : 'nuvem desligada: ' }),
+        el('strong', { text: local ? 'Modo local: ' : 'Nuvem desligada: ' }),
         local
-          ? 'o Supabase ainda não foi ligado. Entre com demo@local / demo1234 — as mudanças ficam só neste navegador.'
+          ? 'o Supabase ainda não foi ligado. Entre com demo@local / demo1234. As mudanças ficam só neste navegador.'
           : 'o Supabase ainda não foi configurado (veja o README).',
       );
     } else {
-      a.append(el('strong', { text: 'modo local: ' }), 'as mudanças ficam só neste navegador até ligar o Supabase.');
+      a.textContent = 'modo local';
+      a.title = 'As mudanças ficam só neste navegador até ligar o Supabase.';
     }
   });
   if (!local) $('[data-form="login"] button[type="submit"]').disabled = true;
@@ -182,6 +244,32 @@ async function recarregar() {
   renderTudo();
 }
 
+function paginaDoHash() {
+  const nome = location.hash.slice(1);
+  return PAGINAS.includes(nome) ? nome : 'videos';
+}
+
+async function irPara(pagina, { foco = true, historico = true } = {}) {
+  if (!PAGINAS.includes(pagina)) pagina = 'videos';
+  if (paginaAtual === 'textos' && pagina !== 'textos' && textosAlterados()) {
+    const sair = await confirmar('Você tem alterações não salvas em Textos e redes. Sair sem salvar?', 'Sair sem salvar');
+    if (!sair) {
+      if (location.hash !== '#textos') history.replaceState(null, '', '#textos');
+      return;
+    }
+    preencherTextos();
+  }
+  paginaAtual = pagina;
+  $$('[data-pagina]').forEach((p) => { p.hidden = p.dataset.pagina !== pagina; });
+  $$('[data-ir]').forEach((a) => {
+    if (a.dataset.ir === pagina) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  });
+  if (historico && location.hash !== `#${pagina}`) history.pushState(null, '', `#${pagina}`);
+  window.scrollTo(0, 0);
+  if (foco) $(`#pg-${pagina}`)?.focus({ preventScroll: true });
+}
+
 async function abrirPainel() {
   mostrarTela('painel');
   if (!Sortable) {
@@ -199,10 +287,11 @@ async function abrirPainel() {
     ligarArraste($('[data-lista="categorias"]'), 'categories');
     ligarArraste($('[data-lista="filtros"]'), 'longform_filters');
     ligarArraste($('[data-lista="trabalhos"]'), 'videos');
-    ligarArraste($('[data-lista="clientes"]'), 'clients', '.cliente-avatar');
+    ligarArraste($('[data-lista="clientes"]'), 'clients', '.alca');
     ligarArraste($('[data-lista="depoimentos"]'), 'testimonials');
-    iniciarMenuAtivo();
   }
+  paginaAtual = null;
+  await irPara(paginaDoHash(), { foco: false, historico: false });
 }
 
 function renderTudo() {
@@ -212,15 +301,30 @@ function renderTudo() {
   renderFiltros();
   renderTipos();
   renderFiltrosSelect($('[data-lista="filtros-select"]'));
+  renderFiltroCategoria();
   atualizarPrevia();
   renderTrabalhos();
   renderClientes();
   renderDepoimentos();
+  renderContas();
+}
+
+function renderContas() {
+  const contas = { videos: db.videos.length, clientes: db.clients.length, depoimentos: (db.testimonials || []).length };
+  Object.entries(contas).forEach(([nome, n]) => {
+    const alvo = $(`[data-conta="${nome}"]`);
+    if (alvo) alvo.textContent = String(n);
+  });
 }
 
 function mostrarFotoSobre(url) {
   const img = $('[data-foto-sobre-img]');
   img.src = url || 'assets/avatar-exemplo.svg';
+  img.onerror = () => { img.onerror = null; img.src = 'assets/avatar-exemplo.svg'; };
+}
+
+function tamanho(bytes) {
+  return bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
 function escolherArquivo(tipo, arquivo) {
@@ -229,22 +333,94 @@ function escolherArquivo(tipo, arquivo) {
   if (!limite.tipos.test(arquivo.type)) return toast(tipo === 'clipe' ? 'o clipe precisa ser mp4 ou webm' : 'isso não é uma imagem', 'erro');
   if (arquivo.size > limite.mb * 1024 * 1024) return toast(`arquivo grande demais (máx. ${limite.mb} MB)`, 'erro');
   arquivos[tipo] = arquivo;
-  $(`[data-rotulo="${tipo}"]`).textContent = `✓ ${arquivo.name}`;
-  $(`[data-solta="${tipo}"]`).classList.add('escolhido');
   if (tipo === 'foto-sobre') {
     $('[data-form="textos"]').foto_url.value = '';
     mostrarFotoSobre(URL.createObjectURL(arquivo));
+    $('[data-rotulo="foto-sobre"]').textContent = 'Foto escolhida ✓';
+    atualizarBarraTextos();
+    return;
   }
-  if (tipo !== 'foto-sobre') atualizarPrevia();
+  removidos[tipo] = false;
+  marcarArquivo(tipo, `✓ ${arquivo.name}`, tamanho(arquivo.size));
+  atualizarPrevia();
+}
+
+function marcarArquivo(tipo, nome, info) {
+  const caixa = $(`[data-arquivo="${tipo}"]`);
+  $(`[data-rotulo="${tipo}"]`).textContent = nome;
+  $('.arquivo-info', caixa).textContent = info;
+  caixa.classList.add('escolhido');
+  $(`[data-remover="${tipo}"]`).hidden = false;
 }
 
 function limparArquivo(tipo) {
   arquivos[tipo] = null;
-  const rotulo = $(`[data-rotulo="${tipo}"]`);
-  if (rotulo) rotulo.textContent = LIMITES[tipo].rotulo;
-  $(`[data-solta="${tipo}"]`)?.classList.remove('escolhido');
   const entrada = $(`[data-solta="${tipo}"] input[type="file"]`);
   if (entrada) entrada.value = '';
+  if (tipo === 'foto-sobre') {
+    $('[data-rotulo="foto-sobre"]').textContent = LIMITES[tipo].rotulo;
+    return;
+  }
+  const caixa = $(`[data-arquivo="${tipo}"]`);
+  $(`[data-rotulo="${tipo}"]`).textContent = LIMITES[tipo].rotulo;
+  $('.arquivo-info', caixa).textContent = tipo === 'clipe' ? 'mp4 ou webm, até 15 MB' : 'opcional · imagem até 3 MB';
+  caixa.classList.remove('escolhido');
+  $(`[data-remover="${tipo}"]`).hidden = true;
+}
+
+function estadoTextos() {
+  const form = $('[data-form="textos"]');
+  return JSON.stringify(['nome', 'email', 'foto_url', 'sobre_pt', 'sobre_en', 'discord_nick', 'instagram', 'x', 'youtube'].map((n) => form[n].value.trim()).concat(arquivos['foto-sobre']?.name ?? ''));
+}
+
+function textosAlterados() {
+  return Boolean(db) && estadoTextos() !== textosSalvos;
+}
+
+function atualizarBarraTextos() {
+  $('[data-barra-salvar]').hidden = !textosAlterados();
+}
+
+function atualizarContadores() {
+  const form = $('[data-form="textos"]');
+  ['sobre_pt', 'sobre_en'].forEach((nome) => {
+    const campo = form[nome];
+    $(`[data-contador="${nome}"]`).textContent = `${campo.value.length} / ${campo.maxLength}`;
+  });
+}
+
+function atualizarLinksFinais() {
+  const form = $('[data-form="textos"]');
+  ['instagram', 'x', 'youtube'].forEach((nome) => {
+    const final = urlCompleta(form[nome].value);
+    const alvo = $(`[data-link-final="${nome}"]`);
+    alvo.textContent = form[nome].value.trim() ? (final ? `Vai para ${final}` : 'Link inválido: use só https://') : '';
+    alvo.classList.toggle('erro', Boolean(form[nome].value.trim()) && !final);
+  });
+}
+
+function textoComDestaques(alvo, texto) {
+  alvo.textContent = '';
+  String(texto || '').split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean).forEach((paragrafo) => {
+    const p = el('p');
+    paragrafo.replace(/\s*\n\s*/g, ' ').split(/(\*[^*]+\*)/).forEach((parte) => {
+      if (/^\*[^*]+\*$/.test(parte)) p.append(el('strong', { text: parte.slice(1, -1) }));
+      else if (parte) p.append(parte.replace(/\*/g, ''));
+    });
+    alvo.append(p);
+  });
+  if (!alvo.childNodes.length) alvo.append(el('p', { class: 'vazio', text: 'nada escrito ainda' }));
+}
+
+function atualizarPreviaSobre() {
+  const ligado = $('[data-ver-sobre]').getAttribute('aria-pressed') === 'true';
+  const form = $('[data-form="textos"]');
+  ['sobre_pt', 'sobre_en'].forEach((nome) => {
+    const caixa = $(`[data-sobre-previa="${nome}"]`);
+    caixa.hidden = !ligado;
+    form[nome].hidden = ligado;
+    if (ligado) textoComDestaques(caixa, form[nome].value);
+  });
 }
 
 function preencherTextos() {
@@ -261,51 +437,19 @@ function preencherTextos() {
   form.instagram.value = s.redes?.instagram ?? '';
   form.x.value = s.redes?.x ?? '';
   form.youtube.value = s.redes?.youtube ?? '';
-}
-
-function renderDepoimentos() {
-  const ul = $('[data-lista="depoimentos"]');
-  ul.textContent = '';
-  const lista = db.testimonials || [];
-  if (!lista.length) ul.append(el('li', { class: 'lista-vazia', text: 'nenhum depoimento ainda' }));
-  lista.forEach((d) => {
-    ul.append(el('li', { class: 'corte-c item-ordem', 'data-id': d.id },
-      alca(`Mover depoimento de ${d.nome}`, () => ul, 'testimonials'),
-      el('span', { class: 'item-nome', text: d.canal ? `${d.nome} · ${d.canal}` : d.nome }),
-      el('span', { class: 'item-meta', text: d.texto_pt.length > 60 ? `${d.texto_pt.slice(0, 60)}…` : d.texto_pt }),
-      botaoIcone('xis', `Excluir depoimento de ${d.nome}`, 'excluir', async () => {
-        if (!(await confirmar(`Excluir o depoimento de "${d.nome}"?`))) return;
-        await acao(() => api.excluir('testimonials', d.id), 'depoimento excluído');
-        await recarregar();
-      })));
-  });
-}
-
-async function salvarDepoimento(e) {
-  e.preventDefault();
-  const form = e.currentTarget;
-  const erro = $('[data-depo-erro]');
-  const nome = form.nome.value.trim();
-  const texto_pt = form.texto_pt.value.trim();
-  erro.textContent = '';
-  if (!nome || !texto_pt) {
-    erro.textContent = 'preenche o nome e o depoimento em português!';
-    return;
-  }
-  const ok = await acao(() => api.inserir('testimonials', {
-    nome,
-    canal: form.canal.value.trim(),
-    texto_pt,
-    texto_en: form.texto_en.value.trim(),
-    ordem: (db.testimonials || []).length,
-  }), 'depoimento adicionado ✓');
-  if (ok === undefined) return;
-  form.reset();
-  await recarregar();
+  textosSalvos = estadoTextos();
+  atualizarBarraTextos();
+  atualizarContadores();
+  atualizarLinksFinais();
+  atualizarPreviaSobre();
 }
 
 function renderComissoes() {
   $('[data-comissoes]').setAttribute('aria-pressed', String(Boolean(db.settings.comissoes_abertas)));
+}
+
+function vazio(texto) {
+  return el('li', { class: 'lista-vazia' }, el('span', { class: 'vazio-ic', 'aria-hidden': 'true' }, icone('videos')), el('span', { text: texto }));
 }
 
 function renderCategorias() {
@@ -313,21 +457,25 @@ function renderCategorias() {
   ul.textContent = '';
   db.categories.forEach((cat) => {
     const total = db.videos.filter((v) => v.category_id === cat.id).length;
-    const li = el('li', { class: 'corte-c item-ordem', 'data-id': cat.id });
+    const li = el('li', { class: 'item', 'data-id': cat.id });
     const mostrar = () => {
       li.textContent = '';
+      li.classList.remove('editando');
       li.append(
         alca(`Mover ${cat.nome_pt}`, () => ul, 'categories'),
-        el('span', { class: 'item-nome', text: cat.nome_en && cat.nome_en !== cat.nome_pt ? `${cat.nome_pt} / ${cat.nome_en}` : cat.nome_pt }),
-        el('span', { class: 'item-meta', text: `${total} ${total === 1 ? 'vídeo' : 'vídeos'}${cat.formato === 'vertical' ? ' · 9:16' : ''}` }),
-        botaoIcone('lapis', `Renomear ${cat.nome_pt}`, '', editar),
-        botaoIcone('xis', `Excluir ${cat.nome_pt}`, 'excluir', excluir),
+        el('span', { class: 'item-textos' },
+          el('span', { class: 'item-titulo', text: cat.nome_en && cat.nome_en !== cat.nome_pt ? `${cat.nome_pt} / ${cat.nome_en}` : cat.nome_pt }),
+          el('span', { class: 'item-sub', text: `${plural(total, 'vídeo', 'vídeos')} · ${cat.formato === 'vertical' ? '9:16' : '16:9'}` })),
+        el('span', { class: 'item-acoes' },
+          botaoIcone('editar', `Renomear ${cat.nome_pt}`, '', editar),
+          botaoIcone('lixo', `Excluir ${cat.nome_pt}`, 'btn-icone-perigo', excluir)),
       );
     };
     const editar = () => {
       li.textContent = '';
+      li.classList.add('editando');
       const pt = el('input', { value: cat.nome_pt, 'aria-label': 'nome em português', maxlength: '40' });
-      const en = el('input', { value: cat.nome_en ?? '', 'aria-label': 'nome em inglês', maxlength: '40' });
+      const en = el('input', { value: cat.nome_en ?? '', 'aria-label': 'nome em inglês', maxlength: '40', placeholder: 'em inglês' });
       const formato = el('select', { 'aria-label': 'formato', class: 'select-curto' },
         el('option', { value: 'horizontal', text: '16:9' }),
         el('option', { value: 'vertical', text: '9:16' }));
@@ -339,9 +487,9 @@ function renderCategorias() {
         await recarregar();
       };
       li.append(el('div', { class: 'edicao-inline' }, pt, en, formato,
-        el('div', { class: 'linha-acoes' },
-          el('button', { type: 'button', class: 'botao-pequeno', text: 'salvar', onclick: salvar }),
-          el('button', { type: 'button', class: 'cancelar', text: 'cancelar', onclick: mostrar }))));
+        el('div', { class: 'edicao-botoes' },
+          el('button', { type: 'button', class: 'btn btn-fantasma-escuro btn-pequeno', text: 'Cancelar', onclick: mostrar }),
+          el('button', { type: 'button', class: 'btn btn-primario btn-pequeno', text: 'Salvar', onclick: salvar }))));
       [pt, en].forEach((i) => i.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') salvar();
         if (e.key === 'Escape') mostrar();
@@ -349,7 +497,7 @@ function renderCategorias() {
       pt.focus();
     };
     const excluir = async () => {
-      const aviso = total ? ` Os ${total} ${total === 1 ? 'vídeo' : 'vídeos'} dela também somem.` : '';
+      const aviso = total ? ` ${total === 1 ? 'O vídeo dela também some' : `Os ${total} vídeos dela também somem`}.` : '';
       if (!(await confirmar(`Excluir a categoria "${cat.nome_pt}"?${aviso}`))) return;
       await acao(() => api.excluir('categories', cat.id), 'categoria excluída');
       await recarregar();
@@ -362,23 +510,18 @@ function renderCategorias() {
 function renderFiltros() {
   const ul = $('[data-lista="filtros"]');
   ul.textContent = '';
-  if (!db.longform_filters.length) ul.append(el('li', { class: 'lista-vazia', text: 'nenhum filtro ainda' }));
-  db.longform_filters.forEach((f, i) => {
+  if (!db.longform_filters.length) ul.append(el('li', { class: 'lista-vazia lista-vazia-curta', text: 'nenhum filtro ainda' }));
+  db.longform_filters.forEach((f) => {
     const usados = db.videos.filter((v) => v.filter_id === f.id).length;
-    ul.append(el('li', { class: `chip-filtro ${i % 2 ? 'chanfro-inv' : 'chanfro'}`, 'data-id': f.id },
+    ul.append(el('li', { class: 'chip-filtro', 'data-id': f.id },
       alca(`Mover ${f.nome_pt}`, () => ul, 'longform_filters'),
       el('span', { text: f.nome_pt }),
-      el('button', {
-        type: 'button',
-        class: 'icone-botao',
-        'aria-label': `Remover filtro ${f.nome_pt}`,
-        text: '×',
-        onclick: async () => {
-          const aviso = usados ? ` ${usados} ${usados === 1 ? 'vídeo fica' : 'vídeos ficam'} sem filtro.` : '';
-          if (!(await confirmar(`Remover o filtro "${f.nome_pt}"?${aviso}`, 'REMOVER'))) return;
-          await acao(() => api.excluir('longform_filters', f.id), 'filtro removido');
-          await recarregar();
-        },
+      el('span', { class: 'chip-conta', text: String(usados), title: plural(usados, 'vídeo', 'vídeos') }),
+      botaoIcone('fechar', `Remover filtro ${f.nome_pt}`, 'btn-icone-mini', async () => {
+        const aviso = usados ? ` ${usados} ${usados === 1 ? 'vídeo fica' : 'vídeos ficam'} sem filtro.` : '';
+        if (!(await confirmar(`Remover o filtro "${f.nome_pt}"?${aviso}`, 'Remover'))) return;
+        await acao(() => api.excluir('longform_filters', f.id), 'filtro removido');
+        await recarregar();
       })));
   });
 }
@@ -400,7 +543,7 @@ function renderTipos() {
     alvo.append(el('button', {
       type: 'button',
       role: 'radio',
-      class: `tipo ${i % 2 ? 'chanfro-inv' : 'chanfro'}`,
+      class: 'opcao',
       'aria-checked': String(marcado),
       tabindex: marcado ? '0' : '-1',
       'data-tipo': cat.slug,
@@ -433,10 +576,14 @@ function atualizarPrevia() {
   const thumb = $('[data-previa-thumb]');
   const img = $('[data-previa-img]');
   const video = $('[data-previa-video]');
-  if (arquivos.clipe) {
-    if (video.dataset.nome !== arquivos.clipe.name) {
-      video.dataset.nome = arquivos.clipe.name;
-      video.src = URL.createObjectURL(arquivos.clipe);
+  const clipeAtual = !removidos.clipe && editandoVideo?.preview_url;
+  const capaAtual = !removidos.capa && editandoVideo?.poster_url;
+  const fonteClipe = arquivos.clipe ? URL.createObjectURL(arquivos.clipe) : clipeAtual;
+  const chaveClipe = arquivos.clipe?.name ?? clipeAtual ?? '';
+  if (fonteClipe) {
+    if (video.dataset.nome !== chaveClipe) {
+      video.dataset.nome = chaveClipe;
+      video.src = fonteClipe;
       video.play().catch(() => {});
     }
     video.hidden = false;
@@ -452,26 +599,29 @@ function atualizarPrevia() {
   $('[data-previa-desc]').textContent = form.descricao_pt.value.trim() || '[descrição / participantes]';
   const ajuda = $('[data-link-ajuda]');
   if (!form.link.value.trim()) {
-    ajuda.textContent = '';
+    ajuda.textContent = 'Vale vídeo não listado.';
     ajuda.className = 'campo-ajuda';
   } else if (id) {
-    ajuda.textContent = `✓ vídeo reconhecido (${id})`;
+    ajuda.textContent = ehLinkDeShort(form.link.value) ? `✓ Short reconhecido (${id})` : `✓ vídeo reconhecido (${id})`;
     ajuda.className = 'campo-ajuda ok';
   } else {
     ajuda.textContent = 'não reconheci esse link do YouTube';
     ajuda.className = 'campo-ajuda erro';
   }
-  if (arquivos.capa && !arquivos.clipe) {
-    img.src = URL.createObjectURL(arquivos.capa);
+  const capa = arquivos.capa ? URL.createObjectURL(arquivos.capa) : capaAtual;
+  if (capa && !fonteClipe) {
+    img.src = capa;
     img.hidden = false;
     delete img.dataset.id;
-  } else if (id) {
+  } else if (id && !fonteClipe) {
     if (img.dataset.id !== id) {
       img.dataset.id = id;
       img.hidden = true;
       img.onload = () => { img.hidden = false; };
       img.onerror = () => { img.hidden = true; };
       img.src = thumbYoutube(id);
+    } else {
+      img.hidden = !img.complete || !img.naturalWidth;
     }
   } else {
     img.hidden = true;
@@ -488,43 +638,113 @@ function camposVideo(form) {
   };
 }
 
-async function adicionarVideo(e) {
+function estadoVideo() {
+  const form = $('[data-form="video"]');
+  return JSON.stringify([tipoNovo, form.link.value, form.titulo.value, form.filter_id.value, form.descricao_pt.value, form.descricao_en.value, form.destaque.checked, arquivos.clipe?.name, arquivos.capa?.name, removidos.clipe, removidos.capa]);
+}
+
+const gavetas = {};
+
+function registrarGaveta(nome, { estado, aoFechar }) {
+  const dialogo = $(`[data-gaveta="${nome}"]`);
+  const g = { dialogo, estado, inicial: '', aoFechar };
+  gavetas[nome] = g;
+  const pedirFechar = async () => {
+    if (g.estado() !== g.inicial && !(await confirmar('Descartar o que você mudou?', 'Descartar'))) return;
+    fecharGaveta(nome);
+  };
+  g.pedirFechar = pedirFechar;
+  dialogo.addEventListener('cancel', (e) => {
+    e.preventDefault();
+    pedirFechar();
+  });
+  dialogo.addEventListener('click', (e) => {
+    if (e.target === dialogo) pedirFechar();
+  });
+  $$('[data-fechar]', dialogo).forEach((b) => b.addEventListener('click', pedirFechar));
+}
+
+function abrirGaveta(nome, foco) {
+  const g = gavetas[nome];
+  g.dialogo.showModal();
+  g.dialogo.scrollTop = 0;
+  $('.gaveta-corpo', g.dialogo).scrollTop = 0;
+  g.inicial = g.estado();
+  (foco ?? $('input, textarea', g.dialogo))?.focus();
+}
+
+function fecharGaveta(nome) {
+  const g = gavetas[nome];
+  if (g.dialogo.open) g.dialogo.close();
+  g.aoFechar?.();
+}
+
+function abrirVideo(v = null) {
+  const form = $('[data-form="video"]');
+  editandoVideo = v;
+  form.reset();
+  limparArquivo('clipe');
+  limparArquivo('capa');
+  removidos.clipe = false;
+  removidos.capa = false;
+  $('[data-video-erro]').textContent = '';
+  $('[data-video-titulo]').textContent = v ? 'Editar vídeo' : 'Novo vídeo';
+  $('[data-video-botao]').textContent = v ? 'Salvar vídeo' : 'Adicionar vídeo';
+  if (v) {
+    tipoNovo = v.category_id;
+    form.titulo.value = v.titulo ?? '';
+    form.link.value = v.youtube_id ? `https://youtu.be/${v.youtube_id}` : '';
+    form.descricao_pt.value = v.descricao_pt ?? '';
+    form.descricao_en.value = v.descricao_en ?? '';
+    form.destaque.checked = Boolean(v.destaque);
+    renderFiltrosSelect(form.filter_id, v.filter_id ?? '');
+    if (v.preview_url) marcarArquivo('clipe', 'Clipe atual ✓', 'escolha outro para trocar');
+    if (v.poster_url) marcarArquivo('capa', 'Capa atual ✓', 'escolha outra para trocar');
+  } else if (filtroCategoria !== 'todas') {
+    tipoNovo = filtroCategoria;
+  }
+  renderTipos();
+  atualizarPrevia();
+  abrirGaveta('video', v ? form.titulo : $('[aria-checked="true"]', form));
+}
+
+async function salvarVideo(e) {
   e.preventDefault();
   const form = e.currentTarget;
   const erro = $('[data-video-erro]');
   const dados = camposVideo(form);
   erro.textContent = '';
   if (!tipoNovo) return void (erro.textContent = 'crie uma categoria primeiro!');
-  if (!dados.titulo) {
-    erro.textContent = 'falta o título!';
-    return form.titulo.focus();
-  }
   if (!dados.youtube_id) {
     erro.textContent = 'cola um link do YouTube válido!';
     return form.link.focus();
   }
+  if (!dados.titulo) {
+    erro.textContent = 'falta o título!';
+    return form.titulo.focus();
+  }
   const cat = categoria(tipoNovo);
-  const menor = Math.min(0, ...db.videos.map((v) => v.ordem ?? 0));
-  const botao = $('button[type="submit"]', form);
-  botao.disabled = true;
-  const novo = await acao(async () => {
-    const preview_url = arquivos.clipe ? await api.enviarArquivo(arquivos.clipe, 'previas') : '';
-    const poster_url = arquivos.capa ? await api.enviarArquivo(arquivos.capa, 'capas') : '';
-    return api.inserir('videos', {
+  const v = editandoVideo;
+  const botao = $('[data-video-botao]');
+  const ok = await ocupado(botao, () => acao(async () => {
+    let preview_url = v && !removidos.clipe ? v.preview_url ?? '' : '';
+    let poster_url = v && !removidos.capa ? v.poster_url ?? '' : '';
+    if (arquivos.clipe) preview_url = await api.enviarArquivo(arquivos.clipe, 'previas');
+    if (arquivos.capa) poster_url = await api.enviarArquivo(arquivos.capa, 'capas');
+    const registro = {
       ...dados,
       preview_url,
       poster_url,
       category_id: tipoNovo,
       filter_id: usaFiltros(cat) ? form.filter_id.value || null : null,
       destaque: form.destaque.checked,
-      ordem: menor - 1,
-    });
-  }, 'vídeo adicionado ✓');
-  botao.disabled = false;
-  if (!novo) return;
-  form.reset();
-  limparArquivo('clipe');
-  limparArquivo('capa');
+    };
+    if (v) await api.atualizar('videos', v.id, registro);
+    else await api.inserir('videos', { ...registro, ordem: Math.min(0, ...db.videos.map((x) => x.ordem ?? 0)) - 1 });
+    return true;
+  }, v ? 'vídeo salvo ✓' : 'vídeo adicionado ✓'));
+  if (!ok) return;
+  fecharGaveta('video');
   await recarregar();
 }
 
@@ -532,113 +752,81 @@ function textoBusca() {
   return $('[data-busca]').value.trim().toLowerCase();
 }
 
+function renderFiltroCategoria() {
+  const alvo = $('[data-lista="filtro-categoria"]');
+  if (filtroCategoria !== 'todas' && !db.categories.some((c) => c.id === filtroCategoria)) filtroCategoria = 'todas';
+  alvo.textContent = '';
+  [{ id: 'todas', nome_pt: 'Todos' }, ...db.categories].forEach((c) => {
+    const total = c.id === 'todas' ? db.videos.length : db.videos.filter((v) => v.category_id === c.id).length;
+    alvo.append(el('button', {
+      type: 'button',
+      class: 'chip',
+      'aria-pressed': String(c.id === filtroCategoria),
+      onclick: () => {
+        filtroCategoria = c.id;
+        renderFiltroCategoria();
+        renderTrabalhos();
+      },
+    }, el('span', { text: c.nome_pt }), el('span', { class: 'chip-conta', text: String(total) })));
+  });
+}
+
 function renderTrabalhos() {
   const ul = $('[data-lista="trabalhos"]');
   const busca = textoBusca();
   ul.textContent = '';
   const lista = db.videos.filter((v) => {
+    if (filtroCategoria !== 'todas' && v.category_id !== filtroCategoria) return false;
     if (!busca) return true;
     const cat = categoria(v.category_id);
     return [v.titulo, v.descricao_pt, v.descricao_en, cat?.nome_pt].join(' ').toLowerCase().includes(busca);
   });
   if (!lista.length) {
-    ul.append(el('li', { class: 'lista-vazia', text: busca ? 'nada com esse nome…' : 'nenhum vídeo ainda — adiciona o primeiro aí em cima!' }));
+    ul.append(vazio(busca || filtroCategoria !== 'todas' ? 'Nenhum vídeo encontrado.' : 'Nenhum vídeo ainda. Clique em "Novo vídeo" para adicionar o primeiro.'));
     return;
   }
   lista.forEach((v) => ul.append(itemTrabalho(v, ul)));
 }
 
-function itemTrabalho(v, ul) {
-  const cat = categoria(v.category_id);
-  const destaque = Boolean(v.destaque);
-  const li = el('li', { class: 'corte-c item-trabalho', 'data-id': v.id });
-  const mini = el('span', { class: `corte-c mini-thumb${cat?.formato === 'vertical' ? ' vertical' : ''}`, 'aria-hidden': 'true' });
-  if (v.poster_url || v.youtube_id) {
-    const img = el('img', { src: v.poster_url || thumbYoutube(v.youtube_id, 'mqdefault'), alt: '', loading: 'lazy' });
+function miniatura(v, vertical) {
+  const mini = el('span', { class: `mini${vertical ? ' vertical' : ''}`, 'aria-hidden': 'true' });
+  const src = v.poster_url || (v.youtube_id ? thumbYoutube(v.youtube_id, 'mqdefault') : '');
+  mini.append(icone(v.preview_url ? 'clipe' : 'videos', 'ic mini-ic'));
+  if (src) {
+    const img = el('img', { src, alt: '', loading: 'lazy' });
     img.addEventListener('error', () => img.remove());
     mini.append(img);
   }
+  return mini;
+}
+
+function itemTrabalho(v, ul) {
+  const cat = categoria(v.category_id);
+  const destaque = Boolean(v.destaque);
+  const li = el('li', { class: 'item item-video', 'data-id': v.id });
   const sub = [v.descricao_pt, v.youtube_id ? `youtu.be/${v.youtube_id}` : 'sem link'].filter(Boolean).join(' · ');
-  li.append(...[
-    el('div', { class: 'item-principal' },
-      alca(`Mover ${v.titulo}`, () => ul, 'videos'),
-      mini,
-      el('span', { class: 'item-textos' },
-        el('span', { class: 'item-titulo', text: v.titulo }),
-        el('span', { class: 'item-sub', text: sub }))),
-    v.preview_url ? el('span', { class: 'selo-clipe', text: 'clipe' }) : null,
-    destaque ? el('span', { class: 'selo-destaque', text: 'destaque' }) : null,
-    el('span', { class: 'chanfro selo-cat', text: (cat?.nome_pt ?? '?').toUpperCase() }),
-    el('div', { class: 'item-acoes' },
-      botaoIcone('lapis', `Editar ${v.titulo}`, '', () => editarVideo(li, v)),
-      botaoIcone('xis', `Excluir ${v.titulo}`, 'excluir', async () => {
+  li.append(
+    alca(`Mover ${v.titulo}`, () => ul, 'videos'),
+    miniatura(v, cat?.formato === 'vertical'),
+    el('span', { class: 'item-textos' },
+      el('span', { class: 'item-titulo', text: v.titulo }),
+      el('span', { class: 'item-sub', text: sub })),
+    el('span', { class: 'etiquetas' },
+      el('span', { class: 'etiqueta-cat', text: cat?.nome_pt ?? '?' }),
+      v.preview_url ? el('span', { class: 'etiqueta-clipe', text: 'clipe' }) : null),
+    el('span', { class: 'item-acoes' },
+      botaoIcone('estrela', destaque ? `Tirar ${v.titulo} dos destaques` : `Destacar ${v.titulo}`, `btn-destaque${destaque ? ' ativo' : ''}`, async () => {
+        await acao(() => api.atualizar('videos', v.id, { destaque: !destaque }), destaque ? 'saiu dos destaques' : 'agora está nos destaques ✓');
+        await recarregar();
+      }, { 'aria-pressed': String(destaque) }),
+      botaoIcone('editar', `Editar ${v.titulo}`, '', () => abrirVideo(v)),
+      botaoIcone('lixo', `Excluir ${v.titulo}`, 'btn-icone-perigo', async () => {
         if (!(await confirmar(`Excluir "${v.titulo}"? Ele sai do site na hora.`))) return;
         await acao(() => api.excluir('videos', v.id), 'vídeo excluído');
         await recarregar();
       })),
-  ].filter(Boolean));
-  return li;
-}
-
-function editarVideo(li, v) {
-  if ($('.form-edicao', li)) return;
-  const form = el('form', { class: 'form-edicao', novalidate: true });
-  const campo = (rotulo, entrada) => el('label', { class: 'campo' }, rotulo, entrada);
-  const titulo = el('input', { name: 'titulo', class: 'chanfro', value: v.titulo, maxlength: '120' });
-  const cat = el('select', { name: 'category_id', class: 'chanfro-inv' }, db.categories.map((c) => el('option', { value: c.id, text: c.nome_pt })));
-  cat.value = v.category_id;
-  const filtro = el('select', { name: 'filter_id', class: 'chanfro' });
-  renderFiltrosSelect(filtro, v.filter_id ?? '');
-  const filtroCampo = campo('filtro', filtro);
-  const link = el('input', { name: 'link', class: 'chanfro-inv', value: v.youtube_id ? `https://youtu.be/${v.youtube_id}` : '' });
-  const descPt = el('input', { name: 'descricao_pt', class: 'chanfro', value: v.descricao_pt ?? '', maxlength: '160' });
-  const descEn = el('input', { name: 'descricao_en', class: 'chanfro-inv', value: v.descricao_en ?? '', maxlength: '160' });
-  const destaque = el('input', { type: 'checkbox', name: 'destaque' });
-  destaque.checked = Boolean(v.destaque);
-  const clipe = el('input', { type: 'file', name: 'clipe', accept: 'video/mp4,video/webm' });
-  const semClipe = el('input', { type: 'checkbox', name: 'sem_clipe' });
-  const erro = el('p', { class: 'form-erro rabisco', role: 'alert' });
-  const ajustarFiltro = () => { filtroCampo.hidden = !usaFiltros(categoria(cat.value)); };
-  cat.addEventListener('change', ajustarFiltro);
-  ajustarFiltro();
-  form.append(
-    campo('título', titulo), campo('categoria', cat), filtroCampo, campo('link do YouTube', link),
-    campo('descrição (PT)', descPt), campo('descrição (EN)', descEn),
-    campo(v.preview_url ? 'trocar clipe de prévia' : 'clipe de prévia (mp4/webm)', clipe),
-    v.preview_url ? el('label', { class: 'checagem' }, semClipe, ' tirar o clipe atual') : null,
-    el('label', { class: 'checagem' }, destaque, ' mostrar nos destaques'),
-    erro,
-    el('div', { class: 'linha-acoes' },
-      el('button', { type: 'submit', class: 'botao-pequeno', text: 'salvar' }),
-      el('button', { type: 'button', class: 'cancelar', text: 'cancelar', onclick: () => form.remove() })),
   );
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const dados = camposVideo(form);
-    if (!dados.titulo) return void (erro.textContent = 'falta o título!');
-    if (!dados.youtube_id) return void (erro.textContent = 'link do YouTube inválido!');
-    const novoClipe = clipe.files?.[0];
-    if (novoClipe && (!LIMITES.clipe.tipos.test(novoClipe.type) || novoClipe.size > LIMITES.clipe.mb * 1024 * 1024)) {
-      erro.textContent = 'o clipe precisa ser mp4 ou webm de até 15 MB';
-      return;
-    }
-    const ok = await acao(async () => {
-      let preview_url = v.preview_url ?? '';
-      if (novoClipe) preview_url = await api.enviarArquivo(novoClipe, 'previas');
-      else if (semClipe.checked) preview_url = '';
-      await api.atualizar('videos', v.id, {
-        ...dados,
-        preview_url,
-        destaque: destaque.checked,
-        category_id: cat.value,
-        filter_id: usaFiltros(categoria(cat.value)) ? filtro.value || null : null,
-      });
-      return true;
-    }, 'vídeo salvo ✓');
-    if (ok) await recarregar();
-  });
-  li.append(form);
-  titulo.focus();
+  return li;
 }
 
 function avatar(c, classe = 'cliente-rosto') {
@@ -656,59 +844,60 @@ function avatar(c, classe = 'cliente-rosto') {
 function renderClientes() {
   const ul = $('[data-lista="clientes"]');
   ul.textContent = '';
-  if (!db.clients.length) ul.append(el('li', { class: 'lista-vazia', text: 'nenhum cliente ainda' }));
-  db.clients.forEach((c) => {
-    ul.append(el('li', { class: 'cliente-item', 'data-id': c.id },
-      el('span', { class: 'cliente-avatar', title: 'arraste pra reordenar' },
-        el('span', { class: 'cliente-sombra', 'aria-hidden': 'true' }), avatar(c)),
-      el('span', { class: 'cliente-nome', text: c.nome }),
-      el('div', { class: 'cliente-acoes' },
-        botaoIcone('lapis', `Editar cliente ${c.nome}`, '', () => editarCliente(c)),
-        botaoIcone('xis', `Excluir cliente ${c.nome}`, 'excluir', async () => {
+  if (!db.clients.length) ul.append(vazio('Nenhum cliente ainda. Clique em "Novo cliente".'));
+  db.clients.forEach((c, i) => {
+    let dominio = '';
+    try { dominio = c.canal_url ? new URL(c.canal_url).hostname.replace(/^www\./, '') : ''; } catch { dominio = ''; }
+    ul.append(el('li', { class: 'cliente', 'data-id': c.id },
+      alca(`Mover cliente ${c.nome}`, () => ul, 'clients'),
+      avatar(c),
+      el('span', { class: 'cliente-textos' },
+        el('span', { class: 'cliente-nome', text: c.nome }),
+        el('span', { class: 'cliente-linha' },
+          el('span', { class: `etiqueta-lugar${i < NO_CARTAZ ? ' cartaz' : ''}`, text: i < NO_CARTAZ ? 'no cartaz' : 'em ver todos' }),
+          el('span', { class: 'item-sub', text: dominio || 'sem link' }))),
+      el('span', { class: 'item-acoes' },
+        botaoIcone('editar', `Editar cliente ${c.nome}`, '', () => abrirCliente(c)),
+        botaoIcone('lixo', `Excluir cliente ${c.nome}`, 'btn-icone-perigo', async () => {
           if (!(await confirmar(`Excluir o cliente "${c.nome}"?`))) return;
           await acao(() => api.excluir('clients', c.id), 'cliente excluído');
-          if (editandoCliente?.id === c.id) limparCliente();
           await recarregar();
         }))));
   });
 }
 
-function mostrarFoto(url) {
-  const rotulo = $('[data-foto-rotulo]');
-  const caixa = $('[data-solta-foto]');
-  $('img', caixa)?.remove();
+function mostrarFotoCliente(url, nome = '') {
+  const caixa = $('[data-cliente-previa]');
+  caixa.textContent = '';
   if (url) {
-    caixa.insertBefore(el('img', { src: url, alt: '' }), rotulo);
-    rotulo.textContent = 'trocar foto';
+    const img = el('img', { src: url, alt: '' });
+    img.addEventListener('error', () => { caixa.textContent = iniciais(nome || '?'); });
+    caixa.append(img);
+    $('[data-foto-rotulo]').textContent = 'Trocar foto';
   } else {
-    rotulo.textContent = 'enviar foto';
+    caixa.append(icone('upload'));
+    $('[data-foto-rotulo]').textContent = 'Enviar foto';
   }
 }
 
-function editarCliente(c) {
+function estadoCliente() {
+  const form = $('[data-form="cliente"]');
+  return JSON.stringify([form.nome.value, form.canal_url.value, form.foto_url.value, fotoArquivo?.name]);
+}
+
+function abrirCliente(c = null) {
   editandoCliente = c;
   fotoArquivo = null;
   const form = $('[data-form="cliente"]');
-  form.nome.value = c.nome;
-  form.canal_url.value = c.canal_url ?? '';
-  form.foto_url.value = c.foto_url?.startsWith('data:') ? '' : c.foto_url ?? '';
-  mostrarFoto(c.foto_url);
-  $('[data-cliente-titulo]').textContent = 'EDITAR CLIENTE';
-  $('[data-cliente-botao]').textContent = 'SALVAR CLIENTE';
-  $('[data-cliente-cancelar]').hidden = false;
-  form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  form.nome.focus({ preventScroll: true });
-}
-
-function limparCliente() {
-  editandoCliente = null;
-  fotoArquivo = null;
-  $('[data-form="cliente"]').reset();
-  mostrarFoto('');
-  $('[data-cliente-titulo]').textContent = 'NOVO CLIENTE';
-  $('[data-cliente-botao]').textContent = 'ADICIONAR CLIENTE';
-  $('[data-cliente-cancelar]').hidden = true;
+  form.reset();
   $('[data-cliente-erro]').textContent = '';
+  form.nome.value = c?.nome ?? '';
+  form.canal_url.value = c?.canal_url ?? '';
+  form.foto_url.value = c?.foto_url && !c.foto_url.startsWith('data:') ? c.foto_url : '';
+  mostrarFotoCliente(c?.foto_url ?? '', c?.nome);
+  $('[data-cliente-titulo]').textContent = c ? 'Editar cliente' : 'Novo cliente';
+  $('[data-cliente-botao]').textContent = c ? 'Salvar cliente' : 'Adicionar cliente';
+  abrirGaveta('cliente', form.nome);
 }
 
 function escolherFoto(arquivo) {
@@ -717,7 +906,7 @@ function escolherFoto(arquivo) {
   if (arquivo.size > 3 * 1024 * 1024) return toast('foto grande demais (máx. 3 MB)', 'erro');
   fotoArquivo = arquivo;
   $('[data-form="cliente"]').foto_url.value = '';
-  mostrarFoto(URL.createObjectURL(arquivo));
+  mostrarFotoCliente(URL.createObjectURL(arquivo));
 }
 
 async function salvarCliente(e) {
@@ -730,40 +919,144 @@ async function salvarCliente(e) {
     erro.textContent = 'falta o nome!';
     return form.nome.focus();
   }
-  const ok = await acao(async () => {
+  const c = editandoCliente;
+  const ok = await ocupado($('[data-cliente-botao]'), () => acao(async () => {
     let foto = urlCompleta(form.foto_url.value);
     if (fotoArquivo) foto = await api.enviarArquivo(fotoArquivo, 'clientes');
-    else if (!foto && editandoCliente) foto = editandoCliente.foto_url?.startsWith('data:') ? editandoCliente.foto_url : '';
+    else if (!foto && c) foto = c.foto_url?.startsWith('data:') ? c.foto_url : '';
     const dados = { nome, canal_url: urlCompleta(form.canal_url.value), foto_url: foto };
-    if (editandoCliente) await api.atualizar('clients', editandoCliente.id, dados);
+    if (c) await api.atualizar('clients', c.id, dados);
     else await api.inserir('clients', { ...dados, ordem: db.clients.length });
     return true;
-  }, editandoCliente ? 'cliente salvo ✓' : 'cliente adicionado ✓');
+  }, c ? 'cliente salvo ✓' : 'cliente adicionado ✓'));
   if (!ok) return;
-  limparCliente();
+  fecharGaveta('cliente');
   await recarregar();
 }
 
-function iniciarMenuAtivo() {
-  const links = $$('.admin-menu a');
-  const alvos = links.map((a) => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
-  if (!('IntersectionObserver' in window)) return;
-  const observador = new IntersectionObserver((entradas) => {
-    entradas.forEach((entrada) => {
-      if (!entrada.isIntersecting) return;
-      links.forEach((a) => {
-        const ativo = a.getAttribute('href') === `#${entrada.target.id}`;
-        a.classList.toggle('ativo', ativo);
-        a.classList.toggle('chanfro', ativo);
-        if (ativo) a.setAttribute('aria-current', 'true');
-        else a.removeAttribute('aria-current');
-      });
-    });
-  }, { rootMargin: '-30% 0px -60% 0px' });
-  alvos.forEach((alvo) => observador.observe(alvo));
+function renderDepoimentos() {
+  const ul = $('[data-lista="depoimentos"]');
+  ul.textContent = '';
+  const lista = db.testimonials || [];
+  if (!lista.length) ul.append(vazio('Nenhum depoimento ainda. Clique em "Novo depoimento".'));
+  lista.forEach((d) => {
+    ul.append(el('li', { class: 'item item-depo', 'data-id': d.id },
+      alca(`Mover depoimento de ${d.nome}`, () => ul, 'testimonials'),
+      el('span', { class: 'item-textos' },
+        el('span', { class: 'item-titulo', text: d.canal ? `${d.nome} · ${d.canal}` : d.nome }),
+        el('span', { class: 'item-citacao', text: `“${d.texto_pt}”` }),
+        d.texto_en ? null : el('span', { class: 'item-aviso', text: 'sem versão em inglês' })),
+      el('span', { class: 'item-acoes' },
+        botaoIcone('editar', `Editar depoimento de ${d.nome}`, '', () => abrirDepoimento(d)),
+        botaoIcone('lixo', `Excluir depoimento de ${d.nome}`, 'btn-icone-perigo', async () => {
+          if (!(await confirmar(`Excluir o depoimento de "${d.nome}"?`))) return;
+          await acao(() => api.excluir('testimonials', d.id), 'depoimento excluído');
+          await recarregar();
+        }))));
+  });
+}
+
+function estadoDepoimento() {
+  const form = $('[data-form="depoimento"]');
+  return JSON.stringify([form.nome.value, form.canal.value, form.texto_pt.value, form.texto_en.value]);
+}
+
+function abrirDepoimento(d = null) {
+  editandoDepoimento = d;
+  const form = $('[data-form="depoimento"]');
+  form.reset();
+  $('[data-depo-erro]').textContent = '';
+  form.nome.value = d?.nome ?? '';
+  form.canal.value = d?.canal ?? '';
+  form.texto_pt.value = d?.texto_pt ?? '';
+  form.texto_en.value = d?.texto_en ?? '';
+  $('[data-depo-titulo]').textContent = d ? 'Editar depoimento' : 'Novo depoimento';
+  $('[data-depo-botao]').textContent = d ? 'Salvar depoimento' : 'Adicionar depoimento';
+  abrirGaveta('depoimento', form.nome);
+}
+
+async function salvarDepoimento(e) {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const erro = $('[data-depo-erro]');
+  const nome = form.nome.value.trim();
+  const texto_pt = form.texto_pt.value.trim();
+  erro.textContent = '';
+  if (!nome || !texto_pt) {
+    erro.textContent = 'preenche o nome e o depoimento em português!';
+    return (nome ? form.texto_pt : form.nome).focus();
+  }
+  const d = editandoDepoimento;
+  const dados = { nome, canal: form.canal.value.trim(), texto_pt, texto_en: form.texto_en.value.trim() };
+  const ok = await ocupado($('[data-depo-botao]'), () => acao(async () => {
+    if (d) await api.atualizar('testimonials', d.id, dados);
+    else await api.inserir('testimonials', { ...dados, ordem: (db.testimonials || []).length });
+    return true;
+  }, d ? 'depoimento salvo ✓' : 'depoimento adicionado ✓'));
+  if (!ok) return;
+  fecharGaveta('depoimento');
+  await recarregar();
+}
+
+async function salvarTextos(e) {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const nome = form.nome.value.trim();
+  if (!nome) {
+    toast('o nome artístico não pode ficar vazio', 'erro');
+    return form.nome.focus();
+  }
+  const redes = { instagram: urlCompleta(form.instagram.value), x: urlCompleta(form.x.value), youtube: urlCompleta(form.youtube.value) };
+  const ruim = Object.keys(redes).find((r) => form[r].value.trim() && !redes[r]);
+  if (ruim) {
+    toast('tem um link de rede inválido', 'erro');
+    return form[ruim].focus();
+  }
+  const botao = $('button[type="submit"]', form);
+  const ok = await ocupado(botao, async () => {
+    let foto_url = urlCompleta(form.foto_url.value) || (db.settings.foto_url ?? '');
+    if (arquivos['foto-sobre']) {
+      const enviada = await acao(() => api.enviarArquivo(arquivos['foto-sobre'], 'sobre'));
+      if (!enviada) return false;
+      foto_url = enviada;
+    }
+    const patch = {
+      nome,
+      foto_url,
+      email: form.email.value.trim(),
+      sobre_pt: form.sobre_pt.value.trim(),
+      sobre_en: form.sobre_en.value.trim(),
+      discord_nick: form.discord_nick.value.trim(),
+      redes,
+    };
+    const salvo = await acao(() => api.salvarSettings(patch), 'textos salvos ✓');
+    if (salvo === undefined) return false;
+    Object.assign(db.settings, patch);
+    return true;
+  });
+  if (!ok) return;
+  preencherTextos();
+  renderTudo();
+  const aviso = $('[data-salvo]');
+  aviso.textContent = 'salvo ✓';
+  setTimeout(() => { aviso.textContent = ''; }, 2500);
+}
+
+function ligarSoltar(caixa, aoSoltar) {
+  ['dragenter', 'dragover'].forEach((ev) => caixa.addEventListener(ev, (e) => {
+    e.preventDefault();
+    caixa.classList.add('solta');
+  }));
+  ['dragleave', 'drop'].forEach((ev) => caixa.addEventListener(ev, () => caixa.classList.remove('solta')));
+  caixa.addEventListener('drop', (e) => {
+    e.preventDefault();
+    aoSoltar(e.dataTransfer?.files?.[0]);
+  });
 }
 
 function ligarEventos() {
+  pintarIcones();
+
   $('[data-form="login"]').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -785,60 +1078,83 @@ function ligarEventos() {
     }
   });
 
+  $('[data-ver-senha]').addEventListener('click', (e) => {
+    const botao = e.currentTarget;
+    const senha = $('[data-form="login"]').senha;
+    const ver = senha.type === 'password';
+    senha.type = ver ? 'text' : 'password';
+    botao.setAttribute('aria-pressed', String(ver));
+    botao.setAttribute('aria-label', ver ? 'Esconder senha' : 'Mostrar senha');
+  });
+
   $('[data-sair]').addEventListener('click', async () => {
+    if (textosAlterados() && !(await confirmar('Você tem alterações não salvas. Sair mesmo assim?', 'Sair'))) return;
     await api.sair().catch(() => {});
+    db = null;
     mostrarLogin();
   });
 
-  $('[data-comissoes]').addEventListener('click', async () => {
+  $$('[data-ir]').forEach((a) => a.addEventListener('click', (e) => {
+    e.preventDefault();
+    irPara(a.dataset.ir);
+  }));
+  window.addEventListener('popstate', () => {
+    if (db && !$('[data-tela="painel"]').hidden) irPara(paginaDoHash(), { historico: false });
+  });
+  window.addEventListener('beforeunload', (e) => {
+    if (!textosAlterados()) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== '/' || paginaAtual !== 'videos' || document.querySelector('dialog[open]')) return;
+    if (e.target.closest('input, textarea, select, [contenteditable]')) return;
+    e.preventDefault();
+    $('[data-busca]').focus();
+  });
+
+  $('[data-comissoes]').addEventListener('click', async (e) => {
+    const botao = e.currentTarget;
     const aberto = !db.settings.comissoes_abertas;
-    const ok = await acao(() => api.salvarSettings({ comissoes_abertas: aberto }), aberto ? 'comissões abertas ✓' : 'comissões fechadas');
+    const ok = await ocupado(botao, () => acao(() => api.salvarSettings({ comissoes_abertas: aberto }), aberto ? 'comissões abertas ✓' : 'comissões fechadas'));
     if (ok !== undefined) {
       db.settings.comissoes_abertas = aberto;
       renderComissoes();
     }
   });
 
-  $('[data-form="textos"]').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const nome = form.nome.value.trim();
-    if (!nome) return form.nome.focus();
-    let foto_url = urlCompleta(form.foto_url.value) || (db.settings.foto_url ?? '');
-    if (arquivos['foto-sobre']) {
-      const enviada = await acao(() => api.enviarArquivo(arquivos['foto-sobre'], 'sobre'));
-      if (!enviada) return;
-      foto_url = enviada;
-    }
-    const patch = {
-      nome,
-      foto_url,
-      email: form.email.value.trim(),
-      sobre_pt: form.sobre_pt.value.trim(),
-      sobre_en: form.sobre_en.value.trim(),
-      discord_nick: form.discord_nick.value.trim(),
-      redes: {
-        instagram: urlCompleta(form.instagram.value),
-        x: urlCompleta(form.x.value),
-        youtube: urlCompleta(form.youtube.value),
-      },
-    };
-    const ok = await acao(() => api.salvarSettings(patch), 'textos salvos na nuvem ✓');
-    if (ok === undefined) return;
-    Object.assign(db.settings, patch);
-    preencherTextos();
-    renderTudo();
-    const salvo = $('[data-salvo]');
-    salvo.textContent = 'salvo ✓';
-    setTimeout(() => { salvo.textContent = ''; }, 2000);
+  const formTextos = $('[data-form="textos"]');
+  formTextos.addEventListener('submit', salvarTextos);
+  formTextos.addEventListener('input', () => {
+    atualizarBarraTextos();
+    atualizarContadores();
+    atualizarLinksFinais();
   });
+  formTextos.foto_url.addEventListener('input', (e) => {
+    limparArquivo('foto-sobre');
+    mostrarFotoSobre(urlCompleta(e.target.value) || db.settings.foto_url);
+  });
+  $('[data-descartar]').addEventListener('click', () => {
+    preencherTextos();
+    toast('alterações descartadas');
+  });
+  $('[data-ver-sobre]').addEventListener('click', (e) => {
+    const botao = e.currentTarget;
+    const ligar = botao.getAttribute('aria-pressed') !== 'true';
+    botao.setAttribute('aria-pressed', String(ligar));
+    botao.textContent = ligar ? 'Voltar a editar' : 'Ver como fica';
+    atualizarPreviaSobre();
+  });
+  const soltaSobre = $('[data-solta="foto-sobre"]');
+  $('input[type="file"]', soltaSobre).addEventListener('change', (e) => escolherArquivo('foto-sobre', e.target.files?.[0]));
+  ligarSoltar(soltaSobre, (arquivo) => escolherArquivo('foto-sobre', arquivo));
 
   $('[data-form="categoria"]').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.currentTarget;
     const nome = form.nome.value.trim();
     if (!nome) return form.nome.focus();
-    let base = slug(nome);
+    const base = slug(nome);
     let s = base;
     let n = 2;
     while (db.categories.some((c) => c.slug === s)) s = `${base}-${n++}`;
@@ -857,29 +1173,28 @@ function ligarEventos() {
     await recarregar();
   });
 
-  Object.keys(LIMITES).forEach((tipo) => {
+  registrarGaveta('video', { estado: estadoVideo, aoFechar: () => { editandoVideo = null; } });
+  registrarGaveta('cliente', { estado: estadoCliente, aoFechar: () => { editandoCliente = null; fotoArquivo = null; } });
+  registrarGaveta('depoimento', { estado: estadoDepoimento, aoFechar: () => { editandoDepoimento = null; } });
+
+  $('[data-novo-video]').addEventListener('click', () => abrirVideo());
+  $('[data-novo-cliente]').addEventListener('click', () => abrirCliente());
+  $('[data-novo-depoimento]').addEventListener('click', () => abrirDepoimento());
+
+  ['clipe', 'capa'].forEach((tipo) => {
     const caixa = $(`[data-solta="${tipo}"]`);
-    if (!caixa) return;
     $('input[type="file"]', caixa).addEventListener('change', (e) => escolherArquivo(tipo, e.target.files?.[0]));
-    ['dragenter', 'dragover'].forEach((ev) => caixa.addEventListener(ev, (e) => {
-      e.preventDefault();
-      caixa.classList.add('solta');
-    }));
-    ['dragleave', 'drop'].forEach((ev) => caixa.addEventListener(ev, () => caixa.classList.remove('solta')));
-    caixa.addEventListener('drop', (e) => {
-      e.preventDefault();
-      escolherArquivo(tipo, e.dataTransfer?.files?.[0]);
+    ligarSoltar(caixa, (arquivo) => escolherArquivo(tipo, arquivo));
+    $(`[data-remover="${tipo}"]`).addEventListener('click', () => {
+      limparArquivo(tipo);
+      if (editandoVideo?.[tipo === 'clipe' ? 'preview_url' : 'poster_url']) removidos[tipo] = true;
+      atualizarPrevia();
     });
-  });
-  $('[data-form="textos"]').foto_url.addEventListener('input', (e) => {
-    limparArquivo('foto-sobre');
-    mostrarFotoSobre(urlCompleta(e.target.value) || db.settings.foto_url);
   });
 
   const formVideo = $('[data-form="video"]');
   formVideo.addEventListener('input', atualizarPrevia);
-  formVideo.addEventListener('reset', () => setTimeout(atualizarPrevia));
-  formVideo.addEventListener('submit', adicionarVideo);
+  formVideo.addEventListener('submit', salvarVideo);
 
   $('[data-busca]').addEventListener('input', renderTrabalhos);
 
@@ -890,19 +1205,9 @@ function ligarEventos() {
   formCliente.arquivo.addEventListener('change', (e) => escolherFoto(e.target.files?.[0]));
   formCliente.foto_url.addEventListener('input', (e) => {
     fotoArquivo = null;
-    mostrarFoto(urlCompleta(e.target.value));
+    mostrarFotoCliente(urlCompleta(e.target.value), formCliente.nome.value);
   });
-  $('[data-cliente-cancelar]').addEventListener('click', limparCliente);
-  const solta = $('[data-solta-foto]');
-  ['dragenter', 'dragover'].forEach((tipo) => solta.addEventListener(tipo, (e) => {
-    e.preventDefault();
-    solta.classList.add('solta');
-  }));
-  ['dragleave', 'drop'].forEach((tipo) => solta.addEventListener(tipo, () => solta.classList.remove('solta')));
-  solta.addEventListener('drop', (e) => {
-    e.preventDefault();
-    escolherFoto(e.dataTransfer?.files?.[0]);
-  });
+  ligarSoltar($('[data-solta-foto]'), escolherFoto);
 }
 
 async function iniciar() {
