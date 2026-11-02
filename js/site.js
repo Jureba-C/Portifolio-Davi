@@ -5,6 +5,7 @@ import { iniciarCursor } from './cursor.js';
 import { criarPlayer } from './player.js';
 import { montarPrevia, soltarPrevias, suspenderPrevias } from './previa.js';
 import { el, usoSvg } from './dom.js';
+import { FOTO_PADRAO, SOBRE_PADRAO } from './padrao.js';
 
 const TILTS = ['tilt-l', 'tilt-r', 'tilt-0'];
 const ICONES = {
@@ -148,12 +149,13 @@ function textoComDestaques(alvo, texto) {
 function renderSobre() {
   const { settings } = estado.db;
   const nome = settings.nome || 'DECXZ';
-  textoComDestaques(document.querySelector('[data-campo="sobre"]'), campo(settings, 'sobre'));
+  const sobre = String(campo(settings, 'sobre') || '').trim() || SOBRE_PADRAO[idioma()] || SOBRE_PADRAO.pt;
+  textoComDestaques(document.querySelector('[data-campo="sobre"]'), sobre);
   const foto = document.querySelector('[data-campo="foto"]');
-  const src = urlSegura(settings.foto_url, { midia: true }) || 'assets/avatar-exemplo.svg';
+  const src = urlSegura(settings.foto_url, { midia: true }) || FOTO_PADRAO;
   if (foto.getAttribute('src') !== src) foto.src = src;
   foto.alt = t('sobre.fotoAlt', { nome });
-  foto.onerror = () => { foto.onerror = null; foto.src = 'assets/avatar-exemplo.svg'; };
+  foto.onerror = () => { foto.onerror = null; foto.src = src === FOTO_PADRAO ? 'assets/avatar-exemplo.svg' : FOTO_PADRAO; };
   document.querySelector('[data-campo="foto-selo"]').textContent = t('sobre.fotoSelo', { nome });
 }
 
@@ -236,9 +238,10 @@ function iniciarOrcamento() {
     });
   };
   const abrir = (e) => {
+    const { settings } = estado.db;
+    if (!settings.email && !settings.discord_nick) return;
     e.preventDefault();
     montarTipos();
-    const { settings } = estado.db;
     dialogo.querySelector('[data-orc-email]').hidden = !settings.email;
     dialogo.querySelector('[data-orc-discord]').hidden = !settings.discord_nick;
     aviso.textContent = '';
@@ -467,6 +470,8 @@ function renderContato() {
   if (settings.email) {
     redes.append(el('a', { href: `mailto:${settings.email}`, 'aria-label': `${t('contato.email')} (${settings.email})`, class: 'rede' }, caixa('email')));
   }
+  document.querySelector('.redes-legenda').hidden = redes.childElementCount === 0;
+  document.querySelector('.orcamento-abrir').hidden = !settings.email && !settings.discord_nick;
 }
 
 function renderOffline(origem) {

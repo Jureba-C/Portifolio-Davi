@@ -168,7 +168,23 @@ test.describe('painel admin (modo local)', () => {
     await expect(page.locator('[data-salvo]')).toHaveText('salvo ✓');
     const site = await context.newPage();
     await site.goto('/?intro=0');
-    await expect(site.locator('[data-campo="foto"]')).toHaveAttribute('src', /assets\/avatar-exemplo\.svg|exemplo\.com/);
+    await expect(site.locator('[data-campo="foto"]')).toHaveAttribute('src', /assets\/foto-decxz\.webp|exemplo\.com/);
+  });
+
+  test('banco recém-criado: o painel já mostra a foto e o texto do Decxz para editar', async ({ page }) => {
+    await page.goto('/admin.html');
+    await page.evaluate(async () => {
+      const { MOCK } = await import('/js/mock-data.js');
+      const dados = JSON.parse(JSON.stringify(MOCK));
+      dados.settings = { id: 1 };
+      localStorage.setItem('portfolio-local', JSON.stringify(dados));
+    });
+    await entrar(page);
+    await irPara(page, 'textos');
+    await expect(page.locator('[data-foto-sobre-img]')).toHaveAttribute('src', 'assets/foto-decxz.webp');
+    await expect(page.locator('[data-form="textos"] [name="sobre_pt"]')).toHaveValue(/editor de vídeo e motion designer/);
+    await expect(page.locator('[data-form="textos"] [name="sobre_en"]')).toHaveValue(/video editor and motion designer/);
+    await expect(page.locator('[data-barra-salvar]')).toBeHidden();
   });
 
   test('link de Shorts deixa a prévia em 9:16', async ({ page }) => {

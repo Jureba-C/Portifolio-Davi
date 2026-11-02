@@ -1,6 +1,7 @@
 import { criarApi, extrairIdYoutube, ehLinkDeShort, thumbYoutube, iniciais, loginLocalPermitido } from './data.js';
 import { nuvemConfigurada } from './supabase.js';
 import { el } from './dom.js';
+import { FOTO_PADRAO, SOBRE_PADRAO } from './padrao.js';
 
 const api = criarApi();
 const $ = (seletor, raiz = document) => raiz.querySelector(seletor);
@@ -320,8 +321,9 @@ function renderContas() {
 
 function mostrarFotoSobre(url) {
   const img = $('[data-foto-sobre-img]');
-  img.src = url || 'assets/avatar-exemplo.svg';
-  img.onerror = () => { img.onerror = null; img.src = 'assets/avatar-exemplo.svg'; };
+  const src = url || FOTO_PADRAO;
+  img.src = src;
+  img.onerror = () => { img.onerror = null; img.src = src === FOTO_PADRAO ? 'assets/avatar-exemplo.svg' : FOTO_PADRAO; };
 }
 
 function tamanho(bytes) {
@@ -432,8 +434,8 @@ function preencherTextos() {
   limparArquivo('foto-sobre');
   form.nome.value = s.nome ?? '';
   form.email.value = s.email ?? '';
-  form.sobre_pt.value = s.sobre_pt ?? '';
-  form.sobre_en.value = s.sobre_en ?? '';
+  form.sobre_pt.value = s.sobre_pt?.trim() ? s.sobre_pt : SOBRE_PADRAO.pt;
+  form.sobre_en.value = s.sobre_en?.trim() ? s.sobre_en : SOBRE_PADRAO.en;
   TEXTOS_PAGINA.forEach((nome) => { form[nome].value = s[nome] ?? ''; });
   form.discord_nick.value = s.discord_nick ?? '';
   form.instagram.value = s.redes?.instagram ?? '';

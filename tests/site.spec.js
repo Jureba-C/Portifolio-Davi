@@ -312,6 +312,42 @@ test.describe('site público', () => {
     await expect(lista.locator('li').nth(1)).toContainText('He gets the timing');
   });
 
+  test('banco recém-criado, sem foto e sem texto, mostra a foto e o texto do Decxz', async ({ page }) => {
+    await page.goto('/?intro=0');
+    await page.evaluate(async () => {
+      const { MOCK } = await import('/js/mock-data.js');
+      const dados = JSON.parse(JSON.stringify(MOCK));
+      dados.settings = { id: 1 };
+      localStorage.setItem('portfolio-local', JSON.stringify(dados));
+    });
+    await page.reload();
+    const foto = page.locator('[data-campo="foto"]');
+    await expect(foto).toHaveAttribute('src', 'assets/foto-decxz.webp');
+    await expect.poll(() => foto.evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
+    await expect(page.locator('[data-campo="sobre"]')).toContainText('editor de vídeo e motion designer');
+    await page.getByRole('button', { name: 'EN', exact: true }).first().click();
+    await expect(page.locator('[data-campo="sobre"]')).toContainText('video editor and motion designer');
+  });
+
+  test('contato sem redes nem e-mail não mostra legenda nem orçamento sem destino', async ({ page }) => {
+    await page.goto('/?intro=0');
+    await page.evaluate(async () => {
+      const { MOCK } = await import('/js/mock-data.js');
+      const dados = JSON.parse(JSON.stringify(MOCK));
+      Object.assign(dados.settings, { email: '', discord_nick: '', redes: { instagram: '', x: '', youtube: '' } });
+      localStorage.setItem('portfolio-local', JSON.stringify(dados));
+    });
+    await page.reload();
+    await expect(page.locator('.redes-legenda')).toBeHidden();
+    await expect(page.locator('.orcamento-abrir')).toBeHidden();
+    const contratar = page.locator('.contratar:visible').first();
+    if (await contratar.count()) {
+      await contratar.click();
+      await expect(page.locator('[data-orcamento]')).not.toBeVisible();
+      await expect(page).toHaveURL(/#contato$/);
+    }
+  });
+
   test('selo de comissões vem dos dados', async ({ page }) => {
     await page.goto('/?intro=0');
     await expect(page.locator('.selo-texto')).toHaveText('COMMISSIONS: ON');
