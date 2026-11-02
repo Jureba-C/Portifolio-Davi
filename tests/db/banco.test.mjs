@@ -105,6 +105,15 @@ test('redes e e-mail do contato não aceitam link perigoso', async () => {
   await como('authenticated', ADMIN, () => db.query(`update public.settings set redes = '{"instagram":"https://instagram.com/x","x":""}'::jsonb, email = 'oi@decxz.com' where id = 1`));
 });
 
+test('textos da página: admin muda, visitante lê e o tamanho tem limite', async () => {
+  await como('authenticated', ADMIN, () => db.query(`update public.settings set frase_pt = 'que fazem você assistir até o fim.', chamada_pt = 'Bora?' where id = 1`));
+  const lido = await como('anon', null, () => db.query('select frase_pt, chamada_pt, selo_pt from public.settings where id = 1'));
+  assert.equal(lido.rows[0].frase_pt, 'que fazem você assistir até o fim.');
+  assert.equal(lido.rows[0].selo_pt, '');
+  await assert.rejects(como('authenticated', ADMIN, () => db.query(`update public.settings set selo_pt = repeat('x', 41) where id = 1`)));
+  await assert.rejects(como('anon', null, () => db.query(`update public.settings set frase_pt = 'invasão' where id = 1 returning id`)).then((r) => { if (!r.rows.length) throw new Error('sem permissão'); }));
+});
+
 test('rodar o schema de novo não apaga dados nem dá erro', async () => {
   const antes = await db.query('select count(*)::int as n from public.videos');
   await db.exec(await readFile(new URL('schema.sql', raiz), 'utf8'));

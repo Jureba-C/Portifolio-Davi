@@ -210,6 +210,23 @@ test.describe('painel admin (modo local)', () => {
     await expect(site.locator('[data-campo="sobre"]')).toHaveText('Texto novo do sobre mim.');
   });
 
+  test('textos da página mudam a abertura e o contato do site', async ({ page, context }) => {
+    await entrar(page);
+    await irPara(page, 'textos');
+    await page.fill('[data-form="textos"] [name="frase_pt"]', 'que fazem você assistir até o fim.');
+    await page.fill('[data-form="textos"] [name="chamada_pt"]', 'Bora fazer o próximo?');
+    await page.click('[data-form="textos"] button[type="submit"]');
+    await expect(page.locator('[data-salvo]')).toHaveText('salvo ✓');
+    const site = await context.newPage();
+    await site.goto('/?intro=0');
+    await expect(site.locator('[data-i18n="hero.frase"]')).toHaveText('que fazem você assistir até o fim.');
+    await expect(site.locator('[data-i18n="contato.chamada"]')).toHaveText('Bora fazer o próximo?');
+    await expect(site.locator('[data-i18n="hero.selo"]')).toHaveText('editor de vídeo');
+    await site.locator('[data-idioma="en"]').click();
+    await expect(site.locator('[data-i18n="hero.frase"]')).toHaveText('que fazem você assistir até o fim.');
+    await expect(site.locator('[data-i18n="hero.selo"]')).toHaveText('video editor');
+  });
+
   test('sair de Textos com mudanças avisa e descartar volta ao salvo', async ({ page }) => {
     await entrar(page);
     await irPara(page, 'textos');

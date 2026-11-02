@@ -5,7 +5,7 @@
 .chanfro-inv { clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 12px 100%); }
 .ponta { clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px)); }
 
-.boil { filter: url(#boil); }
+.boil { filter: url(#rough); }
 .rough-text { filter: url(#rough); }
 
 .tilt-l { transform: rotate(-1.6deg); }
@@ -275,9 +275,3 @@ footer:hover .footer-spider { transform: translateY(0); }
 
 @media (max-width: 700px) { .reveal-l, .reveal-r { --desloca: 48px; } }
 
-@media (prefers-reduced-motion: reduce) {
-  .swing, .swing .aranha-viva, .swing .spider-btn, .swing .fio, .aranha-viva *, .crawl, .letras-pulam .l, .strip-l, .strip-r, .gira, .pisca, .rec, .flutua, .pop, .reveal, .reveal-l, .reveal-r, .risca, .stamp-in { animation: none; }
-  .flee-up, .flee-down, .footer-spider, .spider-btn { transition: none; }
-  .intro { display: none !important; }
-  .boil { filter: none; }
-}

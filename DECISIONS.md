@@ -10,7 +10,7 @@ Decisões tomadas durante a construção, com o motivo de cada uma.
 5. **Abertura limpa:** nome, frase em janela, botão e showreel. O "papel e tinta" do primeiro protótipo saiu inteiro (`paper.css` e os mockups de `design/` foram apagados).
 6. **Mira de câmera no lugar do cursor de tinta.** A seta do sistema continua visível; a mira acompanha o mouse e "trava" em botões, links e cards, abraçando o elemento. Some com movimento reduzido e não existe em tela de toque.
 7. **Painel limpo, separado do visual do site.** O painel é uma ferramenta: tudo reto, fundo escuro, cartões claros e vermelho só em ações. A letra gótica fica só no logo. Uma tela por parte (Vídeos, Textos e redes, Clientes, Depoimentos, Categorias), e criar ou editar acontece numa gaveta lateral com a prévia do card. Textos salvam com uma barra de "alterações não salvas".
-8. **Antes e depois** (comparar o bruto com o editado) e a seção de **números** ficaram de fora, a pedido.
+8. **Antes e depois**, a seção de **números** e **"Como eu trabalho"** ficaram de fora, a pedido (o Decxz ainda não tem um processo fixo para mostrar).
 
 ## Técnicas
 9. **Fontes hospedadas no próprio site** (`assets/fonts`, só latim e latim estendido) em vez do Google Fonts. Carrega mais rápido e não depende de terceiros. Licença OFL.
@@ -26,7 +26,7 @@ Decisões tomadas durante a construção, com o motivo de cada uma.
 19. **Depoimentos** numa tabela própria (`testimonials`), com as mesmas regras de segurança das outras.
 20. **Pedido de orçamento** sem guardar nada: a janela monta a mensagem e o cliente manda por e-mail (`mailto:`) ou copia para o Discord. Assim não há formulário para spam nem dado pessoal guardado.
 21. **Intro** controlada por `js/boot.js`, um script pequeno no `<head>`: claquete de edição (timecode, REC, cortes) que termina com um corte na diagonal abrindo a tela em duas metades. A intro fica logo no começo do `<body>`, para o site não aparecer antes dela. Aparece uma vez por sessão, sai sozinha em cerca de 3 s e pode ser pulada com clique ou tecla. Se o script falhar, ela simplesmente não aparece.
-22. **Botão de pausar animações** no cabeçalho, além do "reduzir movimento" do sistema. A escolha fica salva no navegador.
+22. **Animações iguais em todo aparelho.** A pedido, o site ignora o "reduzir animações" do sistema (no Windows ele costuma vir desligado e deixava o computador sem nenhuma animação). O controle fica com o botão de pausar do cabeçalho, que vale para a visita (`sessionStorage`). O filtro de borda tremida virou o mesmo do celular (`#rough`, parado), mais leve e igual em todos os navegadores. Em navegadores sem animação ligada à rolagem (Safari antigo, Firefox), o plano B com `IntersectionObserver` já começa no `boot.js`, sem os blocos piscarem.
 23. **Entrada ao rolar:** CSS `animation-timeline: view()`. Nos navegadores que ainda não suportam, entra o fallback com `IntersectionObserver`.
 24. **Links seguros:** `urlSegura()` só aceita `http(s)`, arquivos do próprio site e `blob:`; `data:` só para imagem e vídeo enviados no modo local. O banco também recusa redes sem `https://` e e-mail inválido.
 25. **Endereço do site num lugar só:** `SITE_URL` em `js/config.js`. `npm run endereco -- https://…` troca em todos os arquivos.
@@ -37,4 +37,5 @@ Decisões tomadas durante a construção, com o motivo de cada uma.
 ## Pendente (depende do Caio ou do editor)
 - **Dados reais:** e-mail, redes, Discord, clientes, vídeos, clipes e depoimentos.
 - **Supabase:** criar o projeto e seguir o passo a passo do README.
-- **Vercel e domínio:** publicar e depois rodar `npm run endereco -- https://endereco-real`.
+- **Vercel e domínio:** seguir o `DEPLOY.md` (variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SITE_URL`).
+- **Ícone da aba:** o Decxz vai mandar um novo; trocar `assets/favicon.svg` e rodar `npm run imagens`.

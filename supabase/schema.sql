@@ -66,6 +66,13 @@ create table if not exists public.settings (
   comissoes_abertas boolean not null default true
 );
 
+alter table public.settings add column if not exists selo_pt text not null default '' check (char_length(selo_pt) <= 40);
+alter table public.settings add column if not exists selo_en text not null default '' check (char_length(selo_en) <= 40);
+alter table public.settings add column if not exists frase_pt text not null default '' check (char_length(frase_pt) <= 160);
+alter table public.settings add column if not exists frase_en text not null default '' check (char_length(frase_en) <= 160);
+alter table public.settings add column if not exists chamada_pt text not null default '' check (char_length(chamada_pt) <= 160);
+alter table public.settings add column if not exists chamada_en text not null default '' check (char_length(chamada_en) <= 160);
+
 create or replace function public.redes_validas(redes jsonb)
 returns boolean
 language sql

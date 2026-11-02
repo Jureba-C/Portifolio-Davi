@@ -33,6 +33,7 @@ O painel tem um menu com cinco telas: **Vídeos**, **Textos e redes**, **Cliente
 ### Textos e redes
 - **Perfil:** foto do "sobre mim" (enviar ou colar link), nome artístico, e-mail e a chave **Comissões abertas**. A chave muda o selo do site na hora.
 - **Sobre mim:** português e inglês lado a lado, com contador de letras. `*entre asteriscos*` fica em negrito e uma linha em branco separa parágrafos. **Ver como fica** mostra o texto já formatado.
+- **Textos da página:** o selo e a frase da abertura e a chamada do contato, em português e em inglês. Em branco, o site usa o texto padrão, que aparece em cinza dentro do campo.
 - **Redes:** Discord, Instagram, X e YouTube. Embaixo de cada link aparece para onde ele vai.
 - Quando algo muda, aparece a barra **Alterações não salvas** com **Descartar** e **Salvar alterações**. Se você tentar sair da tela ou fechar a aba sem salvar, o painel avisa.
 
@@ -93,7 +94,7 @@ npm run check:comments           # garante que o código não tem comentários
 3. Ainda no SQL Editor, cadastre o e-mail do admin:
    `insert into public.admins (email) values ('email-do-editor@exemplo.com');` (em minúsculas)
 4. Em **Authentication → Users → Add user**, crie o usuário com esse e-mail e uma senha forte (marque "Auto Confirm User").
-5. Em **Project Settings → API**, copie a **Project URL** e a chave **anon public** para `js/config.js`. Nunca use a chave `service_role` no site.
+5. Em **Project Settings → API**, pegue a **Project URL** e a chave **anon public**. Elas vão nas variáveis de ambiente da Vercel (veja o `DEPLOY.md`), não no código. Nunca use a chave `service_role` no site.
 6. Em **Authentication → URL Configuration**, coloque o endereço do site em **Site URL**.
 7. Em **Authentication → Sign In / Providers**, desligue **Allow new users to sign up**. Assim ninguém cria conta sozinho; só o admin que você cadastrou entra.
 8. Se já tinha rodado o `schema.sql` antes, rode de novo: ele só acrescenta o que falta (depoimentos, travas de links `https://` e de e-mail válido) sem apagar nada.
@@ -101,25 +102,31 @@ npm run check:comments           # garante que o código não tem comentários
 Segurança: todas as tabelas têm Row Level Security. Qualquer pessoa lê. Só quem está logado **e** está na tabela `admins` escreve, reordena ou envia arquivos.
 
 ### Publicar (Vercel)
-```bash
-npx vercel login
-npx vercel --prod
-```
-O `.vercelignore` deixa de fora testes, scripts, SQL e o guia de estilo. A Vercel usa o `404.html` sozinha para endereços que não existem.
+O passo a passo completo está no **`DEPLOY.md`**. Em resumo:
+- importar o repositório na Vercel;
+- cadastrar `SUPABASE_URL`, `SUPABASE_ANON_KEY` e, com domínio, `SITE_URL` nas variáveis de ambiente;
+- clicar em Deploy.
 
-Depois do primeiro deploy (ou quando tiver um domínio próprio), troque o endereço do site em todos os lugares com um comando só:
-```bash
-npm run endereco -- https://decxz.com.br
-```
-Ele atualiza `index.html` (canonical, Open Graph, dados para o Google), `robots.txt`, `sitemap.xml` e `js/config.js`.
+O `vercel.json` já define o build (`node scripts/build.mjs`), a pasta de saída (`dist`) e os cabeçalhos de segurança.
 
-Alternativas: Netlify ou Cloudflare Pages também servem (é só publicar a pasta). Copie os cabeçalhos do `vercel.json` para o `_headers` deles.
+O build:
+- copia só o que vai ao ar;
+- gera o `js/config.js` com as chaves;
+- troca o endereço do site nas metatags, no `robots.txt` e no `sitemap.xml`;
+- para com um aviso se faltar alguma chave.
+
+A Vercel usa o `404.html` sozinha para endereços que não existem.
+
+Para trocar o endereço provisório também no código (opcional): `npm run endereco -- https://decxz.com.br`.
 
 ### Trocar cores, fontes e nome
 - Cores: variáveis no topo de `css/base.css` (`--vermelho`, `--preto`, `--branco`…).
 - Fontes: arquivos em `assets/fonts/` e `css/fonts.css` (New Rocker, Space Mono, Barlow e Barlow Condensed, todas com licença OFL).
 - Nome e textos: pelo painel. O nome também está fixo nas metatags do `index.html` (para Google e redes sociais). Depois de mudar o nome, rode `npm run imagens` para refazer a imagem de compartilhamento e o ícone.
-- Textos fixos do site (menu, botões, faixas, "como eu trabalho", janela de orçamento): `js/i18n.js`.
+- Textos fixos do site (menu, botões, faixas, janela de orçamento): `js/i18n.js`.
+
+### Ícone da aba (favicon)
+- Para trocar: substitua `assets/favicon.svg` (de preferência um desenho quadrado e simples) e rode `npm run imagens`. Ele refaz o `apple-touch-icon.png` a partir do novo ícone.
 
 ### Google
 - O `index.html` traz os dados da pessoa (nome, profissão, redes) para o Google.

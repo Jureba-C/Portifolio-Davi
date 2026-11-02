@@ -5,9 +5,16 @@
     if (localStorage.getItem('idioma') === 'en') raiz.lang = 'en';
   } catch (e) {}
   try {
-    if (localStorage.getItem('movimento') === 'parado') raiz.classList.add('parado');
+    if (sessionStorage.getItem('movimento') === 'parado') raiz.classList.add('parado');
   } catch (e) {}
-  var reduz = raiz.classList.contains('parado') || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var reduz = raiz.classList.contains('parado');
+  var temTimeline = window.CSS && CSS.supports && CSS.supports('animation-timeline: view()');
+  if (!reduz && !temTimeline && 'IntersectionObserver' in window) {
+    raiz.classList.add('io');
+    setTimeout(function () {
+      if (!raiz.classList.contains('io-ok')) raiz.classList.remove('io');
+    }, 4000);
+  }
   var vista = false;
   try { vista = sessionStorage.getItem('intro-vista') === '1'; } catch (e) {}
   if (reduz || vista || /[?&]intro=0\b/.test(location.search)) return;

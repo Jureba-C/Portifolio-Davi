@@ -293,7 +293,7 @@ function iniciarMovimento() {
   };
   botao.addEventListener('click', () => {
     raiz.classList.toggle('parado');
-    try { localStorage.setItem('movimento', raiz.classList.contains('parado') ? 'parado' : 'livre'); } catch (e) {}
+    try { sessionStorage.setItem('movimento', raiz.classList.contains('parado') ? 'parado' : 'livre'); } catch (e) {}
     aplicarEstado();
   });
   aplicarEstado();
@@ -513,8 +513,19 @@ function dadosDosVideos() {
   bloco.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: itens });
 }
 
+const TEXTOS_LIVRES = { selo: 'hero.selo', frase: 'hero.frase', chamada: 'contato.chamada' };
+
+function renderTextosLivres() {
+  const { settings } = estado.db;
+  Object.entries(TEXTOS_LIVRES).forEach(([base, chave]) => {
+    const alvo = document.querySelector(`[data-i18n="${chave}"]`);
+    if (alvo) alvo.textContent = String(campo(settings, base) || '').trim() || t(chave);
+  });
+}
+
 function renderTudo() {
   document.title = t('pagina.titulo');
+  renderTextosLivres();
   renderNome();
   renderDestaques();
   renderSobre();

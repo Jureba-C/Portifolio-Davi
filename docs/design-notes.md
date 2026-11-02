@@ -25,7 +25,7 @@ Contraste: todo texto fica acima de 4,5:1 (axe sem violações no site e no pain
 | Barlow 500/700 | texto corrido |
 
 ## Componentes
-- **Janela anos 2000** (`.janela`): borda preta, barra em Space Mono com três quadradinhos e corpo branco. Usada no Sobre mim, na frase da abertura, no Contato, nos filtros do Long Form, em "Como eu trabalho" e na janela de orçamento.
+- **Janela anos 2000** (`.janela`): borda preta, barra em Space Mono com três quadradinhos e corpo branco. Usada no Sobre mim, na frase da abertura, no Contato, nos filtros do Long Form e na janela de orçamento.
 - **Sombra torta** (`.caixa-sombra`): bloco vermelho inclinado atrás da foto e do texto do Sobre mim.
 - **Botão de corte** (`.botao`): paralelogramo com miolo deslocado; o vermelho acende no hover.
 - **Quadro de vídeo** (`.quadro`): moldura com sombra deslocada, REC piscando e rótulo; o clipe de prévia toca dentro.
@@ -47,5 +47,5 @@ Contraste: todo texto fica acima de 4,5:1 (axe sem violações no site e no pain
 | Mira | segue o mouse e se ajusta ao tamanho do botão, link ou card; pisca ao clicar |
 | Orçamento | a janela entra com mola (`orc-entra`) |
 
-**Movimento reduzido** (sistema ou botão de pausa no cabeçalho): sem intro, sem mira, sem varredura de abas e sem animações contínuas. Os clipes de prévia pausam. O site fica completo parado.
+**Botão de pausa** (cabeçalho, vale para a visita): sem intro, sem mira, sem varredura de abas e sem animações contínuas. Os clipes de prévia pausam. O site fica completo parado. O "reduzir animações" do sistema é ignorado a pedido do cliente.
 **Celular:** sem mira, aranhas menores, títulos e nome em tamanho de tela, sem rolagem lateral.

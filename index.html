@@ -68,7 +68,6 @@
 <svg class="defs" aria-hidden="true" focusable="false">
   <defs>
     <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="4"/></filter>
-    <filter id="boil"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="1"><animate attributeName="seed" values="1;5;9;13" dur="0.48s" calcMode="discrete" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" scale="4"/></filter>
     <filter id="grao"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="2"/><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.06 0"/></filter>
     <pattern id="meio-tom" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="4.5" cy="4.5" r="1.4" fill="#E3162B" fill-opacity="0.32"/></pattern>
     <linearGradient id="some-tom" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="0.55" stop-color="#fff" stop-opacity="0"/></linearGradient>
@@ -196,24 +195,6 @@
     <div class="abas" role="tablist" aria-label="Categorias" data-i18n-aria="trabalhos.categorias" data-lista="abas"></div>
     <div class="filtros" data-lista="filtros" hidden></div>
     <div id="painel-trabalhos" class="grade" role="tabpanel" data-lista="videos" tabindex="-1"></div>
-  </section>
-
-  <section id="processo" class="processo" aria-labelledby="processo-titulo">
-    <h2 id="processo-titulo" class="titulo processo-titulo boil" data-i18n="processo.titulo">COMO EU TRABALHO</h2>
-    <ol class="processo-lista">
-      <li class="janela passo reveal">
-        <div class="janela-barra"><span>&gt;&gt; briefing.txt</span><span class="janela-botoes" aria-hidden="true"><span></span><span></span><span></span></span></div>
-        <div class="janela-corpo"><h3 class="passo-titulo" data-i18n="processo.p1t">BRIEFING</h3><p class="passo-texto" data-i18n="processo.p1">Você me manda o material bruto e a ideia. Eu pergunto o que importa: público, ritmo, referências e prazo.</p></div>
-      </li>
-      <li class="janela passo reveal">
-        <div class="janela-barra"><span>&gt;&gt; edicao.prproj</span><span class="janela-botoes" aria-hidden="true"><span></span><span></span><span></span></span></div>
-        <div class="janela-corpo"><h3 class="passo-titulo" data-i18n="processo.p2t">EDIÇÃO</h3><p class="passo-texto" data-i18n="processo.p2">Corte, motion, cor e sound design. Você vê uma prévia e pede ajustes sem burocracia.</p></div>
-      </li>
-      <li class="janela passo reveal">
-        <div class="janela-barra"><span>&gt;&gt; entrega.mp4</span><span class="janela-botoes" aria-hidden="true"><span></span><span></span><span></span></span></div>
-        <div class="janela-corpo"><h3 class="passo-titulo" data-i18n="processo.p3t">ENTREGA</h3><p class="passo-texto" data-i18n="processo.p3">Arquivo final no formato certo pra cada plataforma, no prazo combinado e pronto pra subir.</p></div>
-      </li>
-    </ol>
   </section>
 
   <section id="contato" class="contato" aria-labelledby="contato-titulo">

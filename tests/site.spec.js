@@ -295,6 +295,23 @@ test.describe('site público', () => {
     if (ehCelular(testInfo)) await expect(page.locator('.menu-botao')).toHaveAttribute('aria-expanded', 'false');
   });
 
+  test('depoimento sem inglês aparece em português no site em inglês', async ({ page }) => {
+    await page.addInitScript(() => {
+      try { localStorage.setItem('idioma', 'en'); } catch {}
+    });
+    await page.goto('/?intro=0');
+    await page.evaluate(async () => {
+      const { MOCK } = await import('/js/mock-data.js');
+      const dados = JSON.parse(JSON.stringify(MOCK));
+      dados.testimonials[0].texto_en = '';
+      localStorage.setItem('portfolio-local', JSON.stringify(dados));
+    });
+    await page.reload();
+    const lista = page.locator('[data-lista="depoimentos"]');
+    await expect(lista.locator('li').first()).toContainText('Mandei o bruto numa sexta');
+    await expect(lista.locator('li').nth(1)).toContainText('He gets the timing');
+  });
+
   test('selo de comissões vem dos dados', async ({ page }) => {
     await page.goto('/?intro=0');
     await expect(page.locator('.selo-texto')).toHaveText('COMMISSIONS: ON');
@@ -318,22 +335,34 @@ test.describe('site público', () => {
   });
 });
 
-test.describe('movimento reduzido', () => {
+test.describe('sistema com "reduzir animações" ligado', () => {
   test.use({ contextOptions: { reducedMotion: 'reduce' } });
 
-  test('sem intro, sem cursor e sem animações', async ({ page }) => {
+  test('o site continua animado igual ao celular', async ({ page }) => {
     await page.goto('/');
+    await expect(page.locator('html')).toHaveClass(/intro-on/);
+    await expect(page.locator('.intro')).toBeVisible();
+    await expect(page.locator('html')).not.toHaveClass(/intro-on/, { timeout: 6000 });
+    const animadas = await page.evaluate(() => ['.letras-pulam .l', '.rec'].filter((s) => {
+      const el = document.querySelector(s);
+      return el && getComputedStyle(el).animationName !== 'none' && parseFloat(getComputedStyle(el).animationDuration) > 0.1;
+    }));
+    expect(animadas).toEqual(['.letras-pulam .l', '.rec']);
+    const video = page.locator('[data-lista="showreel"] video').first();
+    await expect.poll(() => video.evaluate((v) => !v.paused), { timeout: 8000 }).toBe(true);
+  });
+});
+
+test.describe('animações pausadas pelo botão', () => {
+  test('sem intro, sem cursor e sem animações', async ({ page }) => {
+    await page.addInitScript(() => { try { sessionStorage.setItem('movimento', 'parado'); } catch {} });
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveClass(/parado/);
     await expect(page.locator('html')).not.toHaveClass(/intro-on/);
     await expect(page.locator('.intro')).toBeHidden();
     await expect(page.locator('.mira')).toHaveCount(0);
-    const animadas = await page.evaluate(() => {
-      const nomes = ['.letras-pulam .l', '.swing', '.strip-l', '.flutua', '.rec', '.gira', '.pisca'];
-      return nomes.filter((s) => {
-        const el = document.querySelector(s);
-        return el && getComputedStyle(el).animationName !== 'none';
-      });
-    });
-    expect(animadas).toEqual([]);
+    const duracao = await page.locator('.letras-pulam .l').first().evaluate((el) => parseFloat(getComputedStyle(el).animationDuration));
+    expect(duracao).toBeLessThan(0.01);
     const filtro = await page.locator('.abertura-nome').evaluate((el) => getComputedStyle(el).filter);
     expect(filtro).toBe('none');
     const video = page.locator('[data-lista="showreel"] video').first();
@@ -343,5 +372,36 @@ test.describe('movimento reduzido', () => {
     const capa = page.locator('[data-lista="showreel"] img.previa-midia').first();
     await expect(capa).toBeVisible();
     expect(await capa.getAttribute('src')).toContain('assets/exemplos/');
+  });
+
+  test('a pausa vale só para esta visita', async ({ browser }) => {
+    const contexto = await browser.newContext();
+    const page = await contexto.newPage();
+    await page.goto('/?intro=0');
+    await page.locator('[data-movimento]').click();
+    await page.reload();
+    await expect(page.locator('html')).toHaveClass(/parado/);
+    const nova = await contexto.newPage();
+    await nova.goto('/?intro=0');
+    await expect(nova.locator('html')).not.toHaveClass(/parado/);
+    await contexto.close();
+  });
+});
+
+test.describe('navegador sem animação ligada à rolagem (Safari antigo, Firefox)', () => {
+  test('os blocos aparecem ao rolar pelo plano B', async ({ page }) => {
+    await page.addInitScript(() => {
+      const original = CSS.supports.bind(CSS);
+      CSS.supports = (...args) => (String(args.join(' ')).includes('animation-timeline') ? false : original(...args));
+    });
+    await page.goto('/?intro=0');
+    await expect(page.locator('html')).toHaveClass(/io/);
+    const bloco = page.locator('.depo').first();
+    await bloco.scrollIntoViewIfNeeded();
+    await expect(bloco).toHaveClass(/visto/);
+    await expect.poll(() => bloco.evaluate((el) => parseFloat(getComputedStyle(el).opacity))).toBeGreaterThan(0.95);
+    const card = page.locator('.grade .card').first();
+    await card.scrollIntoViewIfNeeded();
+    await expect.poll(() => card.evaluate((el) => parseFloat(getComputedStyle(el).opacity))).toBeGreaterThan(0.95);
   });
 });

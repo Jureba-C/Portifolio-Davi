@@ -35,6 +35,7 @@ const ERROS = {
 };
 
 const PAGINAS = ['videos', 'textos', 'clientes', 'depoimentos', 'categorias'];
+const TEXTOS_PAGINA = ['selo_pt', 'selo_en', 'frase_pt', 'frase_en', 'chamada_pt', 'chamada_en'];
 const NO_CARTAZ = 6;
 
 let db = null;
@@ -370,7 +371,7 @@ function limparArquivo(tipo) {
 
 function estadoTextos() {
   const form = $('[data-form="textos"]');
-  return JSON.stringify(['nome', 'email', 'foto_url', 'sobre_pt', 'sobre_en', 'discord_nick', 'instagram', 'x', 'youtube'].map((n) => form[n].value.trim()).concat(arquivos['foto-sobre']?.name ?? ''));
+  return JSON.stringify(['nome', 'email', 'foto_url', 'sobre_pt', 'sobre_en', ...TEXTOS_PAGINA, 'discord_nick', 'instagram', 'x', 'youtube'].map((n) => form[n].value.trim()).concat(arquivos['foto-sobre']?.name ?? ''));
 }
 
 function textosAlterados() {
@@ -433,6 +434,7 @@ function preencherTextos() {
   form.email.value = s.email ?? '';
   form.sobre_pt.value = s.sobre_pt ?? '';
   form.sobre_en.value = s.sobre_en ?? '';
+  TEXTOS_PAGINA.forEach((nome) => { form[nome].value = s[nome] ?? ''; });
   form.discord_nick.value = s.discord_nick ?? '';
   form.instagram.value = s.redes?.instagram ?? '';
   form.x.value = s.redes?.x ?? '';
@@ -1027,6 +1029,7 @@ async function salvarTextos(e) {
       sobre_pt: form.sobre_pt.value.trim(),
       sobre_en: form.sobre_en.value.trim(),
       discord_nick: form.discord_nick.value.trim(),
+      ...Object.fromEntries(TEXTOS_PAGINA.map((nome) => [nome, form[nome].value.trim()])),
       redes,
     };
     const salvo = await acao(() => api.salvarSettings(patch), 'textos salvos ✓');

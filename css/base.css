@@ -197,20 +197,6 @@ h1, h2, h3, p { margin: 0; }
 
 .nota { font-family: var(--f-ui); font-style: italic; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
 
-@media (max-width: 760px), (hover: none) {
-  .boil { filter: url(#rough); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
-  .boil { filter: none; }
-}
-
 html.parado { scroll-behavior: auto; }
 html.parado *, html.parado *::before, html.parado *::after {
   animation-duration: 0.001ms !important;

@@ -1,12 +1,16 @@
 const mq = (q) => window.matchMedia?.(q).matches ?? false;
 
-export const reduzMovimento = () => document.documentElement.classList.contains('parado') || mq('(prefers-reduced-motion: reduce)');
+export const reduzMovimento = () => document.documentElement.classList.contains('parado');
 export const temMouse = () => mq('(hover: hover) and (pointer: fine)');
 
 export function iniciarRevelacao() {
+  const raiz = document.documentElement;
   if (window.CSS?.supports?.('animation-timeline: view()')) return undefined;
-  if (reduzMovimento() || !('IntersectionObserver' in window)) return undefined;
-  document.documentElement.classList.add('io');
+  if (reduzMovimento() || !('IntersectionObserver' in window)) {
+    raiz.classList.remove('io');
+    return undefined;
+  }
+  raiz.classList.add('io', 'io-ok');
   const observador = new IntersectionObserver(
     (entradas) => {
       entradas.forEach((entrada) => {
