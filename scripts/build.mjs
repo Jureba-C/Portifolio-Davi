@@ -13,7 +13,18 @@ function falhar(mensagem) {
 }
 
 function limpo(valor) {
-  return String(valor ?? '').trim();
+  return String(valor ?? '')
+    .trim()
+    .replace(/^[A-Z_]+\s*=\s*/, '')
+    .replace(/^["'`]+|["'`]+$/g, '')
+    .trim();
+}
+
+function enderecoSupabase(valor) {
+  const texto = limpo(valor);
+  if (/^[a-z0-9]{20}$/i.test(texto)) return `https://${texto.toLowerCase()}.supabase.co`;
+  const achado = texto.match(/^(?:https?:\/\/)?([a-z0-9-]+\.supabase\.co)(?:[/?#].*)?$/i);
+  return achado ? `https://${achado[1].toLowerCase()}` : texto.replace(/\/+$/, '');
 }
 
 function enderecoDoSite() {
@@ -25,8 +36,8 @@ function enderecoDoSite() {
 }
 
 function lerConfiguracao() {
-  const url = limpo(process.env.SUPABASE_URL).replace(/\/+$/, '');
-  const chave = limpo(process.env.SUPABASE_ANON_KEY);
+  const url = enderecoSupabase(process.env.SUPABASE_URL);
+  const chave = limpo(process.env.SUPABASE_ANON_KEY).replace(/\s+/g, '');
   const site = enderecoDoSite();
   const demo = process.env.PERMITIR_DEMO === '1';
   if (!url || !chave) {
@@ -35,8 +46,9 @@ function lerConfiguracao() {
     }
     console.warn('! Sem Supabase: publicando em modo demonstração (PERMITIR_DEMO=1).');
   } else {
-    if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)) falhar(`SUPABASE_URL não parece um endereço do Supabase: ${url}`);
-    if (!/^(eyJ[\w-]+\.[\w-]+\.[\w-]+|sb_publishable_[\w-]+)$/.test(chave)) falhar('SUPABASE_ANON_KEY não parece a chave "anon public" (ou "publishable") do Supabase. Nunca use a chave service_role.');
+    if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)) falhar(`SUPABASE_URL não parece um endereço do Supabase (esperado: https://xxxx.supabase.co). Veio: ${url.slice(0, 60)}`);
+    if (/^sb_secret_/.test(chave)) falhar('SUPABASE_ANON_KEY está com a chave "secret", que é secreta. Use a chave "publishable" (sb_publishable_…) ou a "anon public" (eyJ…).');
+    if (!/^(eyJ[\w-]+\.[\w-]+\.[\w-]+|sb_publishable_[\w-]+)$/.test(chave)) falhar(`SUPABASE_ANON_KEY não parece a chave "publishable" (sb_publishable_…) nem a "anon public" (eyJ…) do Supabase. Começa com "${chave.slice(0, 6)}…" e tem ${chave.length} caracteres.`);
     if (/service_role/.test(Buffer.from(chave.split('.')[1] ?? '', 'base64').toString())) falhar('Essa é a chave service_role, que é secreta. Use a chave "anon public".');
   }
   if (!/^https:\/\/[^/\s]+$/.test(site)) falhar(`SITE_URL precisa ser https e sem caminho, ex.: https://decxz.com.br (veio: ${site})`);

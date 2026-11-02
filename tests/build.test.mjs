@@ -96,3 +96,37 @@ test('os caminhos dos cabeçalhos do vercel.json usam só o formato que a Vercel
     assert.equal(nivel, 0, `parênteses sem par em ${source}`);
   }
 });
+
+test('aceita as chaves coladas com aspas, espaços, nome na frente ou caminho no fim', () => {
+  const casos = [
+    { SUPABASE_URL: ' "https://abcdefgh.supabase.co/rest/v1/" ', SUPABASE_ANON_KEY: `SUPABASE_ANON_KEY=${CHAVE_ANON}\n` },
+    { SUPABASE_URL: 'abcdefghijklmnopqrst', SUPABASE_ANON_KEY: 'sb_publishable_AbC123-xyz_9' },
+    { SUPABASE_URL: 'abcdefgh.supabase.co', SUPABASE_ANON_KEY: `'${CHAVE_ANON}'` },
+  ];
+  const esperado = [
+    ['https://abcdefgh.supabase.co', CHAVE_ANON],
+    ['https://abcdefghijklmnopqrst.supabase.co', 'sb_publishable_AbC123-xyz_9'],
+    ['https://abcdefgh.supabase.co', CHAVE_ANON],
+  ];
+  casos.forEach((env, i) => {
+    const r = construir(env);
+    try {
+      assert.equal(r.status, 0, r.stderr);
+      const config = readFileSync(join(r.pasta, 'js/config.js'), 'utf8');
+      assert.ok(config.includes(`SUPABASE_URL = "${esperado[i][0]}";`), config);
+      assert.ok(config.includes(`SUPABASE_ANON_KEY = "${esperado[i][1]}";`), config);
+    } finally {
+      rmSync(r.pasta, { recursive: true, force: true });
+    }
+  });
+});
+
+test('a chave secret nova também é recusada', () => {
+  const r = construir({ SUPABASE_URL: 'https://abcdefgh.supabase.co', SUPABASE_ANON_KEY: 'sb_secret_abc123' });
+  try {
+    assert.notEqual(r.status, 0);
+    assert.match(r.stderr, /secret/);
+  } finally {
+    rmSync(r.pasta, { recursive: true, force: true });
+  }
+});
