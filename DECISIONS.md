@@ -33,6 +33,7 @@ Decisões tomadas durante a construção, com o motivo de cada uma.
 26. **Dados para o Google:** `Person` fixo no `index.html` e uma lista de `VideoObject` gerada com os vídeos do banco.
 27. **Página 404 própria**, sem depender do resto do site (estilo e aranha dentro do próprio arquivo).
 28. **Testes no Chromium** (computador 1440 e celular 390). Firefox e iPhone ficam opcionais (`TODOS_NAVEGADORES=1`), porque esta máquina só tem o Chromium.
+29. **Rolagem leve.** As animações que nunca param (aranhas, letras do DECXZ, faixas, cartões dos clientes) pausam quando o bloco sai da tela, e as aranhas e letras pausam enquanto a página rola, voltando do mesmo ponto. O grão da tela virou uma imagem pronta (`assets/grao.png`) em vez de filtro calculado na hora, e o filtro de borda tremida do título fica em cada letra. Resultado medido no Chromium: cerca de 37% menos trabalho durante a rolagem, com o mesmo visual.
 
 ## Pendente (depende do Caio ou do editor)
 - **Dados reais:** e-mail, redes, Discord, clientes, vídeos, clipes e depoimentos.

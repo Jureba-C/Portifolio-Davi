@@ -3,6 +3,21 @@ const mq = (q) => window.matchMedia?.(q).matches ?? false;
 export const reduzMovimento = () => document.documentElement.classList.contains('parado');
 export const temMouse = () => mq('(hover: hover) and (pointer: fine)');
 
+export function pausarForaDaTela() {
+  if (!('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver((itens) => {
+    itens.forEach((item) => item.target.classList.toggle('fora-da-tela', !item.isIntersecting));
+  }, { rootMargin: '200px 0px' });
+  document.querySelectorAll('main > section, body > section, body > header, footer').forEach((bloco) => io.observe(bloco));
+  const raiz = document.documentElement;
+  let parar = 0;
+  window.addEventListener('scroll', () => {
+    if (!parar) raiz.classList.add('rolando');
+    clearTimeout(parar);
+    parar = setTimeout(() => { parar = 0; raiz.classList.remove('rolando'); }, 160);
+  }, { passive: true });
+}
+
 export function iniciarRevelacao() {
   const raiz = document.documentElement;
   if (window.CSS?.supports?.('animation-timeline: view()')) return undefined;

@@ -1,6 +1,6 @@
 import { carregarSite, linkYoutube, iniciais, urlSegura, thumbYoutube } from './data.js';
 import { t, campo, aplicar, definirIdioma, idioma, aoMudarIdioma } from './i18n.js';
-import { iniciarRevelacao, iniciarAranhaHero, iniciarRodape, aranhasVivas, letrasSoltas, recorte, temMouse, reduzMovimento } from './animations.js';
+import { iniciarRevelacao, pausarForaDaTela, iniciarAranhaHero, iniciarRodape, aranhasVivas, letrasSoltas, recorte, temMouse, reduzMovimento } from './animations.js';
 import { iniciarCursor } from './cursor.js';
 import { criarPlayer } from './player.js';
 import { montarPrevia, soltarPrevias, suspenderPrevias } from './previa.js';
@@ -601,6 +601,7 @@ async function iniciar() {
   iniciarRodape();
   iniciarCursor();
   observarNovos = iniciarRevelacao() ?? (() => {});
+  pausarForaDaTela();
   estado.db = await carregarSite();
   renderTudo();
   document.documentElement.classList.add('pronto');

@@ -6,6 +6,8 @@
 .ponta { clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px)); }
 
 .boil { filter: url(#rough); }
+.letras-pulam.boil { filter: none; }
+.letras-pulam.boil .l { filter: url(#rough); }
 .rough-text { filter: url(#rough); }
 
 .tilt-l { transform: rotate(-1.6deg); }
@@ -275,3 +277,4 @@ footer:hover .footer-spider { transform: translateY(0); }
 
 @media (max-width: 700px) { .reveal-l, .reveal-r { --desloca: 48px; } }
 
+.rolando :is(.swing, .swing *, .aranha-viva *, .letras-pulam .l), .fora-da-tela :is(.gira, .pisca, .flutua, .swing, .swing *, .aranha-viva *, .letras-pulam .l, .strip, .rec) { animation-play-state: paused !important; }

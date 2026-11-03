@@ -83,7 +83,9 @@ export function iniciarCursor() {
     mira.classList.add('clique');
     animar();
   });
-  window.addEventListener('scroll', () => {
+  let conferindo = 0;
+  const conferirAlvo = () => {
+    conferindo = 0;
     if (!visivel) return;
     const alvo = document.elementFromPoint(ponteiro.x, ponteiro.y)?.closest?.(ALVOS) ?? null;
     if (alvo !== travado) {
@@ -91,6 +93,9 @@ export function iniciarCursor() {
       mira.classList.toggle('travada', Boolean(alvo));
     }
     animar();
+  };
+  window.addEventListener('scroll', () => {
+    if (visivel && !conferindo) conferindo = requestAnimationFrame(conferirAlvo);
   }, { passive: true });
   document.documentElement.addEventListener('pointerleave', () => mostrar(false));
 }
