@@ -9,3 +9,4 @@ styleguide.html
 package-lock.json
 playwright.config.js
 *.md
+dist-teste

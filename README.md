@@ -83,6 +83,8 @@ Sem o Supabase configurado, o site usa os dados de exemplo e o painel entra no *
 ### Testes
 ```bash
 npm test                         # Playwright: computador 1440 e celular 390
+PW_DIST=1 npm test               # a mesma suíte contra o build de produção (empacotado e com os cabeçalhos da Vercel)
+npm run test:build               # o build da Vercel
 TODOS_NAVEGADORES=1 npm test     # também Firefox e iPhone (precisa de "npx playwright install")
 npm run test:db                  # SQL, segurança (RLS) e funções do banco
 npm run check:comments           # garante que o código não tem comentários
@@ -111,11 +113,14 @@ O `vercel.json` já define o build (`node scripts/build.mjs`), a pasta de saída
 
 O build:
 - copia só o que vai ao ar;
-- gera o `js/config.js` com as chaves;
+- gera o `js/config.js` com as chaves e empacota o JS e o CSS com o esbuild (um arquivo por página, minificado, com o nome mudando a cada versão para ficar em cache por 1 ano);
+- deixa o cliente do Supabase só no painel: o site lê o banco direto pela API;
 - troca o endereço do site nas metatags, no `robots.txt` e no `sitemap.xml`;
 - para com um aviso se faltar alguma chave.
 
 A Vercel usa o `404.html` sozinha para endereços que não existem.
+
+Para ver o build de produção no computador: `PERMITIR_DEMO=1 npm run build` e depois `node scripts/servir-dist.mjs dist 4600` (serve com os mesmos cabeçalhos da Vercel).
 
 Para trocar o endereço provisório também no código (opcional): `npm run endereco -- https://decxz.com.br`.
 

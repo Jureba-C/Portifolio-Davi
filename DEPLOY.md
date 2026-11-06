@@ -26,7 +26,7 @@ Tudo já está configurado no repositório. O que falta são só os cliques nas 
 2. Não precisa mexer em **Framework**, **Build** nem **Output**: o `vercel.json` já define tudo.
    - Build: `node scripts/build.mjs`.
    - Saída: `dist`.
-   - Nada para instalar.
+   - Instalação: só o esbuild, que empacota o site (`installCommand` do `vercel.json`).
 3. ⚠️ Antes de clicar em Deploy, abra **Environment Variables** e cadastre:
 
    | Nome | Valor |

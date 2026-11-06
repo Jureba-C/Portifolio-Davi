@@ -86,6 +86,90 @@ async function trocarEndereco(site) {
   }
 }
 
+const PAGINAS = {
+  'index.html': { js: 'site', css: ['fonts', 'base', 'formas', 'site'], boot: true },
+  'admin.html': { js: 'admin', css: ['fonts', 'base', 'admin'], boot: false },
+};
+
+async function carregarEsbuild() {
+  try {
+    return await import('esbuild');
+  } catch {
+    falhar('Falta o esbuild para empacotar o site. Rode npm install (ou, na Vercel, o installCommand do vercel.json).');
+  }
+  return null;
+}
+
+const nomeDe = (caminho) => caminho.split('/').pop();
+
+async function empacotar(site, demo) {
+  const esbuild = await carregarEsbuild();
+  const pastaJs = join(destino, 'js');
+  const pastaCss = join(destino, 'css');
+  const js = await esbuild.build({
+    entryPoints: Object.values(PAGINAS).map(({ js: nome }) => join(pastaJs, `${nome}.js`)),
+    bundle: true,
+    splitting: true,
+    format: 'esm',
+    minify: true,
+    target: 'es2020',
+    outdir: join(destino, 'js', 'm'),
+    entryNames: '[name]-[hash]',
+    chunkNames: 'parte-[hash]',
+    metafile: true,
+    logLevel: 'silent',
+  });
+  const boot = await esbuild.build({
+    entryPoints: [join(pastaJs, 'boot.js')],
+    minify: true,
+    target: 'es2020',
+    outdir: join(destino, 'js', 'm'),
+    entryNames: '[name]-[hash]',
+    metafile: true,
+    logLevel: 'silent',
+  });
+  const entradasCss = [];
+  for (const [pagina, { css }] of Object.entries(PAGINAS)) {
+    const entrada = join(pastaCss, `_${pagina.replace('.html', '')}.css`);
+    await writeFile(entrada, css.map((nome) => `@import "./${nome}.css";`).join('\n'));
+    entradasCss.push(entrada);
+  }
+  const estilos = await esbuild.build({
+    entryPoints: entradasCss,
+    bundle: true,
+    minify: true,
+    outdir: join(destino, 'css'),
+    entryNames: '[name]-[hash]',
+    external: ['*.woff2', '*.png', '*.svg', '*.webp', '*.jpg'],
+    metafile: true,
+    logLevel: 'silent',
+  });
+  const saidaDe = (resultado, entrada) => Object.entries(resultado.metafile.outputs).find(([, info]) => info.entryPoint && resolve(raiz, info.entryPoint) === resolve(entrada))?.[0];
+  for (const [pagina, { js: nome, boot: comBoot }] of Object.entries(PAGINAS)) {
+    const caminho = join(destino, pagina);
+    let html = await readFile(caminho, 'utf8');
+    const jsSaida = nomeDe(saidaDe(js, join(pastaJs, `${nome}.js`)));
+    const cssSaida = nomeDe(saidaDe(estilos, join(pastaCss, `_${pagina.replace('.html', '')}.css`)));
+    let primeiro = true;
+    html = html.replace(/<link rel="stylesheet" href="css\/[a-z-]+\.css">\n?/g, () => {
+      if (!primeiro) return '';
+      primeiro = false;
+      return `<link rel="stylesheet" href="css/${cssSaida}">\n`;
+    });
+    html = html.replace(`<script type="module" src="js/${nome}.js"></script>`, `<script type="module" src="js/m/${jsSaida}"></script>`);
+    if (comBoot) html = html.replace('<script src="js/boot.js"></script>', `<script src="js/m/${nomeDe(saidaDe(boot, join(pastaJs, 'boot.js')))}"></script>`);
+    if (site.supabase && pagina === 'index.html') html = html.replace('<link rel="preconnect" href="https://i.ytimg.com">', `<link rel="preconnect" href="${site.supabase}" crossorigin>\n<link rel="preconnect" href="https://i.ytimg.com">`);
+    await writeFile(caminho, html);
+  }
+  for (const entrada of entradasCss) await rm(entrada, { force: true });
+  if (!demo) {
+    for (const arquivo of await readdir(pastaJs)) if (arquivo.endsWith('.js')) await rm(join(pastaJs, arquivo));
+    await rm(join(pastaJs, 'vendor'), { recursive: true, force: true });
+    for (const arquivo of await readdir(pastaCss)) if (arquivo.endsWith('.css') && !arquivo.startsWith('_')) await rm(join(pastaCss, arquivo));
+  }
+  await cp(join(raiz, 'js', 'vendor', 'LICENCAS.txt'), join(destino, 'js', 'm', 'LICENCAS.txt'));
+}
+
 async function principal() {
   const { url, chave, site } = lerConfiguracao();
   await rm(destino, { recursive: true, force: true });
@@ -102,6 +186,7 @@ async function principal() {
   ].join('\n');
   await writeFile(join(destino, 'js', 'config.js'), config);
   await trocarEndereco(site);
+  await empacotar({ supabase: url }, !url);
   const faltando = await referenciasQuebradas();
   if (faltando.length) falhar(`Arquivos citados nos HTML que não existem:\n  ${faltando.join('\n  ')}`);
   const arquivos = await readdir(destino, { recursive: true });

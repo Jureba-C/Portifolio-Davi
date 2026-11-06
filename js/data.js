@@ -1,5 +1,5 @@
 import { MOCK } from './mock-data.js';
-import { BUCKET_MIDIA } from './config.js';
+import { BUCKET_MIDIA, SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 import { nuvemConfigurada, obterCliente } from './supabase.js';
 
 const CHAVE_CACHE = 'portfolio-cache';
@@ -113,32 +113,58 @@ function comTempo(promessa, ms) {
   ]);
 }
 
+function cabecalhosPublicos() {
+  const chave = SUPABASE_ANON_KEY;
+  const cabecalhos = { apikey: chave, Accept: 'application/json' };
+  if (/^eyJ/.test(chave)) cabecalhos.Authorization = `Bearer ${chave}`;
+  return cabecalhos;
+}
+
+async function lerTabela(caminho) {
+  const resposta = await fetch(`${SUPABASE_URL.replace(/\/+$/, '')}/rest/v1/${caminho}`, { headers: cabecalhosPublicos() });
+  if (!resposta.ok) throw new Error(`rest-${resposta.status}`);
+  return resposta.json();
+}
+
 async function buscarNuvem() {
-  const sb = await obterCliente();
-  const pedidos = [
-    sb.from('settings').select('*').eq('id', 1).maybeSingle(),
-    ...TABELAS.map((tabela) => sb.from(tabela).select('*').order('ordem')),
-  ];
-  const respostas = await Promise.all(pedidos);
-  const erro = respostas.find((r) => r.error);
-  if (erro) throw erro.error;
-  const [settings, categories, longform_filters, videos, clients, testimonials] = respostas.map((r) => r.data);
-  return normalizar({ settings: settings ?? {}, categories, longform_filters, videos, clients, testimonials });
+  const [settings, categories, longform_filters, videos, clients, testimonials] = await Promise.all([
+    lerTabela('settings?select=*&id=eq.1').then((linhas) => linhas[0] ?? {}),
+    ...TABELAS.map((tabela) => lerTabela(`${tabela}?select=*&order=ordem.asc`)),
+  ]);
+  return normalizar({ settings, categories, longform_filters, videos, clients, testimonials });
 }
 
 function bancoLocal() {
   return normalizar(ler(CHAVE_LOCAL) ?? MOCK);
 }
 
-export async function carregarSite() {
+function bancoVazio() {
+  return normalizar({
+    settings: { nome: '', email: '', foto_url: '', sobre_pt: '', sobre_en: '', redes: { instagram: '', x: '', youtube: '' }, discord_nick: '', comissoes_abertas: false },
+    longform_filters: [],
+    videos: [],
+    clients: [],
+    testimonials: [],
+  });
+}
+
+export async function carregarSite({ aoAtualizar = () => {}, aoFalhar = () => {} } = {}) {
   if (!nuvemConfigurada()) return { ...bancoLocal(), origem: 'local' };
-  try {
-    const db = await comTempo(buscarNuvem(), 8000);
+  const cache = ler(CHAVE_CACHE);
+  const buscar = comTempo(buscarNuvem(), 8000).then((db) => {
     gravar(CHAVE_CACHE, db);
-    return { ...db, origem: 'nuvem' };
+    return db;
+  });
+  if (cache) {
+    buscar.then((db) => {
+      if (JSON.stringify(db) !== JSON.stringify(normalizar(cache))) aoAtualizar({ ...db, origem: 'nuvem' });
+    }).catch(() => aoFalhar());
+    return { ...normalizar(cache), origem: 'nuvem' };
+  }
+  try {
+    return { ...(await buscar), origem: 'nuvem' };
   } catch {
-    const cache = ler(CHAVE_CACHE);
-    return cache ? { ...normalizar(cache), origem: 'cache' } : { ...normalizar(MOCK), origem: 'mock' };
+    return { ...bancoVazio(), origem: 'mock' };
   }
 }
 

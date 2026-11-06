@@ -1,14 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const raiz = fileURLToPath(new URL('..', import.meta.url));
 const CHAVE_ANON = `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ role: 'anon', ref: 'abcdefgh' })).toString('base64url')}.assinatura`;
 const CHAVE_SECRETA = `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ role: 'service_role' })).toString('base64url')}.assinatura`;
+
+function pacotes(pasta) {
+  const dir = join(pasta, 'js', 'm');
+  return readdirSync(dir).filter((f) => f.endsWith('.js')).map((f) => readFileSync(join(dir, f), 'utf8')).join('\n');
+}
 
 function construir(env) {
   const pasta = mkdtempSync(join(tmpdir(), 'decxz-build-'));
@@ -22,20 +27,37 @@ test('build com as chaves gera config, troca o endereço e deixa de fora o que �
   const r = construir({ SUPABASE_URL: 'https://abcdefgh.supabase.co', SUPABASE_ANON_KEY: CHAVE_ANON, SITE_URL: 'https://decxz.com.br/' });
   try {
     assert.equal(r.status, 0, r.stderr);
-    const config = readFileSync(join(r.pasta, 'js/config.js'), 'utf8');
-    assert.match(config, /SUPABASE_URL = "https:\/\/abcdefgh\.supabase\.co"/);
-    assert.match(config, /SITE_URL = "https:\/\/decxz\.com\.br"/);
+    const config = pacotes(r.pasta);
+    assert.ok(config.includes('"https://abcdefgh.supabase.co"'));
     assert.ok(config.includes(CHAVE_ANON));
     const index = readFileSync(join(r.pasta, 'index.html'), 'utf8');
     assert.ok(index.includes('https://decxz.com.br/'));
     assert.ok(!index.includes('portfolio-editor.vercel.app'));
     assert.ok(readFileSync(join(r.pasta, 'sitemap.xml'), 'utf8').includes('https://decxz.com.br/'));
-    for (const interno of ['styleguide.html', 'tests', 'supabase', 'scripts', 'docs', 'package.json', 'README.md']) {
+    for (const interno of ['styleguide.html', 'tests', 'supabase', 'scripts', 'docs', 'package.json', 'README.md', 'js/site.js', 'js/config.js', 'js/vendor', 'css/site.css']) {
       assert.ok(!existsSync(join(r.pasta, interno)), `${interno} não devia ir ao ar`);
     }
-    for (const publico of ['index.html', 'admin.html', '404.html', 'robots.txt', 'css/site.css', 'js/site.js', 'assets/favicon.svg']) {
+    for (const publico of ['index.html', 'admin.html', '404.html', 'robots.txt', 'assets/favicon.svg']) {
       assert.ok(existsSync(join(r.pasta, publico)), `${publico} devia ir ao ar`);
     }
+    for (const pagina of ['index.html', 'admin.html']) {
+      const html = readFileSync(join(r.pasta, pagina), 'utf8');
+      const refs = [...html.matchAll(/(?:src|href)="(js\/m\/[^"]+|css\/_[^"]+)"/g)].map((m) => m[1]);
+      assert.ok(refs.some((ref) => /^js\/m\/(site|admin)-[A-Z0-9]+\.js$/.test(ref)), `${pagina} devia usar o pacote com hash`);
+      assert.ok(refs.some((ref) => /^css\/_[a-z]+-[A-Z0-9]+\.css$/.test(ref)), `${pagina} devia usar o CSS com hash`);
+      assert.equal((html.match(/rel="stylesheet"/g) || []).length, 1);
+      refs.forEach((ref) => assert.ok(existsSync(join(r.pasta, ref)), `${ref} não existe`));
+      refs.filter((ref) => ref.endsWith('.css')).forEach((ref) => {
+        const css = readFileSync(join(r.pasta, ref), 'utf8');
+        [...css.matchAll(/url\(["']?([^"')]+)["']?\)/g)].map((m) => m[1]).filter((u) => !u.startsWith('data:') && !u.startsWith('#')).forEach((u) => {
+          assert.ok(existsSync(join(r.pasta, dirname(ref), u)), `${ref} aponta para ${u}, que não existe`);
+        });
+      });
+    }
+    const pagina = readFileSync(join(r.pasta, 'index.html'), 'utf8');
+    assert.ok(pagina.includes('<link rel="preconnect" href="https://abcdefgh.supabase.co" crossorigin>'));
+    const site = readFileSync(join(r.pasta, pagina.match(/src="(js\/m\/site-[^"]+)"/)[1]), 'utf8');
+    assert.ok(!/createClient|GoTrueClient/.test(site), 'o cliente do Supabase não devia entrar no pacote do site');
   } finally {
     rmSync(r.pasta, { recursive: true, force: true });
   }
@@ -65,7 +87,7 @@ test('sem SITE_URL usa o endereço que a Vercel dá', () => {
   const r = construir({ SUPABASE_URL: 'https://abcdefgh.supabase.co', SUPABASE_ANON_KEY: CHAVE_ANON, VERCEL_PROJECT_PRODUCTION_URL: 'decxz.vercel.app' });
   try {
     assert.equal(r.status, 0, r.stderr);
-    assert.match(readFileSync(join(r.pasta, 'js/config.js'), 'utf8'), /SITE_URL = "https:\/\/decxz\.vercel\.app"/);
+    assert.ok(readFileSync(join(r.pasta, 'index.html'), 'utf8').includes('https://decxz.vercel.app/'));
   } finally {
     rmSync(r.pasta, { recursive: true, force: true });
   }
@@ -112,9 +134,9 @@ test('aceita as chaves coladas com aspas, espaços, nome na frente ou caminho no
     const r = construir(env);
     try {
       assert.equal(r.status, 0, r.stderr);
-      const config = readFileSync(join(r.pasta, 'js/config.js'), 'utf8');
-      assert.ok(config.includes(`SUPABASE_URL = "${esperado[i][0]}";`), config);
-      assert.ok(config.includes(`SUPABASE_ANON_KEY = "${esperado[i][1]}";`), config);
+      const config = pacotes(r.pasta);
+      assert.ok(config.includes(`"${esperado[i][0]}"`), esperado[i][0]);
+      assert.ok(config.includes(`"${esperado[i][1]}"`), esperado[i][1]);
     } finally {
       rmSync(r.pasta, { recursive: true, force: true });
     }

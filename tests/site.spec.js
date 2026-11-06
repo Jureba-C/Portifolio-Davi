@@ -329,6 +329,15 @@ test.describe('site público', () => {
     await expect(page.locator('.olho, .olho-svg')).toHaveCount(0);
   });
 
+  test('endereço que não existe mostra a página 404 própria, com volta ao início', async ({ page }) => {
+    const resposta = await page.goto('/esse-endereco-nao-existe');
+    expect(resposta.status()).toBe(404);
+    const voltar = page.getByRole('link', { name: /VOLTAR PRO INÍCIO/ });
+    await expect(voltar).toBeVisible();
+    await voltar.click();
+    await expect(page.locator('.grade .card').first()).toBeAttached();
+  });
+
   test('âncoras do menu levam às seções', async ({ page }, testInfo) => {
     await page.goto('/?intro=0');
     if (ehCelular(testInfo)) {

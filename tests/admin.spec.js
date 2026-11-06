@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+
 async function entrar(page) {
   await page.goto('/admin.html');
   await page.fill('[data-form="login"] [name="email"]', 'demo@local');
@@ -298,6 +300,63 @@ test.describe('painel admin (modo local)', () => {
     await page.click('[data-form="cliente"] button[type="submit"]');
     await expect(page.locator('[data-lista="clientes"]')).toContainText('Canal Novo');
     await expect(page.locator('[data-lista="clientes"] > li').last()).toContainText('em ver todos');
+  });
+
+  test('cliente com foto enviada do computador aparece no site, é editado e excluído', async ({ page, context }) => {
+    await entrar(page);
+    await irPara(page, 'clientes');
+    await page.click('[data-novo-cliente]');
+    await page.fill('[data-form="cliente"] [name="nome"]', 'Canal Com Foto');
+    await page.fill('[data-form="cliente"] [name="canal_url"]', 'youtube.com/@comfoto');
+    await page.setInputFiles('[data-form="cliente"] [name="arquivo"]', { name: 'foto.png', mimeType: 'image/png', buffer: PNG });
+    await page.click('[data-form="cliente"] button[type="submit"]');
+    const item = page.locator('[data-lista="clientes"] > li', { hasText: 'Canal Com Foto' });
+    await expect(item).toHaveCount(1);
+    await expect(item.locator('img')).toHaveAttribute('src', /^data:image\/png/);
+    const site = await context.newPage();
+    await site.goto('/?intro=0');
+    await expect(site.locator('.client, .ficha', { hasText: 'Canal Com Foto' }).locator('img')).toHaveAttribute('src', /^data:image\/png/);
+    await page.getByRole('button', { name: 'Editar cliente Canal Com Foto' }).click();
+    await page.fill('[data-form="cliente"] [name="nome"]', 'Canal Renomeado');
+    await page.click('[data-form="cliente"] button[type="submit"]');
+    await expect(page.locator('[data-lista="clientes"]')).toContainText('Canal Renomeado');
+    await expect(page.locator('[data-lista="clientes"]')).not.toContainText('Canal Com Foto');
+    await page.getByRole('button', { name: 'Excluir cliente Canal Renomeado' }).click();
+    await page.click('[data-confirmar-sim]');
+    await expect(page.locator('[data-lista="clientes"]')).not.toContainText('Canal Renomeado');
+    await site.reload();
+    await expect(site.getByText('Canal Renomeado')).toHaveCount(0);
+  });
+
+  test('redes, e-mail e Discord salvos no painel aparecem no contato do site', async ({ page, context }) => {
+    await entrar(page);
+    await irPara(page, 'textos');
+    await page.fill('[data-form="textos"] [name="email"]', 'decxz.novo@gmail.com');
+    await page.fill('[data-form="textos"] [name="instagram"]', 'instagram.com/decxznovo');
+    await page.fill('[data-form="textos"] [name="youtube"]', '');
+    await page.fill('[data-form="textos"] [name="x"]', '');
+    await page.fill('[data-form="textos"] [name="discord_nick"]', 'decxz.novo');
+    await page.click('[data-form="textos"] button[type="submit"]');
+    await expect(page.locator('[data-salvo]')).toHaveText('salvo ✓');
+    const site = await context.newPage();
+    await site.goto('/?intro=0');
+    const redes = site.locator('[data-lista="redes"]');
+    await expect(redes.locator('a[href="https://instagram.com/decxznovo"], a[href="https://www.instagram.com/decxznovo"]')).toHaveCount(1);
+    await expect(redes.locator('a[href*="youtube.com"], a[href*="x.com"]')).toHaveCount(0);
+    await expect(redes.locator('[data-discord]')).toHaveCount(1);
+    await expect(redes.locator('a[href="mailto:decxz.novo@gmail.com"]')).toHaveCount(1);
+    await expect(site.locator('[data-campo="email-texto"]')).toHaveText('decxz.novo@gmail.com');
+  });
+
+  test('foto do sobre mim enviada do computador aparece no site', async ({ page, context }) => {
+    await entrar(page);
+    await irPara(page, 'textos');
+    await page.setInputFiles('[data-form="textos"] [name="foto_arquivo"]', { name: 'eu.png', mimeType: 'image/png', buffer: PNG });
+    await page.click('[data-form="textos"] button[type="submit"]');
+    await expect(page.locator('[data-salvo]')).toHaveText('salvo ✓');
+    const site = await context.newPage();
+    await site.goto('/?intro=0');
+    await expect(site.locator('[data-campo="foto"]')).toHaveAttribute('src', /^data:image\/png/);
   });
 
   test('depoimento novo aparece no site, pode ser editado e excluído', async ({ page, context }) => {

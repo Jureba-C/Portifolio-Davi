@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORTA = 4510;
+const DIST = Boolean(process.env.PW_DIST);
+const PORTA = DIST ? 4511 : 4510;
 const chromium = process.env.PLAYWRIGHT_CHROMIUM ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM } : {};
 
 const projetos = [
@@ -34,9 +35,9 @@ export default defineConfig({
   },
   projects: projetos,
   webServer: {
-    command: `npx serve . -l ${PORTA} --no-clipboard`,
+    command: DIST ? `PERMITIR_DEMO=1 SAIDA=dist-teste node scripts/build.mjs && node scripts/servir-dist.mjs dist-teste ${PORTA}` : `npx serve . -l ${PORTA} --no-clipboard`,
     url: `http://localhost:${PORTA}`,
-    reuseExistingServer: true,
+    reuseExistingServer: !DIST,
     timeout: 30000,
   },
 });

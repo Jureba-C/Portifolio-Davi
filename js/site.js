@@ -516,6 +516,17 @@ function dadosDosVideos() {
     document.head.append(bloco);
   }
   bloco.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: itens });
+  const pessoa = document.getElementById('dados-pessoa');
+  if (!pessoa) return;
+  let dados;
+  try { dados = JSON.parse(pessoa.textContent); } catch { return; }
+  const { settings } = estado.db;
+  const redes = ['instagram', 'x', 'youtube'].map((chave) => urlSegura(settings.redes?.[chave])).filter(Boolean);
+  if (settings.email) dados.email = `mailto:${settings.email}`;
+  else delete dados.email;
+  if (redes.length) dados.sameAs = redes;
+  else delete dados.sameAs;
+  pessoa.textContent = JSON.stringify(dados);
 }
 
 const TEXTOS_LIVRES = { selo: 'hero.selo', frase: 'hero.frase', chamada: 'contato.chamada' };
@@ -602,7 +613,13 @@ async function iniciar() {
   iniciarCursor();
   observarNovos = iniciarRevelacao() ?? (() => {});
   pausarForaDaTela();
-  estado.db = await carregarSite();
+  estado.db = await carregarSite({
+    aoAtualizar: (db) => {
+      estado.db = db;
+      renderTudo();
+    },
+    aoFalhar: () => renderOffline('cache'),
+  });
   renderTudo();
   document.documentElement.classList.add('pronto');
   aoMudarIdioma(() => {
