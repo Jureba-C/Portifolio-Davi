@@ -10,3 +10,4 @@ package-lock.json
 playwright.config.js
 *.md
 dist-teste
+package.json
