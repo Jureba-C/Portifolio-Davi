@@ -1,4 +1,4 @@
-import { criarApi, extrairIdYoutube, ehLinkDeShort, thumbYoutube, iniciais, loginLocalPermitido } from './data.js';
+import { criarApi, extrairIdYoutube, ehLinkDeShort, thumbYoutube, capaYoutube, iniciais, loginLocalPermitido } from './data.js';
 import { nuvemConfigurada } from './supabase.js';
 import { el } from './dom.js';
 import { FOTO_PADRAO, SOBRE_PADRAO } from './padrao.js';
@@ -623,7 +623,7 @@ function atualizarPrevia() {
       img.hidden = true;
       img.onload = () => { img.hidden = false; };
       img.onerror = () => { img.hidden = true; };
-      img.src = thumbYoutube(id);
+      capaYoutube(img, id);
     } else {
       img.hidden = !img.complete || !img.naturalWidth;
     }

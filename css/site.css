@@ -261,7 +261,8 @@ main, footer { position: relative; z-index: 1; }
 .previa-midia { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: 0; }
 video.previa-midia { opacity: 0; transition: opacity .3s ease; }
 video.previa-midia.pronto { opacity: 1; }
-iframe.previa-midia { pointer-events: none; transform: scale(1.22); }
+iframe.previa-midia { inset: auto; left: 50%; top: 50%; pointer-events: none; opacity: 0; transform: translate(-50%, -50%) scale(var(--escala, 1.22)); transition: opacity .35s ease; }
+iframe.previa-midia.rodando { opacity: 1; }
 .previa-sem {
   position: absolute;
   inset: 0;

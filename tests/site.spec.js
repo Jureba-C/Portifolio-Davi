@@ -19,6 +19,24 @@ function vigiarErros(page) {
 
 const ehCelular = (testInfo) => testInfo.project.name.startsWith('celular') || testInfo.project.name.startsWith('iphone');
 
+const svg = (w, h) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="${w}" height="${h}" fill="#333"/></svg>`;
+
+async function soLinksDoYoutube(page, { semMaxres = false } = {}) {
+  await page.route('**/i.ytimg.com/**', (rota) => {
+    const pequena = semMaxres && rota.request().url().includes('maxresdefault');
+    rota.fulfill({ contentType: 'image/svg+xml', body: pequena ? svg(120, 90) : svg(1280, 720) });
+  });
+  await page.route(/youtube(-nocookie)?\.com/, (rota) => rota.fulfill({ contentType: 'text/html', body: '<!doctype html><title>yt</title>' }));
+  await page.goto('/?intro=0');
+  await page.evaluate(async () => {
+    const { MOCK } = await import('/js/mock-data.js');
+    const dados = JSON.parse(JSON.stringify(MOCK));
+    dados.videos.forEach((v) => { v.preview_url = ''; v.poster_url = ''; });
+    localStorage.setItem('portfolio-local', JSON.stringify(dados));
+  });
+  await page.reload();
+}
+
 test.describe('site público', () => {
   test('carrega sem erros, sem 4xx/5xx e sem rolagem horizontal', async ({ page }) => {
     const erros = vigiarErros(page);
@@ -439,5 +457,71 @@ test.describe('navegador sem animação ligada à rolagem (Safari antigo, Firefo
     const card = page.locator('.grade .card').first();
     await card.scrollIntoViewIfNeeded();
     await expect.poll(() => card.evaluate((el) => parseFloat(getComputedStyle(el).opacity))).toBeGreaterThan(0.95);
+  });
+});
+
+test.describe('prévias do YouTube', () => {
+  test('capa em alta, caindo para a próxima quando o YouTube não tem a maior', async ({ page }) => {
+    await soLinksDoYoutube(page);
+    const capa = page.locator('.grade .card img.previa-midia').first();
+    await expect(capa).toHaveAttribute('src', /maxresdefault\.jpg$/);
+    await soLinksDoYoutube(page, { semMaxres: true });
+    await expect(page.locator('.grade .card img.previa-midia').first()).toHaveAttribute('src', /sddefault\.jpg$/);
+  });
+
+  test('o player do destaque é montado grande e reduzido para caber no card', async ({ page }) => {
+    await soLinksDoYoutube(page);
+    const tela = page.locator('[data-lista="showreel"] .quadro-tela').first();
+    const iframe = tela.locator('iframe[data-previa="youtube"]');
+    await expect(iframe).toHaveCount(1);
+    const medidas = await iframe.evaluate((f) => {
+      const t = f.parentElement.getBoundingClientRect();
+      const r = f.getBoundingClientRect();
+      return { largura: f.offsetWidth, altura: f.offsetHeight, cobre: r.left <= t.left + 1 && r.top <= t.top + 1 && r.right >= t.right - 1 && r.bottom >= t.bottom - 1 };
+    });
+    expect(Math.min(medidas.largura, medidas.altura)).toBeGreaterThanOrEqual(1080 / 2.7);
+    expect(medidas.cobre).toBe(true);
+  });
+
+  test('no computador, o card dos Trabalhos toca ao passar o mouse, um de cada vez', async ({ page }, testInfo) => {
+    test.skip(ehCelular(testInfo), 'só no computador');
+    await soLinksDoYoutube(page);
+    const cards = page.locator('.grade .card');
+    const primeiro = cards.nth(0);
+    const segundo = cards.nth(1);
+    await primeiro.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(600);
+    await expect(page.locator('.grade iframe[data-previa="youtube"]')).toHaveCount(0);
+    await primeiro.hover();
+    await expect(primeiro.locator('iframe[data-previa="youtube"]')).toHaveCount(1);
+    await segundo.hover();
+    await expect(segundo.locator('iframe[data-previa="youtube"]')).toHaveCount(1);
+    await page.waitForTimeout(4000);
+    await expect(segundo.locator('iframe')).toHaveClass(/rodando/);
+    await expect(primeiro.locator('iframe')).not.toHaveClass(/rodando/);
+    await page.mouse.move(5, 5);
+    await expect(segundo.locator('iframe')).not.toHaveClass(/rodando/);
+  });
+
+  test('no celular, toca só o card do meio da tela', async ({ page }, testInfo) => {
+    test.skip(!ehCelular(testInfo), 'só no celular');
+    await soLinksDoYoutube(page);
+    const card = page.locator('.grade .card').nth(1);
+    await card.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await expect(card.locator('iframe[data-previa="youtube"]')).toHaveCount(1);
+    await page.waitForTimeout(4000);
+    await expect(card.locator('iframe')).toHaveClass(/rodando/);
+    await expect(page.locator('.grade iframe.rodando')).toHaveCount(1);
+  });
+
+  test('com as animações pausadas, passar o mouse não toca nada', async ({ page }, testInfo) => {
+    test.skip(ehCelular(testInfo), 'só no computador');
+    await page.addInitScript(() => { try { sessionStorage.setItem('movimento', 'parado'); } catch {} });
+    await soLinksDoYoutube(page);
+    const card = page.locator('.grade .card').first();
+    await card.scrollIntoViewIfNeeded();
+    await card.hover();
+    await page.waitForTimeout(800);
+    await expect(page.locator('iframe[data-previa="youtube"]')).toHaveCount(0);
   });
 });

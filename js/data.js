@@ -39,6 +39,21 @@ export function thumbYoutube(id, qualidade = 'hqdefault') {
   return id ? `https://i.ytimg.com/vi/${id}/${qualidade}.jpg` : '';
 }
 
+const CAPAS = ['maxresdefault', 'sddefault', 'hqdefault'];
+
+export function capaYoutube(img, id, aoFalhar = () => {}) {
+  let degrau = 0;
+  const proximo = () => {
+    degrau += 1;
+    if (degrau < CAPAS.length) img.src = thumbYoutube(id, CAPAS[degrau]);
+    else aoFalhar();
+  };
+  img.addEventListener('load', () => { if (img.naturalWidth <= 120) proximo(); });
+  img.addEventListener('error', proximo);
+  img.src = thumbYoutube(id, CAPAS[0]);
+  return img;
+}
+
 export function urlSegura(url, { midia = false } = {}) {
   const valor = String(url || '').trim();
   if (/^https?:\/\//i.test(valor) || /^(assets\/|blob:)/.test(valor)) return valor;
