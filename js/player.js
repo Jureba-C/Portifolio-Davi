@@ -1,5 +1,7 @@
 import { t } from './i18n.js';
-import { linkYoutube } from './data.js';
+import { linkYoutube, capaYoutube } from './data.js';
+import { reduzMovimento } from './animations.js';
+import { alturaReal, aquecerQualidade, comandoYoutube, encaixarGrande, ouvirYoutube, qualidadeAlvo } from './youtube.js';
 
 const FOCAVEIS = 'a[href], button:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])';
 
@@ -36,10 +38,12 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   let tocando = false;
   let mudo = false;
   let vizinhos = null;
+  let aquecimento = null;
+  let pararDeOuvir = () => {};
+  let soltarEncaixe = () => {};
 
-  const enviar = (func, args = []) => {
-    iframe?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
-  };
+  const enviar = (func, args = []) => comandoYoutube(iframe, func, args);
+  const aquecendo = () => Boolean(aquecimento && !aquecimento.pronto);
 
   const desenhar = () => {
     const fracao = duracao ? Math.min(1, atual / duracao) : 0;
@@ -51,17 +55,41 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     som.setAttribute('aria-label', t(mudo ? 'player.comSom' : 'player.mudo'));
   };
 
-  const aoMensagem = (e) => {
-    if (!iframe || e.source !== iframe.contentWindow) return;
-    let dados;
-    try { dados = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch { return; }
-    const info = dados?.info;
-    if (!info || typeof info !== 'object') return;
+  const aoInfo = (info) => {
+    aquecimento?.info(info);
     if (typeof info.duration === 'number' && info.duration > 0) duracao = info.duration;
+    if (aquecendo()) return;
     if (typeof info.currentTime === 'number') atual = info.currentTime;
     if (typeof info.playerState === 'number') tocando = info.playerState === 1 || info.playerState === 3;
     if (typeof info.muted === 'boolean') mudo = info.muted;
     desenhar();
+  };
+
+  const mostrarVideo = (capa) => {
+    if (!iframe) return;
+    enviar('seekTo', [0, true]);
+    enviar('unMute');
+    enviar('playVideo');
+    atual = 0;
+    tocando = true;
+    mudo = false;
+    desenhar();
+    if (reduzMovimento()) capa.remove();
+    else {
+      capa.classList.add('saindo');
+      setTimeout(() => capa.remove(), 450);
+    }
+    raiz.classList.remove('aquecendo');
+  };
+
+  const encerrarAquecimento = () => {
+    aquecimento?.cancelar();
+    aquecimento = null;
+    pararDeOuvir();
+    pararDeOuvir = () => {};
+    soltarEncaixe();
+    soltarEncaixe = () => {};
+    raiz.classList.remove('aquecendo');
   };
 
   const prenderFoco = (e) => {
@@ -104,11 +132,13 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     tag.hidden = !item.tag;
     titulo.textContent = item.titulo || '';
     desc.textContent = item.descricao || '';
+    encerrarAquecimento();
     video.textContent = '';
     if (item.youtubeId) {
       const params = new URLSearchParams({
         enablejsapi: '1',
         autoplay: '1',
+        mute: '1',
         controls: '0',
         rel: '0',
         playsinline: '1',
@@ -121,10 +151,27 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
       iframe.allowFullscreen = true;
       iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-      iframe.addEventListener('load', () => {
-        iframe?.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*');
+      const capa = document.createElement('div');
+      capa.className = 'player-capa';
+      capa.setAttribute('aria-hidden', 'true');
+      const img = capaYoutube(Object.assign(document.createElement('img'), { alt: '', decoding: 'async' }), item.youtubeId);
+      const aviso = document.createElement('span');
+      aviso.className = 'player-aquece';
+      const ponto = document.createElement('span');
+      ponto.className = 'rec';
+      aviso.append(ponto, t('player.carregandoHd'));
+      capa.append(img, aviso);
+      const quadroAtual = iframe;
+      const telaGrande = (window.screen?.width || 0) * (window.devicePixelRatio || 1) >= 2560;
+      aquecimento = aquecerQualidade({
+        alvo: (disponiveis) => qualidadeAlvo(alturaReal(quadroAtual), disponiveis),
+        aoPronto: () => { if (iframe === quadroAtual) mostrarVideo(capa); },
       });
-      video.append(iframe);
+      pararDeOuvir = ouvirYoutube(iframe, aoInfo);
+      raiz.classList.add('aquecendo');
+      mudo = true;
+      video.append(iframe, capa);
+      soltarEncaixe = encaixarGrande(video, iframe, { alturaMinima: telaGrande ? 2160 : 1080 });
       link.href = linkYoutube(item.youtubeId);
       link.hidden = false;
       tela.classList.remove('sem-video');
@@ -148,7 +195,6 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     aoAbrir();
     document.documentElement.style.overflow = 'hidden';
     document.addEventListener('keydown', prenderFoco);
-    window.addEventListener('message', aoMensagem);
     raiz.querySelector('.player-fechar').focus();
   }
 
@@ -156,12 +202,12 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     if (raiz.hidden) return;
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     raiz.hidden = true;
+    encerrarAquecimento();
     video.textContent = '';
     iframe = null;
     vizinhos = null;
     document.documentElement.style.overflow = '';
     document.removeEventListener('keydown', prenderFoco);
-    window.removeEventListener('message', aoMensagem);
     if (origemFoco?.focus) origemFoco.focus();
     aoFechar();
   }
@@ -171,12 +217,14 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   proximo.addEventListener('click', () => vizinhos?.ir(1));
   play.addEventListener('click', () => {
     if (!iframe) return;
+    if (aquecendo()) return aquecimento.encerrar();
     tocando = !tocando;
     enviar(tocando ? 'playVideo' : 'pauseVideo');
     desenhar();
   });
   som.addEventListener('click', () => {
     if (!iframe) return;
+    if (aquecendo()) return aquecimento.encerrar();
     mudo = !mudo;
     enviar(mudo ? 'mute' : 'unMute');
     desenhar();
@@ -186,7 +234,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     else tela.requestFullscreen?.().catch(() => {});
   });
   barra.addEventListener('click', (e) => {
-    if (!iframe || !duracao) return;
+    if (!iframe || !duracao || aquecendo()) return;
     const r = barra.getBoundingClientRect();
     const fracao = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
     atual = fracao * duracao;

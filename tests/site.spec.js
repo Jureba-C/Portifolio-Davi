@@ -21,12 +21,40 @@ const ehCelular = (testInfo) => testInfo.project.name.startsWith('celular') || t
 
 const svg = (w, h) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="${w}" height="${h}" fill="#333"/></svg>`;
 
-async function soLinksDoYoutube(page, { semMaxres = false } = {}) {
+const paginaYoutube = (roteiro) => `<!doctype html><title>yt</title><body style="margin:0;background:#123"><script>
+const roteiro = ${JSON.stringify(roteiro || [])};
+let comecou = false;
+addEventListener('message', (e) => {
+  let d;
+  try { d = JSON.parse(e.data); } catch { return; }
+  if (d.event === 'listening' && !comecou) {
+    comecou = true;
+    roteiro.forEach(([ms, info]) => setTimeout(() => parent.postMessage(JSON.stringify({ event: 'infoDelivery', info }), '*'), ms));
+  }
+  if (d.event === 'command') parent.postMessage(JSON.stringify({ event: 'comando-falso', func: d.func, args: d.args }), '*');
+});
+</script></body>`;
+
+async function youtubeFalso(page, roteiro = null) {
+  await page.route('**/i.ytimg.com/**', (rota) => rota.fulfill({ contentType: 'image/svg+xml', body: svg(1280, 720) }));
+  await page.route(/youtube(-nocookie)?\.com/, (rota) => rota.fulfill({ contentType: 'text/html', body: roteiro ? paginaYoutube(roteiro) : '<!doctype html><title>yt</title>' }));
+  await page.addInitScript(() => {
+    window.__comandos = [];
+    addEventListener('message', (e) => {
+      let d;
+      try { d = JSON.parse(e.data); } catch { return; }
+      const player = document.querySelector('[data-player-video] iframe');
+      if (d.event === 'comando-falso' && player && e.source === player.contentWindow) window.__comandos.push(`${d.func}:${JSON.stringify(d.args)}`);
+    });
+  });
+}
+
+async function soLinksDoYoutube(page, { semMaxres = false, roteiro = null } = {}) {
   await page.route('**/i.ytimg.com/**', (rota) => {
     const pequena = semMaxres && rota.request().url().includes('maxresdefault');
     rota.fulfill({ contentType: 'image/svg+xml', body: pequena ? svg(120, 90) : svg(1280, 720) });
   });
-  await page.route(/youtube(-nocookie)?\.com/, (rota) => rota.fulfill({ contentType: 'text/html', body: '<!doctype html><title>yt</title>' }));
+  await page.route(/youtube(-nocookie)?\.com/, (rota) => rota.fulfill({ contentType: 'text/html', body: roteiro ? paginaYoutube(roteiro) : '<!doctype html><title>yt</title>' }));
   await page.goto('/?intro=0');
   await page.evaluate(async () => {
     const { MOCK } = await import('/js/mock-data.js');
@@ -523,5 +551,92 @@ test.describe('prévias do YouTube', () => {
     await card.hover();
     await page.waitForTimeout(800);
     await expect(page.locator('iframe[data-previa="youtube"]')).toHaveCount(0);
+  });
+});
+
+const SOBE_ATE_1080 = [
+  [100, { playerState: 1, playbackQuality: 'small', availableQualityLevels: ['hd1080', 'hd720', 'large', 'medium', 'small', 'tiny', 'auto'], muted: true, duration: 30, currentTime: 0.1 }],
+  [700, { playbackQuality: 'large', currentTime: 0.7 }],
+  [1400, { playbackQuality: 'hd1080', currentTime: 1.4 }],
+];
+
+async function abrirPlayer(page) {
+  await page.goto('/?intro=0');
+  await page.locator('.grade .card').first().click();
+  await expect(page.locator('[data-player]')).toBeVisible();
+}
+
+test.describe('player na melhor qualidade', () => {
+  test('o vídeo aquece escondido e aparece do começo, já em HD', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    const capa = page.locator('.player-capa');
+    await expect(capa).toBeVisible();
+    await expect(page.locator('.player-aquece')).toHaveText('CARREGANDO EM HD');
+    await page.waitForTimeout(900);
+    await expect(capa).toHaveCount(1);
+    await expect(capa).toHaveCount(0, { timeout: 5000 });
+    const comandos = await page.evaluate(() => window.__comandos);
+    expect(comandos).toEqual(expect.arrayContaining(['seekTo:[0,true]', 'unMute:[]', 'playVideo:[]']));
+    expect(comandos.indexOf('seekTo:[0,true]')).toBeLessThan(comandos.indexOf('playVideo:[]'));
+  });
+
+  test('vídeo que não chega a 1080p aparece quando a qualidade para de subir', async ({ page }) => {
+    await youtubeFalso(page, [
+      [100, { playerState: 1, playbackQuality: 'medium', availableQualityLevels: [] }],
+      [500, { playbackQuality: 'hd720' }],
+    ]);
+    await abrirPlayer(page);
+    await page.waitForTimeout(2000);
+    await expect(page.locator('.player-capa')).toHaveCount(1);
+    await expect(page.locator('.player-capa')).toHaveCount(0, { timeout: 3500 });
+  });
+
+  test('sem resposta do YouTube, o vídeo aparece logo, sem travar', async ({ page }) => {
+    await youtubeFalso(page, null);
+    await abrirPlayer(page);
+    await expect(page.locator('.player-capa')).toBeVisible();
+    await expect(page.locator('.player-capa')).toHaveCount(0, { timeout: 4000 });
+  });
+
+  test('fechar durante o aquecimento não deixa nada tocando', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('[data-player]')).toBeHidden();
+    await page.waitForTimeout(2000);
+    await expect(page.locator('[data-player-video] iframe, .player-capa')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__comandos)).toEqual([]);
+  });
+
+  test('o player é montado com pelo menos 1080 pixels reais e cobre a tela', async ({ page }) => {
+    await youtubeFalso(page, null);
+    await abrirPlayer(page);
+    const medidas = await page.locator('[data-player-video] iframe').evaluate((f) => {
+      const caixa = f.parentElement.getBoundingClientRect();
+      const r = f.getBoundingClientRect();
+      return {
+        real: Math.min(f.offsetWidth, f.offsetHeight) * window.devicePixelRatio,
+        cobre: Math.abs(r.left - caixa.left) < 2 && Math.abs(r.top - caixa.top) < 2 && Math.abs(r.right - caixa.right) < 2 && Math.abs(r.bottom - caixa.bottom) < 2,
+      };
+    });
+    expect(medidas.real).toBeGreaterThanOrEqual(1079);
+    expect(medidas.cobre).toBe(true);
+  });
+
+  test('a prévia do card só aparece depois de chegar em HD', async ({ page }, testInfo) => {
+    test.skip(ehCelular(testInfo), 'só no computador');
+    await soLinksDoYoutube(page, { roteiro: [
+      [100, { playerState: 1, playbackQuality: 'small', availableQualityLevels: ['hd1080', 'hd720', 'small'] }],
+      [1800, { playbackQuality: 'hd1080' }],
+    ] });
+    const card = page.locator('.grade .card').first();
+    await card.scrollIntoViewIfNeeded();
+    await card.hover();
+    const iframe = card.locator('iframe[data-previa="youtube"]');
+    await expect(iframe).toHaveCount(1);
+    await page.waitForTimeout(1000);
+    await expect(iframe).not.toHaveClass(/rodando/);
+    await expect(iframe).toHaveClass(/rodando/, { timeout: 4000 });
   });
 });

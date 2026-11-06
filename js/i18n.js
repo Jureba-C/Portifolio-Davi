@@ -101,6 +101,7 @@ const TEXTOS = {
     'player.abrirYoutube': 'abrir no YouTube ↗',
     'player.dialogo': 'Player do vídeo',
     'player.semVideo': 'esse vídeo ainda não tem link',
+    'player.carregandoHd': 'CARREGANDO EM HD',
   },
   en: {
     'pular': 'skip to the work',
@@ -204,6 +205,7 @@ const TEXTOS = {
     'player.abrirYoutube': 'open on YouTube ↗',
     'player.dialogo': 'Video player',
     'player.semVideo': "this video doesn't have a link yet",
+    'player.carregandoHd': 'LOADING IN HD',
   },
 };
 

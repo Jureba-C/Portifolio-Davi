@@ -1,5 +1,6 @@
 import { capaYoutube, urlSegura } from './data.js';
 import { reduzMovimento } from './animations.js';
+import { alturaReal, aquecerQualidade, comandoYoutube, encaixarGrande, ouvirYoutube, qualidadeAlvo } from './youtube.js';
 
 const controles = new Map();
 let observador = null;
@@ -11,7 +12,6 @@ const economia = () => Boolean(navigator.connection?.saveData);
 export const autoplayPermitido = () => !reduzMovimento() && !economia();
 const comMouse = () => window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false;
 
-const ALTURA_HD = 1080;
 const RECORTE = 1.22;
 
 function ativar(controle) {
@@ -96,32 +96,6 @@ function imagem(tela, src, texto, youtubeId = '') {
   return img;
 }
 
-function encaixar(tela, iframe) {
-  const ajustar = () => {
-    const largura = tela.clientWidth;
-    const altura = tela.clientHeight;
-    if (!largura || !altura) return;
-    const minimo = ALTURA_HD / (window.devicePixelRatio || 1);
-    const fator = Math.max(1, minimo / Math.min(largura, altura));
-    iframe.style.width = `${Math.round(largura * fator)}px`;
-    iframe.style.height = `${Math.round(altura * fator)}px`;
-    iframe.style.setProperty('--escala', String(RECORTE / fator));
-  };
-  ajustar();
-  if ('ResizeObserver' in window) new ResizeObserver(ajustar).observe(tela);
-}
-
-const iframes = new Map();
-window.addEventListener('message', (e) => {
-  const iframe = iframes.get(e.source);
-  if (!iframe) return;
-  let dados;
-  try { dados = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch { return; }
-  iframe.dataset.ouvido = '1';
-  const estado = dados?.info?.playerState;
-  if (typeof estado === 'number') iframe.classList.toggle('rodando', estado === 1);
-});
-
 function controleDeVideo(tela, video, poster) {
   imagem(tela, poster, '', poster ? '' : video.youtube_id);
   const v = document.createElement('video');
@@ -161,7 +135,10 @@ function controleDeYoutube(tela, video, poster, texto) {
   imagem(tela, poster, texto, poster ? '' : video.youtube_id);
   let iframe = null;
   let querTocar = false;
-  const enviar = (func) => iframe?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*');
+  let ouviu = false;
+  let tocandoAgora = false;
+  let pronto = false;
+  const atualizar = () => iframe?.classList.toggle('rodando', querTocar && pronto && (tocandoAgora || !ouviu));
   return {
     visivel: false,
     carregar() {},
@@ -169,8 +146,8 @@ function controleDeYoutube(tela, video, poster, texto) {
       if (!autoplayPermitido()) return;
       querTocar = true;
       if (iframe) {
-        enviar('playVideo');
-        if (!iframe.dataset.ouvido) iframe.classList.add('rodando');
+        comandoYoutube(iframe, 'playVideo');
+        atualizar();
         return;
       }
       const params = new URLSearchParams({
@@ -197,18 +174,27 @@ function controleDeYoutube(tela, video, poster, texto) {
       iframe.tabIndex = -1;
       iframe.setAttribute('aria-hidden', 'true');
       iframe.dataset.previa = 'youtube';
-      iframe.addEventListener('load', () => {
-        iframes.set(iframe.contentWindow, iframe);
-        iframe.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*');
+      const quadroAtual = iframe;
+      const aquecimento = aquecerQualidade({
+        alvo: (disponiveis) => qualidadeAlvo(alturaReal(quadroAtual), disponiveis),
+        aoPronto: () => { pronto = true; atualizar(); },
+        semResposta: 3500,
+      });
+      ouvirYoutube(iframe, (info) => {
+        ouviu = true;
+        aquecimento.info(info);
+        if (typeof info.playerState === 'number') {
+          tocandoAgora = info.playerState === 1;
+          atualizar();
+        }
       });
       tela.append(iframe);
-      encaixar(tela, iframe);
-      setTimeout(() => { if (iframe && !iframe.dataset.ouvido && querTocar) iframe.classList.add('rodando'); }, 3500);
+      encaixarGrande(tela, iframe, { recorte: RECORTE });
     },
     pausar() {
       querTocar = false;
-      enviar('pauseVideo');
-      iframe?.classList.remove('rodando');
+      comandoYoutube(iframe, 'pauseVideo');
+      atualizar();
     },
   };
 }
