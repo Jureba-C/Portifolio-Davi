@@ -1,4 +1,4 @@
-# Publicar o site do Decxz (Supabase + Vercel)
+# Publicar o site do Decxz (Supabase + Hostinger)
 
 Tudo já está configurado no repositório. O que falta são só os cliques nas contas, marcados com ⚠️. Faça na ordem: primeiro o Supabase (banco e login), depois a Vercel (o site).
 
@@ -21,30 +21,24 @@ Tudo já está configurado no repositório. O que falta são só os cliques nas 
 7. ⚠️ Em **Project Settings → API**, deixe aberta a página com a **Project URL** e a chave **anon public**. Você vai colar as duas na Vercel, não no código.
    - Nunca use a chave `service_role`: o build recusa essa chave.
 
-## 2. Vercel: o site
-1. ⚠️ Em [vercel.com](https://vercel.com), clique em **Add New → Project** e importe o repositório **Jureba-C/Portifolio-Davi**.
-2. Não precisa mexer em **Framework**, **Build** nem **Output**: o `vercel.json` já define tudo.
-   - Build: `node scripts/build.mjs`.
-   - Saída: `dist`.
-   - Instalação: só o esbuild, que empacota o site (`installCommand` do `vercel.json`).
-3. ⚠️ Antes de clicar em Deploy, abra **Environment Variables** e cadastre:
+## 2. Gerar o site (build na sua máquina)
+A Hostinger só serve arquivos prontos, então o build roda aqui, com as chaves do passo 1.7:
+```bash
+npm install
+SUPABASE_URL=https://abcd1234.supabase.co SUPABASE_ANON_KEY=… SITE_URL=https://seudominio.com.br npm run build
+npm run zip
+```
+- `SITE_URL` é o endereço final, com `https://` e sem barra no fim. Sem ele o build para: as metatags, o `sitemap.xml` e o `robots.txt` ficariam com o endereço provisório.
+- Se faltar alguma chave, o build para e diz qual. Assim o site nunca vai ao ar com o painel de demonstração.
+- O build gera a pasta `dist/` e o arquivo `hostinger.zip` com tudo dentro, inclusive o `.htaccess` (cabeçalhos de segurança, HTTPS, URLs sem `.html` e a página 404).
 
-   | Nome | Valor |
-   |---|---|
-   | `SUPABASE_URL` | a Project URL (ex.: `https://abcd1234.supabase.co`) |
-   | `SUPABASE_ANON_KEY` | a chave **anon public** |
-   | `SITE_URL` | opcional agora; quando tiver domínio, ex.: `https://decxz.com.br` |
-
-4. Clique em **Deploy**. Se faltar alguma chave, o build para e diz qual. Assim o site nunca vai ao ar com o painel de demonstração.
-5. ⚠️ Volte ao Supabase → **Authentication → URL Configuration** e coloque o endereço do site (o `.vercel.app` ou o domínio) em **Site URL**.
-
-## 3. Domínio próprio (quando tiver)
-1. ⚠️ Vercel → **Settings → Domains → Add**, e siga as instruções de DNS do seu registrador.
-2. ⚠️ Vercel → **Environment Variables**: coloque `SITE_URL` com o domínio (`https://…`, sem barra no fim) e clique em **Redeploy**. O build troca o endereço:
-   - nas metatags;
-   - nos dados para o Google;
-   - no `robots.txt` e no `sitemap.xml`.
-3. ⚠️ Supabase → **Site URL**: troque para o domínio.
+## 3. Hostinger: subir o site
+1. ⚠️ No hPanel, abra o site do domínio → **Arquivos → Gerenciador de arquivos** e entre em `public_html`.
+2. ⚠️ O envio apaga o que já está lá: confira o que existe e guarde o que precisar.
+3. ⚠️ Envie o `hostinger.zip`, clique com o botão direito nele → **Extrair** na própria `public_html` e apague o `.zip`.
+   - O `.htaccess` fica escondido no gerenciador. Ative **Mostrar arquivos ocultos** para conferir que ele está lá.
+4. ⚠️ Em **Segurança → SSL**, confirme que o SSL do domínio está ativo.
+5. ⚠️ Volte ao Supabase → **Authentication → URL Configuration**: coloque o domínio em **Site URL** e acrescente-o em **Redirect URLs**.
 
 ## 4. Conferir depois de publicar
 - Abra o site: a intro roda, os vídeos aparecem e o PT/EN funciona.
@@ -65,12 +59,12 @@ Tudo já está configurado no repositório. O que falta são só os cliques nas 
 
 ## Atualizar o site depois
 - Conteúdo (vídeos, textos, clientes, depoimentos): sempre pelo painel `/admin`, sem mexer em código e sem publicar de novo.
-- Código: cada envio para o GitHub (repositório Portifolio-Davi) publica sozinho na Vercel.
+- Código: rode de novo os passos 2 e 3 (build, zip e envio). O envio para o GitHub não publica nada sozinho.
 
 ## Testar o build no computador
 ```bash
-SUPABASE_URL=https://abcd1234.supabase.co SUPABASE_ANON_KEY=… npm run build
+SUPABASE_URL=https://abcd1234.supabase.co SUPABASE_ANON_KEY=… SITE_URL=https://seudominio.com.br npm run build
 PERMITIR_DEMO=1 npm run build
 npm run test:build
 ```
-O segundo comando gera um build sem Supabase, só para olhar. O último confere o build.
+O segundo comando gera um build sem Supabase, só para olhar. O último confere o build e o `.htaccess`.

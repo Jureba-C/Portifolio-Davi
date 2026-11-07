@@ -1,9 +1,9 @@
-import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, readdir, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const raiz = fileURLToPath(new URL('..', import.meta.url));
-const destino = resolve(raiz, process.env.SAIDA || 'dist');
+let destino = resolve(raiz, process.env.SAIDA || 'dist');
 const PUBLICOS = ['index.html', 'admin.html', '404.html', 'robots.txt', 'sitemap.xml', 'css', 'js', 'assets'];
 const ENDERECO_PROVISORIO = 'https://portfolio-editor.vercel.app';
 
@@ -27,22 +27,21 @@ function enderecoSupabase(valor) {
   return achado ? `https://${achado[1].toLowerCase()}` : texto.replace(/\/+$/, '');
 }
 
-function enderecoDoSite() {
+function enderecoDoSite(demo) {
   const informado = limpo(process.env.SITE_URL).replace(/\/+$/, '');
   if (informado) return informado;
-  const vercel = limpo(process.env.VERCEL_PROJECT_PRODUCTION_URL);
-  if (vercel) return `https://${vercel.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
+  if (!demo) falhar('Falta SITE_URL, o endereço final do site (ex.: SITE_URL=https://decxz.com.br). Sem ele as metatags, o sitemap.xml e o robots.txt ficariam com o endereço provisório. Veja o DEPLOY.md.');
   return ENDERECO_PROVISORIO;
 }
 
 function lerConfiguracao() {
   const url = enderecoSupabase(process.env.SUPABASE_URL);
   const chave = limpo(process.env.SUPABASE_ANON_KEY).replace(/\s+/g, '');
-  const site = enderecoDoSite();
   const demo = process.env.PERMITIR_DEMO === '1';
+  const site = enderecoDoSite(demo);
   if (!url || !chave) {
     if (!demo) {
-      falhar('Faltam SUPABASE_URL e/ou SUPABASE_ANON_KEY nas variáveis de ambiente. Na Vercel: Settings → Environment Variables. Veja o DEPLOY.md.');
+      falhar('Faltam SUPABASE_URL e/ou SUPABASE_ANON_KEY nas variáveis de ambiente. Rode o build com elas na frente do comando. Veja o DEPLOY.md.');
     }
     console.warn('! Sem Supabase: publicando em modo demonstração (PERMITIR_DEMO=1).');
   } else {
@@ -86,6 +85,33 @@ async function trocarEndereco(site) {
   }
 }
 
+const aspas = (valor) => `"${String(valor).replace(/[\\"]/g, '\\$&')}"`;
+
+async function gerarHtaccess() {
+  const { headers: regras } = JSON.parse(await readFile(join(raiz, 'cabecalhos.json'), 'utf8'));
+  const linhas = [
+    'Options -Indexes',
+    'RewriteEngine On',
+    'RewriteCond %{HTTPS} off',
+    'RewriteCond %{HTTP:X-Forwarded-Proto} !https',
+    'RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]',
+    'RewriteCond %{REQUEST_FILENAME} !-f',
+    'RewriteCond %{REQUEST_FILENAME} !-d',
+    'RewriteCond %{REQUEST_FILENAME}.html -f',
+    'RewriteRule ^(.+)$ $1.html [L]',
+    'ErrorDocument 404 /404.html',
+    '<IfModule mod_headers.c>',
+  ];
+  regras.forEach(({ source, headers }, i) => {
+    const todos = source === '/(.*)';
+    const padrao = source.replace(/\(\.\*\)/g, '\u0001').replace(/\./g, '[.]').replace(/\u0001/g, '(.*)');
+    if (!todos) linhas.push(`  SetEnvIf Request_URI ${aspas(`^${padrao}$`)} HDR_${i}`);
+    for (const { key, value } of headers) linhas.push(`  Header set ${key} ${aspas(value)}${todos ? '' : ` env=HDR_${i}`}`);
+  });
+  linhas.push('</IfModule>', '');
+  await writeFile(join(destino, '.htaccess'), linhas.join('\n'));
+}
+
 const PAGINAS = {
   'index.html': { js: 'site', css: ['fonts', 'base', 'formas', 'site'], boot: true },
   'admin.html': { js: 'admin', css: ['fonts', 'base', 'admin'], boot: false },
@@ -95,7 +121,7 @@ async function carregarEsbuild() {
   try {
     return await import('esbuild');
   } catch {
-    falhar('Falta o esbuild para empacotar o site. Rode npm install (ou, na Vercel, o installCommand do vercel.json).');
+    falhar('Falta o esbuild para empacotar o site. Rode npm install.');
   }
   return null;
 }
@@ -174,6 +200,7 @@ async function principal() {
   const { url, chave, site } = lerConfiguracao();
   await rm(destino, { recursive: true, force: true });
   await mkdir(destino, { recursive: true });
+  destino = await realpath(destino);
   for (const item of PUBLICOS) {
     await cp(join(raiz, item), join(destino, item), { recursive: true });
   }
@@ -187,6 +214,7 @@ async function principal() {
   await writeFile(join(destino, 'js', 'config.js'), config);
   await trocarEndereco(site);
   await empacotar({ supabase: url }, !url);
+  await gerarHtaccess();
   const faltando = await referenciasQuebradas();
   if (faltando.length) falhar(`Arquivos citados nos HTML que não existem:\n  ${faltando.join('\n  ')}`);
   const arquivos = await readdir(destino, { recursive: true });

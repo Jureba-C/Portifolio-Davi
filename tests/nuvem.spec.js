@@ -18,7 +18,7 @@ function construirEServir(chave, porta) {
   pastas.push(pasta);
   const r = spawnSync(process.execPath, ['scripts/build.mjs'], {
     cwd: raiz,
-    env: { PATH: process.env.PATH, SAIDA: pasta, SUPABASE_URL: SUPABASE, SUPABASE_ANON_KEY: chave },
+    env: { PATH: process.env.PATH, SAIDA: pasta, SUPABASE_URL: SUPABASE, SUPABASE_ANON_KEY: chave, SITE_URL: 'https://decxz.com.br' },
     encoding: 'utf8',
   });
   if (r.status !== 0) throw new Error(r.stderr);

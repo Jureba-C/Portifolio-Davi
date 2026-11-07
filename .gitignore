@@ -5,3 +5,5 @@ playwright-report/
 .env*
 dist/
 dist-teste/
+hostinger.zip
+hostinger/

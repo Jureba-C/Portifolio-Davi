@@ -103,13 +103,13 @@ npm run check:comments           # garante que o código não tem comentários
 
 Segurança: todas as tabelas têm Row Level Security. Qualquer pessoa lê. Só quem está logado **e** está na tabela `admins` escreve, reordena ou envia arquivos.
 
-### Publicar (Vercel)
+### Publicar (Hostinger)
 O passo a passo completo está no **`DEPLOY.md`**. Em resumo:
-- importar o repositório na Vercel;
-- cadastrar `SUPABASE_URL`, `SUPABASE_ANON_KEY` e, com domínio, `SITE_URL` nas variáveis de ambiente;
-- clicar em Deploy.
+- rodar o build com `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SITE_URL` (`npm run build`);
+- gerar o `hostinger.zip` (`npm run zip`);
+- enviar e extrair em `public_html` no hPanel.
 
-O `vercel.json` já define o build (`node scripts/build.mjs`), a pasta de saída (`dist`) e os cabeçalhos de segurança.
+O `cabecalhos.json` é a fonte dos cabeçalhos de segurança: o build os grava no `.htaccess` e o `scripts/servir-dist.mjs` os usa nos testes.
 
 O build:
 - copia só o que vai ao ar;

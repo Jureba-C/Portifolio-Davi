@@ -18,7 +18,7 @@ function pacotes(pasta) {
 function construir(env) {
   const pasta = mkdtempSync(join(tmpdir(), 'decxz-build-'));
   const saida = relative(raiz, pasta);
-  const limpo = { PATH: process.env.PATH, SAIDA: saida, ...env };
+  const limpo = { PATH: process.env.PATH, SAIDA: saida, SITE_URL: 'https://decxz.com.br', ...env };
   const r = spawnSync(process.execPath, ['scripts/build.mjs'], { cwd: raiz, env: limpo, encoding: 'utf8' });
   return { ...r, pasta };
 }
@@ -83,11 +83,27 @@ test('a chave service_role é recusada', () => {
   }
 });
 
-test('sem SITE_URL usa o endereço que a Vercel dá', () => {
-  const r = construir({ SUPABASE_URL: 'https://abcdefgh.supabase.co', SUPABASE_ANON_KEY: CHAVE_ANON, VERCEL_PROJECT_PRODUCTION_URL: 'decxz.vercel.app' });
+test('sem SITE_URL o build para com uma mensagem clara', () => {
+  const r = construir({ SUPABASE_URL: 'https://abcdefgh.supabase.co', SUPABASE_ANON_KEY: CHAVE_ANON, SITE_URL: '' });
+  try {
+    assert.notEqual(r.status, 0);
+    assert.match(r.stderr, /SITE_URL/);
+  } finally {
+    rmSync(r.pasta, { recursive: true, force: true });
+  }
+});
+
+test('o .htaccess traz a CSP, o HTTPS, as URLs sem .html e a página 404', () => {
+  const r = construir({ SUPABASE_URL: 'https://abcdefgh.supabase.co', SUPABASE_ANON_KEY: CHAVE_ANON, SITE_URL: 'https://decxz.com.br' });
   try {
     assert.equal(r.status, 0, r.stderr);
-    assert.ok(readFileSync(join(r.pasta, 'index.html'), 'utf8').includes('https://decxz.vercel.app/'));
+    const htaccess = readFileSync(join(r.pasta, '.htaccess'), 'utf8');
+    assert.match(htaccess, /Header set Content-Security-Policy ".*connect-src 'self' https:\/\/\*\.supabase\.co/);
+    assert.match(htaccess, /RewriteRule \^ https:\/\/%\{HTTP_HOST\}%\{REQUEST_URI\} \[L,R=301\]/);
+    assert.match(htaccess, /RewriteRule \^\(\.\+\)\$ \$1\.html \[L\]/);
+    assert.match(htaccess, /ErrorDocument 404 \/404\.html/);
+    assert.match(htaccess, /SetEnvIf Request_URI "\^\/admin\(\[\.\]html\)\?\$" HDR_\d/);
+    assert.match(htaccess, /Header set X-Robots-Tag "noindex, nofollow" env=HDR_\d/);
   } finally {
     rmSync(r.pasta, { recursive: true, force: true });
   }
@@ -103,8 +119,8 @@ test('modo demonstração só com PERMITIR_DEMO=1', () => {
   }
 });
 
-test('os caminhos dos cabeçalhos do vercel.json usam só o formato que a Vercel aceita', () => {
-  const { headers } = JSON.parse(readFileSync(join(raiz, 'vercel.json'), 'utf8'));
+test('os caminhos do cabecalhos.json usam só grupos simples, sem grupo dentro de grupo', () => {
+  const { headers } = JSON.parse(readFileSync(join(raiz, 'cabecalhos.json'), 'utf8'));
   for (const { source } of headers) {
     let nivel = 0;
     for (let i = 0; i < source.length; i += 1) {
