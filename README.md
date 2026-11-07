@@ -4,7 +4,7 @@ Site-portfólio em cartaz vermelho, preto e branco (Persona 5 + Deadlock, janela
 
 - Site: `index.html` · Painel: `admin.html` (abre em `/admin`) · Página de erro: `404.html`
 - HTML, CSS e JavaScript puros, sem framework e sem etapa de build.
-- Banco, login e arquivos: Supabase (plano grátis). Hospedagem: Vercel (plano grátis).
+- Banco, login e arquivos: Supabase (plano grátis). Hospedagem: Hostinger, em https://decxzeditor.com.br.
 
 ---
 
@@ -83,8 +83,8 @@ Sem o Supabase configurado, o site usa os dados de exemplo e o painel entra no *
 ### Testes
 ```bash
 npm test                         # Playwright: computador 1440 e celular 390
-PW_DIST=1 npm test               # a mesma suíte contra o build de produção (empacotado e com os cabeçalhos da Vercel)
-npm run test:build               # o build da Vercel
+PW_DIST=1 npm test               # a mesma suíte contra o build de produção (empacotado e com os cabeçalhos do cabecalhos.json)
+npm run test:build               # o build de produção e o .htaccess
 TODOS_NAVEGADORES=1 npm test     # também Firefox e iPhone (precisa de "npx playwright install")
 npm run test:db                  # SQL, segurança (RLS) e funções do banco
 npm run check:comments           # garante que o código não tem comentários
@@ -96,7 +96,7 @@ npm run check:comments           # garante que o código não tem comentários
 3. Ainda no SQL Editor, cadastre o e-mail do admin:
    `insert into public.admins (email) values ('email-do-editor@exemplo.com');` (em minúsculas)
 4. Em **Authentication → Users → Add user**, crie o usuário com esse e-mail e uma senha forte (marque "Auto Confirm User").
-5. Em **Project Settings → API**, pegue a **Project URL** e a chave **anon public**. Elas vão nas variáveis de ambiente da Vercel (veja o `DEPLOY.md`), não no código. Nunca use a chave `service_role` no site.
+5. Em **Project Settings → API**, pegue a **Project URL** e a chave **anon public**. Elas vão nas variáveis de ambiente do site na Hostinger (veja o `DEPLOY.md`), não no código. Nunca use a chave `service_role` no site.
 6. Em **Authentication → URL Configuration**, coloque o endereço do site em **Site URL**.
 7. Em **Authentication → Sign In / Providers**, desligue **Allow new users to sign up**. Assim ninguém cria conta sozinho; só o admin que você cadastrou entra.
 8. Se já tinha rodado o `schema.sql` antes, rode de novo: ele só acrescenta o que falta (depoimentos, travas de links `https://` e de e-mail válido) sem apagar nada.
@@ -105,9 +105,9 @@ Segurança: todas as tabelas têm Row Level Security. Qualquer pessoa lê. Só q
 
 ### Publicar (Hostinger)
 O passo a passo completo está no **`DEPLOY.md`**. Em resumo:
-- rodar o build com `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SITE_URL` (`npm run build`);
-- gerar o `hostinger.zip` (`npm run zip`);
-- enviar e extrair em `public_html` no hPanel.
+- cada envio para a branch `main` do GitHub publica sozinho: a Hostinger roda `npm run build` e serve a pasta `dist`;
+- o build lê `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SITE_URL`, cadastradas nas variáveis de ambiente do site na Hostinger;
+- sem o GitHub, `npm run build` com as três variáveis e `npm run zip` geram o `hostinger.zip` para enviar pelo hPanel.
 
 O `cabecalhos.json` é a fonte dos cabeçalhos de segurança: o build os grava no `.htaccess` e o `scripts/servir-dist.mjs` os usa nos testes.
 
@@ -118,9 +118,9 @@ O build:
 - troca o endereço do site nas metatags, no `robots.txt` e no `sitemap.xml`;
 - para com um aviso se faltar alguma chave.
 
-A Vercel usa o `404.html` sozinha para endereços que não existem.
+O `.htaccess` gerado pelo build manda os endereços que não existem para o `404.html`.
 
-Para ver o build de produção no computador: `PERMITIR_DEMO=1 npm run build` e depois `node scripts/servir-dist.mjs dist 4600` (serve com os mesmos cabeçalhos da Vercel).
+Para ver o build de produção no computador: `PERMITIR_DEMO=1 npm run build` e depois `node scripts/servir-dist.mjs dist 4600` (serve com os mesmos cabeçalhos do `cabecalhos.json`).
 
 Para trocar o endereço provisório também no código (opcional): `npm run endereco -- https://decxz.com.br`.
 
@@ -140,4 +140,3 @@ Para trocar o endereço provisório também no código (opcional): `npm run ende
 ### Limites do plano grátis
 - **Supabase** pausa projetos grátis depois de cerca de 1 semana sem nenhum acesso. O site continua mostrando a última versão salva no navegador de quem já visitou e, se não houver, os dados de exemplo. Para reativar, entre no painel do Supabase e clique em **Restore project**. Leva alguns minutos.
 - Supabase Free: 500 MB de banco e 1 GB de arquivos. Os clipes de prévia são o que mais ocupa (até 15 MB cada).
-- Vercel Hobby: uso pessoal e não comercial. Para um portfólio, ok.
