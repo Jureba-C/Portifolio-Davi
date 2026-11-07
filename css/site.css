@@ -148,7 +148,7 @@ main, footer { position: relative; z-index: 1; }
 .abertura-nome {
   font-family: var(--f-display);
   font-weight: 400;
-  font-size: clamp(110px, 10.6vw, 200px);
+  font-size: clamp(110px, 10.6vw, 158px);
   line-height: 0.82;
   color: var(--branco-puro);
   text-shadow: 0.045em 0.045em 0 var(--preto);
@@ -768,7 +768,7 @@ html.parado .player-play, html.parado .player-play-miolo { transition: none; }
 .io .reveal-r:not(.visto) { opacity: 0; transform: translateX(160px) skewX(10deg); }
 .io .stamp-in:not(.visto) { opacity: 0; transform: scale(2.4) rotate(-20deg); }
 
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .cabecalho { gap: 10px 18px; }
   .marca { font-size: 32px; }
   .menu { gap: 2px; }
@@ -776,6 +776,9 @@ html.parado .player-play, html.parado .player-play-miolo { transition: none; }
   .cabecalho-acoes { gap: 12px; }
   .idioma { font-size: 16px; min-width: 34px; }
   .contratar .botao-miolo { font-size: 18px; padding: 0 16px; }
+}
+
+@media (max-width: 1100px) {
   .abertura-miolo { grid-template-columns: 1fr; padding-top: 44px; gap: 48px; }
   .abertura-texto { align-items: center; text-align: center; }
   .diagonal { display: none; }
@@ -791,7 +794,7 @@ html.parado .player-play, html.parado .player-play-miolo { transition: none; }
   .destaques-fileira .quadro-titulo { font-size: 15px; }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .cabecalho { padding: 12px 16px 18px; gap: 10px; }
   .menu-botao { display: inline-flex; order: 3; }
   .marca { font-size: 30px; }
