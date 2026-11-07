@@ -1,0 +1,25 @@
+{
+  "name": "mods-do-caio",
+  "owner": {
+    "name": "Caio de Melo"
+  },
+  "metadata": {
+    "description": "Mods do Caio para o Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "savvy-progress",
+      "source": "./plugins/savvy-progress",
+      "description": "Barra de progresso e painel de agentes com o uso do plano (5 h e semana). Baseado no savvy-progress de johnnyvizz (MIT).",
+      "version": "2.0.0",
+      "category": "mod"
+    },
+    {
+      "name": "escolha-de-modelo",
+      "source": "./plugins/escolha-de-modelo",
+      "description": "Escolhe Haiku, Sonnet ou Opus para cada pedido; comando /modelo.",
+      "version": "1.0.0",
+      "category": "mod"
+    }
+  ]
+}

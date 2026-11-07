@@ -1,0 +1,14 @@
+{
+  "enabledPlugins": {
+    "savvy-progress@mods-do-caio": true,
+    "escolha-de-modelo@mods-do-caio": true
+  },
+  "extraKnownMarketplaces": {
+    "mods-do-caio": {
+      "source": {
+        "source": "directory",
+        "path": "./.claude/mods-do-caio"
+      }
+    }
+  }
+}

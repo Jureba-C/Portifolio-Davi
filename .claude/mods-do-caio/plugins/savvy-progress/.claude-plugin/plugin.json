@@ -1,0 +1,24 @@
+{
+  "name": "savvy-progress",
+  "version": "2.0.0",
+  "description": "Barra de progresso acima do prompt e painel de agentes (/agents-info) com o uso do plano (5 h e semana). Baseado no savvy-progress de johnnyvizz (MIT, https://github.com/johnnyvizz/claude-kit).",
+  "author": {
+    "name": "Caio de Melo"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Panel language",
+      "description": "auto follows Claude Code's language setting, then the system locale (en, ru or pt; a Brazilian locale picks pt)",
+      "default": "pt",
+      "options": [
+        "auto",
+        "en",
+        "ru",
+        "pt"
+      ]
+    }
+  },
+  "license": "MIT"
+}

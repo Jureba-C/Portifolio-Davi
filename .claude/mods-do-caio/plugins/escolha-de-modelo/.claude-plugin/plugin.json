@@ -1,0 +1,10 @@
+{
+  "name": "escolha-de-modelo",
+  "version": "1.0.0",
+  "description": "Escolhe Haiku, Sonnet ou Opus para cada pedido",
+  "author": {
+    "name": "Caio de Melo"
+  },
+  "types": "./types/index.d.ts",
+  "license": "MIT"
+}
