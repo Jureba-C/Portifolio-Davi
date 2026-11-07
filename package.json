@@ -19,10 +19,13 @@
   "devDependencies": {
     "@electric-sql/pglite": "0.3.2",
     "@playwright/test": "1.56.1",
-    "@supabase/supabase-js": "2.49.4",
+    "@supabase/supabase-js": "2.119.0",
     "acorn": "8.14.1",
-    "esbuild": "0.25.2",
-    "serve": "14.2.4",
+    "esbuild": "0.28.2",
+    "serve": "14.2.7",
     "sortablejs": "1.15.6"
+  },
+  "overrides": {
+    "compression": "1.8.2"
   }
 }
