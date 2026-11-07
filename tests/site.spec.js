@@ -873,3 +873,69 @@ test.describe('link dos cards e botão de play', () => {
     await expect(page.locator('[data-player-tempo]')).toBeVisible();
   });
 });
+
+test.describe('clique no vídeo e legendas', () => {
+  test('o YouTube não recebe o mouse; clicar no vídeo pausa e toca pelo site', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('.player-capa')).toHaveCount(0, { timeout: 6000 });
+    expect(await page.locator('[data-player-video] iframe').evaluate((f) => getComputedStyle(f).pointerEvents)).toBe('none');
+    const tela = await page.locator('[data-player-tela]').boundingBox();
+    await page.mouse.click(tela.x + tela.width / 2, tela.y + tela.height / 3);
+    await expect(page.locator('[data-player-play]')).toHaveAttribute('aria-label', 'Reproduzir');
+    await page.mouse.click(tela.x + tela.width / 2, tela.y + tela.height / 3);
+    await expect(page.locator('[data-player-play]')).toHaveAttribute('aria-label', 'Pausar');
+    const comandos = await page.evaluate(() => window.__comandos);
+    expect(comandos).toContain('pauseVideo:[]');
+  });
+
+  test('mexer o mouse sobre o vídeo traz a barra de volta', async ({ page }, testInfo) => {
+    test.skip(ehCelular(testInfo), 'só no computador');
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 9000 });
+    const tela = await page.locator('[data-player-tela]').boundingBox();
+    await page.mouse.move(tela.x + tela.width / 2, tela.y + tela.height / 3, { steps: 4 });
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+    await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 3000 });
+  });
+
+  test('o botão CC liga e desliga as legendas e lembra a escolha', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    const cc = page.locator('[data-player-legenda]');
+    await expect(cc).toHaveAttribute('aria-pressed', 'false');
+    await expect(cc).toHaveAttribute('aria-label', 'Ligar legendas');
+    await expect(page.locator('[data-player-video] iframe')).toHaveAttribute('src', /cc_load_policy=0/);
+    await cc.click();
+    await expect(cc).toHaveAttribute('aria-pressed', 'true');
+    await expect(cc).toHaveAttribute('aria-label', 'Desligar legendas');
+    let comandos = await page.evaluate(() => window.__comandos);
+    expect(comandos).toContain('loadModule:["captions"]');
+    expect(comandos).toContain('setOption:["captions","track",{"languageCode":"pt"}]');
+    await page.keyboard.press('Escape');
+    await page.locator('.grade .card').first().click();
+    await expect(page.locator('[data-player-video] iframe')).toHaveAttribute('src', /cc_load_policy=1/);
+    await expect(cc).toHaveAttribute('aria-pressed', 'true');
+    await cc.click();
+    comandos = await page.evaluate(() => window.__comandos);
+    expect(comandos).toContain('unloadModule:["captions"]');
+    await expect(cc).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('a barra com o CC cabe no celular, no player largo e no vertical', async ({ page }, testInfo) => {
+    test.skip(!ehCelular(testInfo), 'só no celular');
+    await youtubeFalso(page, null);
+    for (const endereco of ['/?intro=0#video-v-motion-2', '/?intro=0#video-v-short-1']) {
+      await page.goto('about:blank');
+      await page.goto(endereco);
+      await expect(page.locator('[data-player]')).toBeVisible();
+      const sobra = await page.locator('.player-linha').evaluate((l) => {
+        const caixa = l.getBoundingClientRect();
+        return Math.max(l.scrollWidth - l.clientWidth, ...[...l.children].filter((c) => c.offsetWidth).map((c) => c.getBoundingClientRect().right - caixa.right));
+      });
+      expect(sobra).toBeLessThanOrEqual(1);
+      await expect(page.locator('[data-player-legenda]')).toBeVisible();
+    }
+  });
+});

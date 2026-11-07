@@ -1,9 +1,14 @@
-import { t } from './i18n.js';
+import { t, idioma } from './i18n.js';
 import { linkYoutube, capaYoutube } from './data.js';
 import { reduzMovimento } from './animations.js';
 import { alturaReal, aquecerQualidade, comandoYoutube, encaixarGrande, ouvirYoutube, qualidadeAlvo } from './youtube.js';
 
-const FOCAVEIS = 'a[href], button:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])';
+const FOCAVEIS = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const CHAVE_LEGENDAS = 'player-legendas';
+
+function lerLegendas() {
+  try { return localStorage.getItem(CHAVE_LEGENDAS) === '1'; } catch { return false; }
+}
 
 function formatar(segundos) {
   const s = Math.max(0, Math.floor(segundos || 0));
@@ -23,6 +28,8 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   const play = raiz.querySelector('[data-player-play]');
   const som = raiz.querySelector('[data-player-som]');
   const cheia = raiz.querySelector('[data-player-cheia]');
+  const legenda = raiz.querySelector('[data-player-legenda]');
+  const toque = raiz.querySelector('[data-player-toque]');
   const barra = raiz.querySelector('[data-player-barra]');
   const progresso = raiz.querySelector('[data-player-progresso]');
   const fio = raiz.querySelector('[data-player-fio]');
@@ -44,6 +51,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   let aquecimento = null;
   let pararDeOuvir = () => {};
   let soltarEncaixe = () => {};
+  let legendas = lerLegendas();
   let esconder = 0;
   let ocioso = 0;
   let sobControles = false;
@@ -102,7 +110,19 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     play.setAttribute('aria-label', t(tocando ? 'player.pausar' : 'player.reproduzir'));
     som.setAttribute('aria-pressed', String(mudo));
     som.setAttribute('aria-label', t(mudo ? 'player.comSom' : 'player.mudo'));
+    legenda.setAttribute('aria-pressed', String(legendas));
+    legenda.setAttribute('aria-label', t(legendas ? 'player.legendasDesligar' : 'player.legendasLigar'));
     atualizarControles();
+  };
+
+  const aplicarLegendas = () => {
+    if (!iframe) return;
+    if (legendas) {
+      enviar('loadModule', ['captions']);
+      enviar('setOption', ['captions', 'track', { languageCode: idioma() }]);
+    } else {
+      enviar('unloadModule', ['captions']);
+    }
   };
 
   const aoInfo = (info) => {
@@ -120,6 +140,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     enviar('seekTo', [0, true]);
     enviar('unMute');
     enviar('playVideo');
+    aplicarLegendas();
     atual = 0;
     tocando = true;
     mudo = false;
@@ -154,7 +175,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
       return;
     }
     if (e.key !== 'Tab') return;
-    const itens = [...caixa.querySelectorAll(FOCAVEIS)].filter((el) => el.offsetParent !== null || el === iframe);
+    const itens = [...caixa.querySelectorAll(FOCAVEIS)].filter((el) => el.offsetParent !== null);
     if (!itens.length) return;
     const primeiro = itens[0];
     const ultimo = itens[itens.length - 1];
@@ -194,9 +215,13 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
         rel: '0',
         playsinline: '1',
         modestbranding: '1',
+        cc_load_policy: legendas ? '1' : '0',
+        cc_lang_pref: idioma(),
+        hl: idioma(),
         origin: location.origin,
       });
       iframe = document.createElement('iframe');
+      iframe.tabIndex = -1;
       iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(item.youtubeId)}?${params}`;
       iframe.title = item.titulo || 'YouTube';
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
@@ -265,8 +290,13 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   }
 
   const atrasoDe = (e) => (e.pointerType === 'mouse' || e.pointerType === 'pen' ? 1000 : 3500);
-  zona.addEventListener('pointerenter', (e) => revelarControles(atrasoDe(e)));
-  zona.addEventListener('pointerdown', (e) => revelarControles(atrasoDe(e)));
+  let reveladoEm = 0;
+  const revelarPelaZona = (e) => {
+    reveladoEm = performance.now();
+    revelarControles(atrasoDe(e));
+  };
+  zona.addEventListener('pointerenter', revelarPelaZona);
+  zona.addEventListener('pointerdown', revelarPelaZona);
   controles.addEventListener('pointerenter', () => {
     sobControles = true;
     armarOcioso();
@@ -311,6 +341,26 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     enviar(mudo ? 'mute' : 'unMute');
     desenhar();
   });
+  legenda.addEventListener('click', () => {
+    legendas = !legendas;
+    try { localStorage.setItem(CHAVE_LEGENDAS, legendas ? '1' : '0'); } catch {}
+    aplicarLegendas();
+    desenhar();
+  });
+  toque.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'mouse') revelarControles(1000);
+  });
+  toque.addEventListener('click', (e) => {
+    if (!iframe || performance.now() - reveladoEm < 450) return;
+    const toqueNaTela = e.pointerType && e.pointerType !== 'mouse' && e.pointerType !== 'pen';
+    if (toqueNaTela && raiz.classList.contains('controles-ocultos')) {
+      revelarControles(3500);
+      return;
+    }
+    play.click();
+    if (toqueNaTela) revelarControles(3500);
+  });
+  toque.addEventListener('dblclick', () => cheia.click());
   cheia.addEventListener('click', () => {
     if (document.fullscreenElement) document.exitFullscreen?.();
     else tela.requestFullscreen?.().catch(() => {});

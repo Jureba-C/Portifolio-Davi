@@ -724,6 +724,11 @@ footer:hover .psiu, .rodape.tocado .psiu { opacity: 0; }
 .player-aviso { padding: 16px; font-family: var(--f-ui); font-weight: 800; font-size: 24px; color: var(--cinza); text-transform: uppercase; text-align: center; }
 .player-controles { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; background: rgba(11, 11, 12, .9); transition: transform .35s cubic-bezier(.3, 0, .2, 1), opacity .3s ease; }
 .player.controles-ocultos .player-controles { transform: translateY(100%); opacity: 0; }
+.player-toque { position: absolute; z-index: 1; inset: 0; cursor: pointer; }
+.player-video iframe { pointer-events: none; }
+.player-cc { position: relative; }
+.player-cc[aria-pressed="true"] { color: var(--vermelho-vivo); }
+.player-cc[aria-pressed="true"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: 6px; height: 3px; background: var(--vermelho-vivo); box-shadow: var(--brilho); }
 .player-zona { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; height: 76px; pointer-events: none; }
 .player.controles-ocultos .player-zona { pointer-events: auto; }
 .player-fio { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(11, 11, 12, .55); opacity: 0; pointer-events: none; transition: opacity .3s ease; }
@@ -981,11 +986,13 @@ html.parado .player-play, html.parado .player-play-miolo { transition: none; }
 .player.vertical .player-linha { gap: 8px; }
 .player.vertical .player-play-miolo { width: 50px; height: 38px; }
 @media (max-width: 760px) {
-  .player.vertical .player-linha { display: grid; grid-template-columns: auto 1fr auto auto; grid-template-areas: "tempo tempo tempo tempo" "play . som cheia"; align-items: center; gap: 8px 6px; }
+  .player.vertical .player-linha { display: grid; grid-template-columns: auto 1fr auto auto auto; grid-template-areas: "tempo tempo tempo tempo tempo" "play . cc som cheia"; align-items: center; gap: 8px 6px; }
   .player.vertical .player-tempo { grid-area: tempo; justify-self: start; }
   .player.vertical .player-play { grid-area: play; }
   .player.vertical .player-espaco { display: none; }
   .player.vertical [data-player-som] { grid-area: som; }
+  .player.vertical [data-player-legenda] { grid-area: cc; }
+  .player.vertical .player-icone { width: 34px; }
   .player.vertical [data-player-cheia] { grid-area: cheia; }
 }
 
