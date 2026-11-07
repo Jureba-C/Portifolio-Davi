@@ -273,17 +273,12 @@ async function irPara(pagina, { foco = true, historico = true } = {}) {
 }
 
 async function abrirPainel() {
-  mostrarTela('painel');
-  if (!Sortable) {
-    try {
-      Sortable = (await import('./vendor/sortable.js')).default;
-    } catch {
-      Sortable = null;
-    }
-  }
-  db = await api.carregarTudo();
+  const arraste = Sortable ? Promise.resolve() : import('./vendor/sortable.js').then((m) => { Sortable = m.default; }).catch(() => { Sortable = null; });
+  const [dados] = await Promise.all([api.carregarTudo(), arraste]);
+  db = dados;
   preencherTextos();
   renderTudo();
+  mostrarTela('painel');
   if (!painelPronto) {
     painelPronto = true;
     ligarArraste($('[data-lista="categorias"]'), 'categories');

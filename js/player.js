@@ -25,6 +25,9 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   const cheia = raiz.querySelector('[data-player-cheia]');
   const barra = raiz.querySelector('[data-player-barra]');
   const progresso = raiz.querySelector('[data-player-progresso]');
+  const fio = raiz.querySelector('[data-player-fio]');
+  const zona = raiz.querySelector('[data-player-zona]');
+  const controles = raiz.querySelector('[data-player-controles]');
   const tempo = raiz.querySelector('[data-player-tempo]');
   const nav = raiz.querySelector('[data-player-nav]');
   const anterior = raiz.querySelector('[data-player-anterior]');
@@ -41,18 +44,65 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   let aquecimento = null;
   let pararDeOuvir = () => {};
   let soltarEncaixe = () => {};
+  let esconder = 0;
+  let ocioso = 0;
+  let sobControles = false;
+  let focoNosControles = false;
 
   const enviar = (func, args = []) => comandoYoutube(iframe, func, args);
   const aquecendo = () => Boolean(aquecimento && !aquecimento.pronto);
 
+  const atualizarControles = (atraso = 1000) => {
+    const deveOcultar = tocando && Boolean(iframe) && !aquecendo() && !sobControles && !focoNosControles && !raiz.hidden;
+    if (!deveOcultar) {
+      clearTimeout(esconder);
+      esconder = 0;
+      raiz.classList.remove('controles-ocultos');
+      return;
+    }
+    if (esconder || raiz.classList.contains('controles-ocultos')) return;
+    esconder = setTimeout(() => {
+      esconder = 0;
+      raiz.classList.add('controles-ocultos');
+    }, atraso);
+  };
+
+  const revelarControles = (atraso) => {
+    clearTimeout(esconder);
+    esconder = 0;
+    raiz.classList.remove('controles-ocultos');
+    atualizarControles(atraso);
+  };
+
+  const armarOcioso = () => {
+    clearTimeout(ocioso);
+    ocioso = setTimeout(() => {
+      ocioso = 0;
+      sobControles = false;
+      atualizarControles(0);
+    }, 2500);
+  };
+
+  const zerarControles = () => {
+    clearTimeout(esconder);
+    clearTimeout(ocioso);
+    esconder = 0;
+    ocioso = 0;
+    sobControles = false;
+    focoNosControles = false;
+    raiz.classList.remove('controles-ocultos');
+  };
+
   const desenhar = () => {
     const fracao = duracao ? Math.min(1, atual / duracao) : 0;
     progresso.style.width = `${(fracao * 100).toFixed(2)}%`;
+    fio.style.width = `${(fracao * 100).toFixed(2)}%`;
     tempo.textContent = `${formatar(atual)} / ${formatar(duracao)}`;
     raiz.classList.toggle('tocando', tocando);
     play.setAttribute('aria-label', t(tocando ? 'player.pausar' : 'player.reproduzir'));
     som.setAttribute('aria-pressed', String(mudo));
     som.setAttribute('aria-label', t(mudo ? 'player.comSom' : 'player.mudo'));
+    atualizarControles();
   };
 
   const aoInfo = (info) => {
@@ -127,6 +177,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     atual = 0;
     tocando = false;
     mudo = false;
+    zerarControles();
     raiz.classList.toggle('vertical', Boolean(item.vertical));
     tag.textContent = item.tag || '';
     tag.hidden = !item.tag;
@@ -202,6 +253,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     if (raiz.hidden) return;
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     raiz.hidden = true;
+    zerarControles();
     encerrarAquecimento();
     video.textContent = '';
     iframe = null;
@@ -212,6 +264,36 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     aoFechar();
   }
 
+  const atrasoDe = (e) => (e.pointerType === 'mouse' || e.pointerType === 'pen' ? 1000 : 3500);
+  zona.addEventListener('pointerenter', (e) => revelarControles(atrasoDe(e)));
+  zona.addEventListener('pointerdown', (e) => revelarControles(atrasoDe(e)));
+  controles.addEventListener('pointerenter', () => {
+    sobControles = true;
+    armarOcioso();
+    atualizarControles();
+  });
+  controles.addEventListener('pointermove', () => {
+    if (sobControles) armarOcioso();
+  });
+  controles.addEventListener('pointerleave', (e) => {
+    clearTimeout(ocioso);
+    ocioso = 0;
+    sobControles = false;
+    revelarControles(atrasoDe(e));
+  });
+  controles.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse') revelarControles(3500);
+    else if (sobControles) armarOcioso();
+  });
+  controles.addEventListener('focusin', (e) => {
+    if (!e.target.matches?.(':focus-visible')) return;
+    focoNosControles = true;
+    atualizarControles();
+  });
+  controles.addEventListener('focusout', () => {
+    focoNosControles = false;
+    atualizarControles();
+  });
   raiz.querySelectorAll('[data-fechar]').forEach((el) => el.addEventListener('click', fechar));
   anterior.addEventListener('click', () => vizinhos?.ir(-1));
   proximo.addEventListener('click', () => vizinhos?.ir(1));

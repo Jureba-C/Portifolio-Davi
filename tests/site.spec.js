@@ -573,6 +573,7 @@ async function abrirPlayer(page) {
   await page.goto('/?intro=0');
   await page.locator('.grade .card').first().click();
   await expect(page.locator('[data-player]')).toBeVisible();
+  await page.mouse.move(2, 2);
 }
 
 test.describe('player na melhor qualidade', () => {
@@ -647,5 +648,228 @@ test.describe('player na melhor qualidade', () => {
     await page.waitForTimeout(1000);
     await expect(iframe).not.toHaveClass(/rodando/);
     await expect(iframe).toHaveClass(/rodando/, { timeout: 4000 });
+  });
+});
+
+async function comShortNosDestaques(page, { principal }) {
+  await page.route('**/i.ytimg.com/**', (rota) => rota.fulfill({ contentType: 'image/svg+xml', body: svg(1280, 720) }));
+  await page.route(/youtube(-nocookie)?\.com/, (rota) => rota.fulfill({ contentType: 'text/html', body: '<!doctype html><title>yt</title>' }));
+  await page.goto('/?intro=0');
+  await page.evaluate(async (primeiro) => {
+    const { MOCK } = await import('/js/mock-data.js');
+    const dados = JSON.parse(JSON.stringify(MOCK));
+    dados.videos.forEach((v) => { v.preview_url = ''; v.poster_url = ''; });
+    if (primeiro) dados.videos.find((v) => v.id === 'v-short-1').ordem = -1;
+    localStorage.setItem('portfolio-local', JSON.stringify(dados));
+  }, principal);
+  await page.reload();
+}
+
+test.describe('Shorts nos destaques', () => {
+  test('na fileira, o Short ganha card em pé, sem faixa preta, e não estica os vizinhos', async ({ page }) => {
+    await comShortNosDestaques(page, { principal: false });
+    const cards = page.locator('[data-lista="destaques"] .quadro');
+    await expect(cards.first()).toBeAttached();
+    const medidas = await cards.evaluateAll((itens) => itens.map((q) => {
+      const tela = q.querySelector('.quadro-tela');
+      return {
+        vertical: q.classList.contains('vertical'),
+        contido: tela.classList.contains('contido'),
+        proporcao: tela.offsetHeight / tela.offsetWidth,
+        alturaCard: q.offsetHeight,
+        alturaSombra: q.querySelector('.quadro-sombra').offsetHeight,
+        largura: q.offsetWidth,
+      };
+    }).filter((m) => m.largura > 0));
+    const emPe = medidas.filter((m) => m.vertical);
+    expect(emPe.length).toBeGreaterThan(0);
+    emPe.forEach((m) => {
+      expect(m.proporcao).toBeGreaterThan(1.7);
+      expect(m.proporcao).toBeLessThan(1.85);
+      expect(m.largura).toBeLessThanOrEqual(221);
+    });
+    medidas.forEach((m) => {
+      expect(m.contido).toBe(false);
+      expect(Math.abs(m.alturaSombra - m.alturaCard)).toBeLessThanOrEqual(1);
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
+  });
+
+  test('como destaque principal, o Short fica em pé, cabe na abertura e o player cobre o card inteiro', async ({ page }) => {
+    await comShortNosDestaques(page, { principal: true });
+    const card = page.locator('[data-lista="showreel"] .quadro');
+    await expect(card).toHaveClass(/vertical/);
+    const m = await card.evaluate((q) => {
+      const tela = q.querySelector('.quadro-tela');
+      const topo = q.closest('section').getBoundingClientRect();
+      const r = q.getBoundingClientRect();
+      return { largura: q.offsetWidth, proporcao: tela.offsetHeight / tela.offsetWidth, dentro: r.left >= -2 && r.right <= innerWidth + 2, abaixoDaSecao: r.bottom > topo.bottom + 2 };
+    });
+    expect(m.largura).toBeGreaterThanOrEqual(219);
+    expect(m.largura).toBeLessThanOrEqual(301);
+    expect(m.proporcao).toBeGreaterThan(1.7);
+    expect(m.proporcao).toBeLessThan(1.85);
+    expect(m.dentro).toBe(true);
+    expect(m.abaixoDaSecao).toBe(false);
+    const iframe = card.locator('iframe[data-previa="youtube"]');
+    await expect(iframe).toHaveCount(1);
+    const cobre = await iframe.evaluate((f) => {
+      const t = f.parentElement.getBoundingClientRect();
+      const r = f.getBoundingClientRect();
+      return r.left <= t.left + 1 && r.top <= t.top + 1 && r.right >= t.right - 1 && r.bottom >= t.bottom - 1;
+    });
+    expect(cobre).toBe(true);
+    await expect(card.locator('.quadro-titulo')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
+  });
+});
+
+test.describe('barra do player', () => {
+  const opacidade = (page) => page.locator('[data-player-controles]').evaluate((el) => Number(getComputedStyle(el).opacity));
+
+  test('fica visível enquanto o vídeo aquece e desce 1 segundo depois que ele começa a tocar', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('.player-capa')).toBeVisible();
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+    await expect(page.locator('.player-capa')).toHaveCount(0, { timeout: 6000 });
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+    await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 2500 });
+    await expect.poll(() => opacidade(page), { timeout: 2000 }).toBe(0);
+    const fio = await page.locator('.player-fio').evaluate((el) => Number(getComputedStyle(el).opacity));
+    expect(fio).toBeGreaterThan(0.9);
+  });
+
+  test('o mouse no rodapé do vídeo traz a barra de volta e ela desce de novo 1 segundo depois que o mouse sai', async ({ page }, testInfo) => {
+    test.skip(ehCelular(testInfo), 'só no computador');
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 9000 });
+    const tela = await page.locator('[data-player-tela]').boundingBox();
+    await page.mouse.move(tela.x + tela.width / 2, tela.y + tela.height - 20);
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+    await expect.poll(() => opacidade(page)).toBe(1);
+    await page.waitForTimeout(1400);
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+    await page.mouse.move(2, 2);
+    await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 4000 });
+  });
+
+  test('pausar mantém a barra na tela e tocar de novo faz ela descer', async ({ page }, testInfo) => {
+    test.skip(ehCelular(testInfo), 'só no computador');
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 9000 });
+    const tela = await page.locator('[data-player-tela]').boundingBox();
+    await page.mouse.move(tela.x + tela.width / 2, tela.y + tela.height - 20);
+    await page.locator('[data-player-play]').click();
+    await page.mouse.move(2, 2);
+    await page.waitForTimeout(1800);
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+    await page.mouse.move(tela.x + tela.width / 2, tela.y + tela.height - 20);
+    await page.locator('[data-player-play]').click();
+    await page.mouse.move(2, 2);
+    await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 4500 });
+  });
+
+  test('o teclado também traz a barra de volta e a mantém enquanto o foco está nela', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 9000 });
+    await page.locator('[data-player-play]').focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+    await page.waitForTimeout(1600);
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+  });
+
+  test('no celular, tocar no rodapé do vídeo mostra a barra por alguns segundos', async ({ page }, testInfo) => {
+    test.skip(!ehCelular(testInfo), 'só no celular');
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 9000 });
+    const tela = await page.locator('[data-player-tela]').boundingBox();
+    await page.touchscreen.tap(tela.x + tela.width / 2, tela.y + tela.height - 20);
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+    await page.waitForTimeout(1800);
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+    await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 4000 });
+  });
+
+  test('fechar o player e abrir outro vídeo começa com a barra à mostra', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 9000 });
+    await page.keyboard.press('Escape');
+    await expect(page.locator('[data-player]')).toBeHidden();
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+    await page.locator('.grade .card').nth(1).click();
+    await expect(page.locator('[data-player]')).toBeVisible();
+    await page.mouse.move(2, 2);
+    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
+  });
+});
+
+test.describe('link dos cards e botão de play', () => {
+  test('os cards apontam para o próprio site, e clicar abre o player sem sair da página', async ({ page, context }) => {
+    await youtubeFalso(page, null);
+    await page.goto('/?intro=0');
+    const hrefs = await page.locator('.quadro').evaluateAll((itens) => itens.map((a) => a.getAttribute('href')));
+    expect(hrefs.length).toBeGreaterThan(0);
+    hrefs.forEach((href) => expect(href).toMatch(/^#video-/));
+    const abas = [];
+    context.on('page', (nova) => abas.push(nova.url()));
+    await page.locator('.grade .card').first().click();
+    await expect(page.locator('[data-player]')).toBeVisible();
+    expect(abas).toEqual([]);
+    expect(new URL(page.url()).hash).toBe('');
+  });
+
+  test('o endereço #video-<id> abre o player daquele vídeo; um id que não existe não abre nada', async ({ page }) => {
+    await youtubeFalso(page, null);
+    await page.goto('/?intro=0#video-v-motion-2');
+    await expect(page.locator('[data-player]')).toBeVisible();
+    await expect(page.locator('[data-player-titulo]')).toHaveText('Abertura do canal Pixel Torto');
+    await page.goto('about:blank');
+    await page.goto('/?intro=0#video-nao-existe');
+    await page.waitForTimeout(800);
+    await expect(page.locator('[data-player]')).toBeHidden();
+  });
+
+  test('o botão de play tem o tamanho certo, troca o ícone e o nome', async ({ page }, testInfo) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    const play = page.locator('[data-player-play]');
+    const caixa = await play.boundingBox();
+    if (ehCelular(testInfo)) {
+      expect(caixa.width).toBeGreaterThanOrEqual(54);
+      expect(caixa.height).toBeGreaterThanOrEqual(42);
+    } else {
+      expect(caixa.width).toBeGreaterThanOrEqual(64);
+      expect(caixa.height).toBeGreaterThanOrEqual(48);
+    }
+    await expect(page.locator('.player-capa')).toHaveCount(0, { timeout: 6000 });
+    await expect(play).toHaveAttribute('aria-label', 'Pausar');
+    await expect(play.locator('.icone-pausa')).toBeVisible();
+    await page.mouse.move(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
+    await play.click();
+    await expect(play).toHaveAttribute('aria-label', 'Reproduzir');
+    await expect(play.locator('.icone-play')).toBeVisible();
+    const linha = await page.locator('.player-linha').evaluate((l) => l.scrollWidth - l.clientWidth);
+    expect(linha).toBeLessThanOrEqual(0);
+  });
+
+  test('no player vertical (Short) a barra cabe inteira', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await page.goto('/?intro=0#video-v-short-1');
+    await expect(page.locator('[data-player]')).toHaveClass(/vertical/);
+    const sobra = await page.locator('.player-linha').evaluate((l) => {
+      const caixa = l.getBoundingClientRect();
+      return Math.max(l.scrollWidth - l.clientWidth, ...[...l.children].filter((c) => c.offsetWidth).map((c) => c.getBoundingClientRect().right - caixa.right));
+    });
+    expect(sobra).toBeLessThanOrEqual(1);
+    await expect(page.locator('[data-player-cheia]')).toBeVisible();
+    await expect(page.locator('[data-player-tempo]')).toBeVisible();
   });
 });

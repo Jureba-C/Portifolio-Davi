@@ -69,12 +69,11 @@ function abrirVideo(video, lista = null) {
 }
 
 function quadro(video, { classe = '', selo = '', rec = false, assistir = '', vertical = false, modo = 'card', tag = '' }) {
-  const conteudoVertical = ehVertical(categoriaDe(video));
-  const tela = el('span', { class: `quadro-tela${conteudoVertical && !vertical ? ' contido' : ''}` });
+  const tela = el('span', { class: 'quadro-tela' });
   const quem = campo(video, 'descricao');
   const link = el('a', {
     class: `quadro ${classe}${vertical ? ' vertical' : ''}`,
-    href: linkYoutube(video.youtube_id) || '#trabalhos',
+    href: `#video-${encodeURIComponent(video.id)}`,
     'data-video': video.id,
     onclick: (e) => {
       e.preventDefault();
@@ -92,6 +91,14 @@ function quadro(video, { classe = '', selo = '', rec = false, assistir = '', ver
   assistir ? el('span', { class: 'quadro-assistir nota', text: assistir }) : null);
   montarPrevia(tela, video, { modo, textoSem: t('trabalhos.semPrevia') });
   return link;
+}
+
+function abrirDoEndereco() {
+  if (!location.hash.startsWith('#video-')) return;
+  let id = '';
+  try { id = decodeURIComponent(location.hash.slice('#video-'.length)); } catch { return; }
+  const video = estado.db.videos.find((v) => v.id === id);
+  if (video) abrirVideo(video);
 }
 
 function renderNome() {
@@ -128,10 +135,10 @@ function renderDestaques() {
   const [primeiro, ...resto] = estado.db.videos.filter((v) => v.destaque).slice(0, 4);
   if (!primeiro) principal.append(aranhaVazia(t('destaques.vazio')));
   else {
-    principal.append(quadro(primeiro, { classe: 'destaque', rec: true, assistir: t('destaques.assistir'), modo: 'destaque' }));
+    principal.append(quadro(primeiro, { classe: 'destaque', rec: true, assistir: t('destaques.assistir'), modo: 'destaque', vertical: ehVertical(categoriaDe(primeiro)) }));
   }
   fileira.closest('.mais-destaques').hidden = resto.length === 0;
-  resto.forEach((video) => fileira.append(quadro(video, { classe: 'destaque', modo: 'destaque' })));
+  resto.forEach((video) => fileira.append(quadro(video, { classe: 'destaque', modo: 'destaque', vertical: ehVertical(categoriaDe(video)) })));
 }
 
 function textoComDestaques(alvo, texto) {
@@ -622,6 +629,7 @@ async function iniciar() {
   });
   renderTudo();
   document.documentElement.classList.add('pronto');
+  abrirDoEndereco();
   aoMudarIdioma(() => {
     marcarIdioma();
     renderTudo();
