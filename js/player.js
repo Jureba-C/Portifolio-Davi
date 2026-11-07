@@ -10,6 +10,14 @@ function lerLegendas() {
   try { return localStorage.getItem(CHAVE_LEGENDAS) === '1'; } catch { return false; }
 }
 
+function novaCapa(youtubeId, extra = '') {
+  const capa = document.createElement('div');
+  capa.className = `player-capa ${extra}`.trim();
+  capa.setAttribute('aria-hidden', 'true');
+  capa.append(capaYoutube(Object.assign(document.createElement('img'), { alt: '', decoding: 'async' }), youtubeId));
+  return capa;
+}
+
 function formatar(segundos) {
   const s = Math.max(0, Math.floor(segundos || 0));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -42,6 +50,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   const posicao = raiz.querySelector('[data-player-posicao]');
 
   let iframe = null;
+  let idAtual = '';
   let origemFoco = null;
   let duracao = 0;
   let atual = 0;
@@ -132,6 +141,9 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     if (typeof info.currentTime === 'number') atual = info.currentTime;
     if (typeof info.playerState === 'number') tocando = info.playerState === 1 || info.playerState === 3;
     if (typeof info.muted === 'boolean') mudo = info.muted;
+    const capaFim = video.querySelector('.player-capa.fim');
+    if (info.playerState === 0 && !capaFim) video.append(novaCapa(idAtual, 'fim'));
+    if (info.playerState === 1) capaFim?.remove();
     desenhar();
   };
 
@@ -227,16 +239,14 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
       iframe.allowFullscreen = true;
       iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-      const capa = document.createElement('div');
-      capa.className = 'player-capa';
-      capa.setAttribute('aria-hidden', 'true');
-      const img = capaYoutube(Object.assign(document.createElement('img'), { alt: '', decoding: 'async' }), item.youtubeId);
+      idAtual = item.youtubeId;
+      const capa = novaCapa(item.youtubeId);
       const aviso = document.createElement('span');
       aviso.className = 'player-aquece';
       const ponto = document.createElement('span');
       ponto.className = 'rec';
       aviso.append(ponto, t('player.carregandoHd'));
-      capa.append(img, aviso);
+      capa.append(aviso);
       const quadroAtual = iframe;
       const telaGrande = (window.screen?.width || 0) * (window.devicePixelRatio || 1) >= 2560;
       aquecimento = aquecerQualidade({

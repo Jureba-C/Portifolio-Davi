@@ -591,6 +591,15 @@ test.describe('player na melhor qualidade', () => {
     expect(comandos.indexOf('seekTo:[0,true]')).toBeLessThan(comandos.indexOf('playVideo:[]'));
   });
 
+  test('quando o vídeo termina, a capa volta por cima da tela final do YouTube e sai se ele tocar de novo', async ({ page }) => {
+    await youtubeFalso(page, [...SOBE_ATE_1080, [2600, { playerState: 0, currentTime: 30 }], [3600, { playerState: 1, currentTime: 0.2 }]]);
+    await abrirPlayer(page);
+    const fim = page.locator('.player-capa.fim');
+    await expect(fim).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.player-capa')).toHaveCount(1);
+    await expect(fim).toHaveCount(0, { timeout: 3000 });
+  });
+
   test('vídeo que não chega a 1080p aparece quando a qualidade para de subir', async ({ page }) => {
     await youtubeFalso(page, [
       [100, { playerState: 1, playbackQuality: 'medium', availableQualityLevels: [] }],
