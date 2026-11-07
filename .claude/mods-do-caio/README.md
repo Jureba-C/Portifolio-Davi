@@ -5,7 +5,7 @@ Dois mods para o Claude Code, prontos para instalar em qualquer projeto.
 ## O que cada um faz
 
 - **savvy-progress** (2.0.0): barra de progresso acima do prompt e painel de agentes (`/agents-info`). Mostra quanto do plano já foi usado (janela de 5 h e semana) e avisa em 80% e 90%. Em português. Baseado no savvy-progress de johnnyvizz (licença MIT, crédito mantido em `plugins/savvy-progress/LICENSE` e `NOTICE.md`).
-- **escolha-de-modelo** (1.0.0): escolhe Haiku, Sonnet ou Opus sozinho para cada pedido.
+- **escolha-de-modelo** (1.1.0): escolhe Sonnet ou Opus sozinho para cada pedido. Desce do Opus para o Sonnet quando o pedido é leve e a troca sai mais barata que reescrever o cache da conversa. Confirmações ("ok", "pode fazer") seguem no modelo que já está em uso. Nunca mexe no esforço. O Haiku só roda se você fixar com `/modelo haiku`.
 
 ## Comandos do /modelo
 

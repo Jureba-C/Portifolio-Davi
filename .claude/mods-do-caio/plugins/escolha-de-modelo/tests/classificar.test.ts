@@ -1,14 +1,29 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { classificar, familia, lerNivel, nivelDe } from '../hooks/classificar'
+import { classificar, compensaTrocar, familia, lerNivel, nivelDe } from '../hooks/classificar'
 
 describe('classificar', () => {
-  test('confirmações curtas vão para o Haiku', () => {
+  test('confirmações curtas seguem no modelo atual', () => {
     for (const texto of ['ok', 'Sim', 'não', 'pode subir', 'Continue', 'pode publicar!', 'beleza, valeu', '👍']) {
       const r = classificar(texto)
-      expect(r.nivel, texto).toBe('haiku')
+      expect(r.nivel, texto).toBe('manter')
       expect(r.certo, texto).toBe(true)
     }
+  })
+
+  test('sinal fraco pede Opus mas deixa o Haiku decidir', () => {
+    for (const texto of ['tem um bug no lightbox', 'a página trava no iPhone', 'melhorar o desempenho da galeria', 'corrige o bug de digitação no título']) {
+      const r = classificar(texto)
+      expect(r.nivel, texto).toBe('opus')
+      expect(r.certo, texto).toBe(false)
+    }
+    expect(classificar('investigue o bug do lightbox').certo).toBe(true)
+  })
+
+  test('trocar de Opus para Sonnet só quando a economia paga o cache', () => {
+    expect(compensaTrocar('opus', 'sonnet', 0, 1000, 3)).toBe(true)
+    expect(compensaTrocar('opus', 'sonnet', 50000, 4000, 4)).toBe(false)
+    expect(compensaTrocar('opus', 'sonnet', 50000, 30000, 4)).toBe(true)
   })
 
   test('palavras de trabalho pesado vão para o Opus', () => {

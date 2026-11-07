@@ -18,7 +18,7 @@
       "name": "escolha-de-modelo",
       "source": "./plugins/escolha-de-modelo",
       "description": "Escolhe Haiku, Sonnet ou Opus para cada pedido; comando /modelo.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "category": "mod"
     }
   ]

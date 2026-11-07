@@ -5,6 +5,7 @@ import type { EscolhaDeModeloEstado, EscolhaDeModeloNivel } from '../types'
 import {
   NOMES,
   classificar,
+  compensaTrocar,
   familia,
   lerNivel,
   nivelDe,
@@ -14,8 +15,8 @@ import {
   perguntaParaHaiku,
 } from './classificar'
 
-export const LONGA_TOKENS = 30000
-export const LONGA_MENSAGENS = 40
+export const SAIDA_PADRAO = 4000
+export const PASSOS_PADRAO = 4
 const TEMPO_HAIKU = 4000
 
 const INICIAL: EscolhaDeModeloEstado = {
@@ -28,6 +29,10 @@ const INICIAL: EscolhaDeModeloEstado = {
   confirmado: false,
   contexto: 0,
   mensagens: 0,
+  saidaAcum: 0,
+  passosAcum: 0,
+  saidaMedia: 0,
+  passosMedios: 0,
   ids: {},
 }
 
@@ -56,14 +61,32 @@ function ehNivel(texto: string): texto is EscolhaDeModeloNivel {
   return (NIVEIS as readonly string[]).includes(texto)
 }
 
-function deveManter(
-  estado: EscolhaDeModeloEstado,
-  desejado: EscolhaDeModeloNivel,
-  mensagens: number,
-): boolean {
+function deveManter(estado: EscolhaDeModeloEstado, desejado: EscolhaDeModeloNivel): boolean {
   if (estado.modo !== 'auto' || estado.emUso === null) return false
-  const longa = estado.contexto >= LONGA_TOKENS || mensagens >= LONGA_MENSAGENS
-  return longa && ordem(desejado) < nivelDe(estado.emUso)
+  if (ordem(desejado) >= nivelDe(estado.emUso)) return false
+  const semHistorico = estado.passosMedios === 0
+  return !compensaTrocar(
+    familia(estado.emUso) ?? 'opus',
+    desejado,
+    estado.contexto,
+    semHistorico ? SAIDA_PADRAO : estado.saidaMedia,
+    semHistorico ? PASSOS_PADRAO : estado.passosMedios,
+  )
+}
+
+function media(anterior: number, nova: number): number {
+  return anterior === 0 ? nova : (anterior + nova) / 2
+}
+
+function fecharTurno(estado: EscolhaDeModeloEstado): EscolhaDeModeloEstado {
+  if (estado.passosAcum === 0) return estado
+  return {
+    ...estado,
+    saidaMedia: media(estado.saidaMedia, estado.saidaAcum),
+    passosMedios: media(estado.passosMedios, estado.passosAcum),
+    saidaAcum: 0,
+    passosAcum: 0,
+  }
 }
 
 function idPara(
@@ -109,7 +132,7 @@ function descrever(estado: EscolhaDeModeloEstado): string {
       linhas.push(`Último pedido: ${NOMES[estado.pedido]} (${estado.motivo}).`)
     }
     if (estado.mantido && estado.emUso !== null) {
-      linhas.push(`Mantido em ${nomeDe(estado.emUso)} para não perder o cache da conversa longa.`)
+      linhas.push(`Mantido em ${nomeDe(estado.emUso)}: trocar agora custaria mais em cache do que economizaria.`)
     }
   } else if (estado.modo === 'fixo' && estado.fixo !== null) {
     linhas.push(`Fixado em ${NOMES[estado.fixo]} até /modelo auto.`)
@@ -128,7 +151,7 @@ async function classificarPedido(
   $: EngineInterface,
   texto: string,
   sinal: AbortSignal,
-): Promise<{ nivel: EscolhaDeModeloNivel; motivo: string }> {
+): Promise<{ nivel: EscolhaDeModeloNivel | 'manter'; motivo: string }> {
   const local = classificar(texto)
   if (local.certo) return local
   const resposta = await $.model
@@ -219,13 +242,18 @@ export const register: Register = on => {
     const atual = await ler($)
     if (atual.modo !== 'auto') return next(e)
     const escolha = await classificarPedido($, e.text, next.signal)
-    const estado = await mudarEstado($, s => ({
-      ...s,
-      pedido: escolha.nivel,
-      motivo: escolha.motivo,
-      mantido: deveManter(s, escolha.nivel, s.mensagens),
-      confirmado: false,
-    }))
+    const estado = await mudarEstado($, s => {
+      const fechado = fecharTurno(s)
+      const nivel =
+        escolha.nivel === 'manter' ? familia(s.emUso) ?? s.pedido ?? 'sonnet' : escolha.nivel
+      return {
+        ...fechado,
+        pedido: nivel,
+        motivo: escolha.motivo,
+        mantido: deveManter(fechado, nivel),
+        confirmado: false,
+      }
+    })
     $.ui.status(textoStatus(estado))
     return next(e)
   })
@@ -239,7 +267,7 @@ export const register: Register = on => {
     if (atual.modo === 'auto' && local.nivel === 'opus') {
       const estado = await mudarEstado($, s => ({
         ...s,
-        pedido: local.nivel,
+        pedido: 'opus',
         motivo: local.motivo,
         mantido: false,
         confirmado: false,
@@ -268,7 +296,7 @@ export const register: Register = on => {
     let enviar = e.model
     let mantido = false
     if (desejado !== null) {
-      mantido = deveManter(antes, desejado, e.messageCount)
+      mantido = deveManter(antes, desejado)
       enviar = mantido && antes.emUso !== null ? antes.emUso : idPara(antes, desejado, e.model)
     }
     let resultado: TurnStepResult
@@ -305,6 +333,8 @@ export const register: Register = on => {
       confirmado: true,
       contexto,
       mensagens: e.messageCount,
+      saidaAcum: s.saidaAcum + (uso?.output_tokens ?? 0),
+      passosAcum: s.passosAcum + 1,
       ids: aprender(s.ids, e.model, uso === null ? null : uso.model),
     }))
     if (textoStatus(depois) !== textoStatus(antes)) $.ui.status(textoStatus(depois))

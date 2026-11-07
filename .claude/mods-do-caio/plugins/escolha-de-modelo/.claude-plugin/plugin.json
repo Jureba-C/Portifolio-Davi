@@ -1,6 +1,6 @@
 {
   "name": "escolha-de-modelo",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Escolhe Haiku, Sonnet ou Opus para cada pedido",
   "author": {
     "name": "Caio de Melo"

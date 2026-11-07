@@ -12,6 +12,10 @@ export type EscolhaDeModeloEstado = {
   confirmado: boolean
   contexto: number
   mensagens: number
+  saidaAcum: number
+  passosAcum: number
+  saidaMedia: number
+  passosMedios: number
   ids: Partial<Record<EscolhaDeModeloNivel, string>>
 }
 

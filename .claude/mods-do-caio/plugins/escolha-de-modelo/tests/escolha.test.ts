@@ -22,12 +22,13 @@ type Mundo = {
   enviados: { model: string; agentId?: string }[]
   consultas: string[]
   contexto: number
+  saida: number
   haiku: string | null | Error
   falhar: string[]
 }
 
 function montar(on: On, inicio: Partial<Mundo> = {}): Mundo {
-  const mundo: Mundo = { status: [], enviados: [], consultas: [], contexto: 0, haiku: null, falhar: [], ...inicio }
+  const mundo: Mundo = { status: [], enviados: [], consultas: [], contexto: 0, saida: 0, haiku: null, falhar: [], ...inicio }
   on('ui.status', ($, e) => {
     mundo.status.push(e.text)
     return { value: undefined }
@@ -53,7 +54,7 @@ function montar(on: On, inicio: Partial<Mundo> = {}): Mundo {
       answer: 'feito',
       toolUses: [],
       stopReason: 'end_turn',
-      usage: { ...ZERO, cache_read_input_tokens: mundo.contexto, model: IDS[e.model] ?? e.model },
+      usage: { ...ZERO, cache_read_input_tokens: mundo.contexto, output_tokens: mundo.saida, model: IDS[e.model] ?? e.model },
     }
   })
   return mundo
@@ -96,13 +97,13 @@ describe('pedido e passo', () => {
     expect(ultimo(mundo.enviados)?.model).toBe('opus')
   })
 
-  test('confirmação curta vai para o Haiku e pedido comum fica no Sonnet', async ($, on) => {
+  test('confirmação numa sessão nova fica no Sonnet e pedido comum também', async ($, on) => {
     const mundo = montar(on)
     await iniciar($)
     await pedir($, 'pode subir')
     await passo($)
-    expect(ultimo(mundo.enviados)?.model).toBe('haiku')
-    expect(ultimo(mundo.status)).toBe('Modelo: Haiku · auto')
+    expect(ultimo(mundo.enviados)?.model).toBe(SESSAO)
+    expect(ultimo(mundo.status)).toBe('Modelo: Sonnet · auto')
     await pedir($, 'troque o título da página inicial')
     await passo($)
     expect(ultimo(mundo.enviados)?.model).toBe(SESSAO)
@@ -154,13 +155,24 @@ describe('pedido e passo', () => {
   })
 })
 
-describe('cache em conversa longa', () => {
-  test('não rebaixa quando a conversa está longa', async ($, on) => {
+describe('troca pelo custo', () => {
+  test('confirmação depois do Opus segue no Opus', async ($, on) => {
+    const mundo = montar(on)
+    await iniciar($)
+    await pedir($, 'investigue o bug do lightbox')
+    await passo($)
+    await pedir($, 'ok, pode fazer')
+    expect(ultimo(mundo.status)).toBe('Modelo: Opus · auto')
+    await passo($)
+    expect(ultimo(mundo.enviados)?.model).toBe('claude-opus-teste')
+  })
+
+  test('conversa longa com turno curto mantém o Opus', async ($, on) => {
     const mundo = montar(on, { contexto: 50000 })
     await iniciar($)
     await pedir($, 'investigue o bug do lightbox')
     await passo($)
-    await pedir($, 'ok')
+    await pedir($, 'troque o título da página inicial')
     expect(ultimo(mundo.status)).toBe('Modelo: Opus · auto')
     await passo($)
     expect(ultimo(mundo.enviados)?.model).toBe('claude-opus-teste')
@@ -168,24 +180,25 @@ describe('cache em conversa longa', () => {
     expect(texto).toContain('Mantido em Opus')
   })
 
-  test('não rebaixa com muitas mensagens mesmo sem tokens', async ($, on) => {
-    const mundo = montar(on)
+  test('turno com muita saída compensa trocar para o Sonnet', async ($, on) => {
+    const mundo = montar(on, { contexto: 50000, saida: 50000 })
     await iniciar($)
     await pedir($, 'investigue o bug do lightbox')
-    await passo($, { messageCount: 60 })
-    await pedir($, 'ok')
-    await passo($, { messageCount: 62 })
-    expect(ultimo(mundo.enviados)?.model).toBe('claude-opus-teste')
+    await passo($)
+    await pedir($, 'troque o título da página inicial')
+    await passo($)
+    expect(ultimo(mundo.enviados)?.model).toBe(SESSAO)
+    expect(ultimo(mundo.status)).toBe('Modelo: Sonnet · auto')
   })
 
-  test('rebaixa quando a conversa é curta', async ($, on) => {
+  test('conversa curta rebaixa para o Sonnet', async ($, on) => {
     const mundo = montar(on)
     await iniciar($)
     await pedir($, 'investigue o bug do lightbox')
     await passo($)
-    await pedir($, 'ok')
+    await pedir($, 'troque o título da página inicial')
     await passo($)
-    expect(ultimo(mundo.enviados)?.model).toBe('haiku')
+    expect(ultimo(mundo.enviados)?.model).toBe(SESSAO)
   })
 
   test('subir de nível é sempre permitido', async ($, on) => {
@@ -195,7 +208,7 @@ describe('cache em conversa longa', () => {
     await passo($)
     await pedir($, 'redesenhar a home')
     await passo($)
-    expect(mundo.enviados.map(e => e.model)).toEqual(['haiku', 'opus'])
+    expect(mundo.enviados.map(e => e.model)).toEqual([SESSAO, 'opus'])
   })
 })
 
@@ -287,7 +300,7 @@ describe('troca manual', () => {
     })
     await pedir($, 'pode subir')
     await passo($)
-    expect(ultimo(mundo.status)).toBe('Modelo: Haiku · auto')
+    expect(ultimo(mundo.status)).toBe('Modelo: Sonnet · auto')
   })
 })
 
@@ -375,10 +388,10 @@ describe('robustez', () => {
     await pedir($, 'investigue o bug do lightbox')
     await passo($)
     expect(ultimo(mundo.status)).toBe('Modelo: Opus · auto')
-    await pedir($, 'ok')
-    expect(ultimo(mundo.status)).toBe('Modelo: Haiku · auto')
+    await pedir($, 'troque o título da página inicial')
+    expect(ultimo(mundo.status)).toBe('Modelo: Sonnet · auto')
     await passo($)
-    expect(ultimo(mundo.status)).toBe('Modelo: Haiku · auto')
+    expect(ultimo(mundo.status)).toBe('Modelo: Sonnet · auto')
   })
 
   test('estado antigo sem os campos novos não quebra', async ($, on) => {
