@@ -22,7 +22,7 @@ O painel tem um menu com cinco telas: **Vídeos**, **Textos e redes**, **Cliente
   1. Escolha o **tipo** (Motion, Vertical/Shorts, Long Form).
   2. Cole o **link do YouTube** (`youtube.com/watch?v=…`, `youtu.be/…` ou `/shorts/…`; vídeo não listado também vale). O painel avisa se reconheceu o link.
   3. Escreva o **título**. No Long Form, escolha o **filtro** se quiser.
-  4. Envie o **clipe de prévia** (mp4 ou webm, até 15 MB) e, se quiser, a **capa**. A lixeira ao lado tira o arquivo.
+  4. Envie o **clipe de prévia** (mp4 ou webm) e, se quiser, a **capa**. O painel comprime o clipe sozinho (720p, sem áudio) e as imagens viram WebP. A lixeira ao lado tira o arquivo.
   5. Preencha a descrição em português e em inglês e ligue **Mostrar nos destaques** se ele deve aparecer no topo do site.
   6. O cartão no topo da gaveta mostra como vai ficar. Clique em **Adicionar vídeo**.
 - Na lista, cada vídeo tem: **estrela** (coloca ou tira dos destaques), **lápis** (abre a mesma gaveta para editar) e **lixeira** (exclui, com confirmação).
@@ -64,7 +64,7 @@ O painel tem um menu com cinco telas: **Vídeos**, **Textos e redes**, **Cliente
 index.html · admin.html · 404.html · styleguide.html (guia visual, não é publicado)
 css/      fonts.css · base.css (cores, fontes, janela) · formas.css (recortes, aranhas, intro, animações) · site.css · admin.css (painel, independente do visual do site)
 js/       config.js (chaves públicas e endereço do site) · supabase.js · data.js (banco + modo local) · i18n.js (textos PT/EN)
-          site.js · animations.js · cursor.js (mira) · player.js · previa.js (clipes) · admin.js · dom.js · boot.js (intro) · mock-data.js
+          site.js · animations.js · cursor.js (mira) · player.js · previa.js (clipes) · clipe.js (compressão no painel) · admin.js · dom.js · boot.js (intro) · mock-data.js
           vendor/ (supabase-js e SortableJS empacotados; licenças em LICENCAS.txt)
 assets/   desenhos.svg (aranha, teia, faísca…) · favicon.svg · og-image.png · apple-touch-icon.png · foto-decxz.webp · exemplos/ · fonts/
 supabase/ schema.sql (tabelas + segurança) · seed.sql (dados de exemplo)
@@ -139,4 +139,4 @@ Para trocar o endereço provisório também no código (opcional): `npm run ende
 
 ### Limites do plano grátis
 - **Supabase** pausa projetos grátis depois de cerca de 1 semana sem nenhum acesso. O site continua mostrando a última versão salva no navegador de quem já visitou e, se não houver, os dados de exemplo. Para reativar, entre no painel do Supabase e clique em **Restore project**. Leva alguns minutos.
-- Supabase Free: 500 MB de banco e 1 GB de arquivos. Os clipes de prévia são o que mais ocupa (até 15 MB cada).
+- Supabase Free: 500 MB de banco e 1 GB de arquivos. Os clipes de prévia são o que mais ocupa; o painel os comprime sozinho e, ao abrir, otimiza e apaga os antigos que forem pesados.

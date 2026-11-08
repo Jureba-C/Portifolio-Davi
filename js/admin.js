@@ -1,4 +1,5 @@
 import { criarApi, extrairIdYoutube, ehLinkDeShort, thumbYoutube, capaYoutube, iniciais, loginLocalPermitido } from './data.js';
+import { clipePesado, otimizarClipe, PASTA_LEVE } from './clipe.js';
 import { nuvemConfigurada } from './supabase.js';
 import { el } from './dom.js';
 import { FOTO_PADRAO, SOBRE_PADRAO } from './padrao.js';
@@ -52,9 +53,12 @@ let fotoArquivo = null;
 let textosSalvos = '';
 const arquivos = { 'foto-sobre': null, clipe: null, capa: null };
 const removidos = { clipe: false, capa: false };
+const LIMITE_BUCKET_MB = 15;
+let otimizacao = Promise.resolve();
+let clipeOtimizado = false;
 const LIMITES = {
   'foto-sobre': { tipos: /^image\//, mb: 3, rotulo: 'Trocar foto' },
-  clipe: { tipos: /^video\/(mp4|webm)$/, mb: 15, rotulo: 'Enviar clipe' },
+  clipe: { tipos: /^video\/(mp4|webm)$/, mb: 500, rotulo: 'Enviar clipe' },
   capa: { tipos: /^image\//, mb: 3, rotulo: 'Enviar capa' },
 };
 let timerToast;
@@ -289,6 +293,7 @@ async function abrirPainel() {
   }
   paginaAtual = null;
   await irPara(paginaDoHash(), { foco: false, historico: false });
+  otimizarClipesAntigos().catch(() => {});
 }
 
 function renderTudo() {
@@ -330,6 +335,10 @@ function escolherArquivo(tipo, arquivo) {
   const limite = LIMITES[tipo];
   if (!limite.tipos.test(arquivo.type)) return toast(tipo === 'clipe' ? 'o clipe precisa ser mp4 ou webm' : 'isso não é uma imagem', 'erro');
   if (arquivo.size > limite.mb * 1024 * 1024) return toast(`arquivo grande demais (máx. ${limite.mb} MB)`, 'erro');
+  if (tipo === 'clipe') {
+    otimizacao = otimizarEscolhido(arquivo);
+    return;
+  }
   arquivos[tipo] = arquivo;
   if (tipo === 'foto-sobre') {
     $('[data-form="textos"]').foto_url.value = '';
@@ -340,7 +349,27 @@ function escolherArquivo(tipo, arquivo) {
   }
   removidos[tipo] = false;
   marcarArquivo(tipo, `✓ ${arquivo.name}`, tamanho(arquivo.size));
-  if (tipo === 'clipe' && arquivo.size > 4 * 1024 * 1024) toast('clipe pesado: comprima para uns 2 MB (720p, sem áudio) para o site abrir mais rápido', 'erro');
+  atualizarPrevia();
+}
+
+async function otimizarEscolhido(original) {
+  arquivos.clipe = original;
+  clipeOtimizado = false;
+  removidos.clipe = false;
+  const informar = (texto) => { if (arquivos.clipe === original) $('.arquivo-info', $('[data-arquivo="clipe"]')).textContent = texto; };
+  marcarArquivo('clipe', `✓ ${original.name}`, 'otimizando… 0%');
+  atualizarPrevia();
+  const otimizado = await otimizarClipe(original, (p) => informar(`otimizando… ${Math.round(p * 100)}%`));
+  if (arquivos.clipe !== original) return;
+  if (otimizado.size > LIMITE_BUCKET_MB * 1024 * 1024) {
+    limparArquivo('clipe');
+    atualizarPrevia();
+    return toast(`clipe grande demais (máx. ${LIMITE_BUCKET_MB} MB depois de comprimir)`, 'erro');
+  }
+  clipeOtimizado = otimizado !== original;
+  arquivos.clipe = otimizado;
+  marcarArquivo('clipe', `✓ ${otimizado.name}`, clipeOtimizado ? `${tamanho(original.size)} → ${tamanho(otimizado.size)}` : tamanho(original.size));
+  if (!clipeOtimizado && original.size > 4 * 1024 * 1024) toast('este navegador não conseguiu comprimir o clipe: use o Chrome, Edge ou Opera para o site abrir mais rápido', 'erro');
   atualizarPrevia();
 }
 
@@ -354,6 +383,7 @@ function marcarArquivo(tipo, nome, info) {
 
 function limparArquivo(tipo) {
   arquivos[tipo] = null;
+  if (tipo === 'clipe') clipeOtimizado = false;
   const entrada = $(`[data-solta="${tipo}"] input[type="file"]`);
   if (entrada) entrada.value = '';
   if (tipo === 'foto-sobre') {
@@ -362,7 +392,7 @@ function limparArquivo(tipo) {
   }
   const caixa = $(`[data-arquivo="${tipo}"]`);
   $(`[data-rotulo="${tipo}"]`).textContent = LIMITES[tipo].rotulo;
-  $('.arquivo-info', caixa).textContent = tipo === 'clipe' ? 'mp4 ou webm, até 15 MB' : 'opcional · imagem até 3 MB';
+  $('.arquivo-info', caixa).textContent = tipo === 'clipe' ? 'mp4 ou webm · o painel comprime sozinho' : 'opcional · imagem até 3 MB';
   caixa.classList.remove('escolhido');
   $(`[data-remover="${tipo}"]`).hidden = true;
 }
@@ -727,9 +757,10 @@ async function salvarVideo(e) {
   const v = editandoVideo;
   const botao = $('[data-video-botao]');
   const ok = await ocupado(botao, () => acao(async () => {
+    await otimizacao;
     let preview_url = v && !removidos.clipe ? v.preview_url ?? '' : '';
     let poster_url = v && !removidos.capa ? v.poster_url ?? '' : '';
-    if (arquivos.clipe) preview_url = await api.enviarArquivo(arquivos.clipe, 'previas');
+    if (arquivos.clipe) preview_url = await api.enviarArquivo(arquivos.clipe, clipeOtimizado ? PASTA_LEVE : 'previas');
     if (arquivos.capa) poster_url = await api.enviarArquivo(arquivos.capa, 'capas');
     const registro = {
       ...dados,
@@ -1209,6 +1240,58 @@ function ligarEventos() {
     mostrarFotoCliente(urlCompleta(e.target.value), formCliente.nome.value);
   });
   ligarSoltar($('[data-solta-foto]'), escolherFoto);
+}
+
+const esperar = (ms) => new Promise((resolver) => setTimeout(resolver, ms));
+let otimizandoLote = false;
+
+function jaTentados() {
+  try { return new Set(JSON.parse(sessionStorage.getItem('clipes-tentados') || '[]')); } catch { return new Set(); }
+}
+
+function lembrarTentado(id) {
+  try { sessionStorage.setItem('clipes-tentados', JSON.stringify([...jaTentados(), id])); } catch {}
+}
+
+async function otimizarClipesAntigos() {
+  if (otimizandoLote || api.modo !== 'nuvem') return;
+  otimizandoLote = true;
+  const faixa = $('[data-otimizando]');
+  const texto = $('[data-otimizando-texto]');
+  const barra = $('[data-otimizando-barra]');
+  try {
+    const tentados = jaTentados();
+    const fila = [];
+    for (const v of db.videos) {
+      if (v.preview_url && !tentados.has(v.id) && await clipePesado(v.preview_url)) fila.push(v);
+    }
+    let economizado = 0;
+    for (const [i, v] of fila.entries()) {
+      while ($('dialog[open]')) await esperar(2000);
+      lembrarTentado(v.id);
+      texto.textContent = `Otimizando clipe ${i + 1} de ${fila.length}…`;
+      barra.style.width = '0%';
+      faixa.hidden = false;
+      try {
+        const resposta = await fetch(v.preview_url);
+        const blob = await resposta.blob();
+        const original = new File([blob], 'clipe.mp4', { type: blob.type || 'video/mp4' });
+        const leve = await otimizarClipe(original, (p) => { barra.style.width = `${Math.round(p * 100)}%`; });
+        if (leve === original) continue;
+        const nova = await api.enviarArquivo(leve, PASTA_LEVE);
+        await api.atualizar('videos', v.id, { preview_url: nova });
+        await api.apagarArquivo(v.preview_url).catch(() => {});
+        economizado += original.size - leve.size;
+      } catch {}
+    }
+    if (economizado) {
+      await recarregar();
+      toast(`clipes otimizados: ${tamanho(economizado)} a menos ✓`);
+    }
+  } finally {
+    faixa.hidden = true;
+    otimizandoLote = false;
+  }
 }
 
 async function iniciar() {

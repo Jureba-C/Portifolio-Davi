@@ -259,6 +259,7 @@ function apiLocal() {
         .sort(porOrdem);
       salvar(atual);
     },
+    async apagarArquivo() {},
     async enviarArquivo(arquivo, pasta = 'geral') {
       const pronto = await otimizarImagem(arquivo, LADO_MAXIMO[pasta]);
       return new Promise((resolver, rejeitar) => {
@@ -326,6 +327,13 @@ function apiNuvem() {
     async reordenar(tabela, ids) {
       const cliente = await sb();
       checar(await cliente.rpc('reordenar', { tabela, ids }));
+    },
+    async apagarArquivo(url) {
+      const marca = `/object/public/${BUCKET_MIDIA}/`;
+      const inicio = String(url).indexOf(marca);
+      if (inicio < 0) return;
+      const cliente = await sb();
+      checar(await cliente.storage.from(BUCKET_MIDIA).remove([decodeURIComponent(String(url).slice(inicio + marca.length).split('?')[0])]));
     },
     async enviarArquivo(original, pasta = 'geral') {
       const cliente = await sb();

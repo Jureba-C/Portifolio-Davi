@@ -389,6 +389,24 @@
 .confirmar-form { display: flex; flex-direction: column; gap: 22px; padding: 24px; }
 .confirmar-texto { font-size: 17px; font-weight: 600; line-height: 1.45; }
 
+.otimizando {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 290;
+  display: grid;
+  gap: 8px;
+  width: min(320px, calc(100vw - 40px));
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--cartao-2);
+  color: var(--tinta);
+  font-weight: 700;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .45);
+}
+.otimizando[hidden] { display: none; }
+.otimizando-barra { height: 6px; border-radius: 3px; background: var(--linha); overflow: hidden; }
+.otimizando-barra span { display: block; height: 100%; width: 0; background: var(--foco); transition: width .2s ease; }
 .toast-admin {
   position: fixed;
   right: 20px;
