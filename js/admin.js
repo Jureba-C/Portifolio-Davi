@@ -340,6 +340,7 @@ function escolherArquivo(tipo, arquivo) {
   }
   removidos[tipo] = false;
   marcarArquivo(tipo, `✓ ${arquivo.name}`, tamanho(arquivo.size));
+  if (tipo === 'clipe' && arquivo.size > 4 * 1024 * 1024) toast('clipe pesado: comprima para uns 2 MB (720p, sem áudio) para o site abrir mais rápido', 'erro');
   atualizarPrevia();
 }
 

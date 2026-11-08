@@ -498,6 +498,21 @@ test.describe('navegador sem animação ligada à rolagem (Safari antigo, Firefo
 });
 
 test.describe('prévias do YouTube', () => {
+  test('a miniatura do destaque principal carrega primeiro, com prioridade alta, e as outras esperam por ela', async ({ page }) => {
+    const pedidos = [];
+    page.on('request', (r) => { if (r.url().includes('i.ytimg.com')) pedidos.push(r.url()); });
+    await soLinksDoYoutube(page);
+    const principal = page.locator('[data-lista="showreel"] img.previa-midia').first();
+    await expect(principal).toHaveAttribute('src', /maxresdefault\.jpg$/);
+    await expect(principal).toHaveAttribute('loading', 'eager');
+    await expect(principal).toHaveAttribute('fetchpriority', 'high');
+    const outra = page.locator('.grade .card img.previa-midia').first();
+    await expect(outra).toHaveAttribute('loading', 'lazy');
+    await expect(outra).toHaveAttribute('src', /maxresdefault\.jpg$/);
+    const idPrincipal = (await principal.getAttribute('src')).split('/vi/')[1].split('/')[0];
+    expect(pedidos[0]).toContain(idPrincipal);
+  });
+
   test('capa em alta, caindo para a próxima quando o YouTube não tem a maior', async ({ page }) => {
     await soLinksDoYoutube(page);
     const capa = page.locator('.grade .card img.previa-midia').first();

@@ -173,6 +173,26 @@ function novoId() {
   return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+const LADO_MAXIMO = { capas: 1280, sobre: 1000, clientes: 320 };
+
+export async function otimizarImagem(arquivo, maxLado = 1280) {
+  if (!/^image\/(png|jpeg|webp)$/.test(arquivo.type) || !globalThis.createImageBitmap) return arquivo;
+  try {
+    const imagem = await createImageBitmap(arquivo);
+    const escala = Math.min(1, maxLado / Math.max(imagem.width, imagem.height));
+    const tela = document.createElement('canvas');
+    tela.width = Math.round(imagem.width * escala);
+    tela.height = Math.round(imagem.height * escala);
+    tela.getContext('2d').drawImage(imagem, 0, 0, tela.width, tela.height);
+    imagem.close?.();
+    const blob = await new Promise((resolver) => tela.toBlob(resolver, 'image/webp', 0.85));
+    if (!blob || blob.type !== 'image/webp' || blob.size >= arquivo.size) return arquivo;
+    return new File([blob], `${arquivo.name.replace(/\.[^.]+$/, '')}.webp`, { type: 'image/webp' });
+  } catch {
+    return arquivo;
+  }
+}
+
 export function loginLocalPermitido() {
   return !nuvemConfigurada();
 }
@@ -239,12 +259,13 @@ function apiLocal() {
         .sort(porOrdem);
       salvar(atual);
     },
-    async enviarArquivo(arquivo) {
+    async enviarArquivo(arquivo, pasta = 'geral') {
+      const pronto = await otimizarImagem(arquivo, LADO_MAXIMO[pasta]);
       return new Promise((resolver, rejeitar) => {
         const leitor = new FileReader();
         leitor.onload = () => resolver(String(leitor.result));
         leitor.onerror = () => rejeitar(leitor.error);
-        leitor.readAsDataURL(arquivo);
+        leitor.readAsDataURL(pronto);
       });
     },
   };
@@ -306,8 +327,9 @@ function apiNuvem() {
       const cliente = await sb();
       checar(await cliente.rpc('reordenar', { tabela, ids }));
     },
-    async enviarArquivo(arquivo, pasta = 'geral') {
+    async enviarArquivo(original, pasta = 'geral') {
       const cliente = await sb();
+      const arquivo = await otimizarImagem(original, LADO_MAXIMO[pasta]);
       const extensao = (arquivo.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '');
       const caminho = `${pasta}/${novoId()}.${extensao}`;
       checar(await cliente.storage.from(BUCKET_MIDIA).upload(caminho, arquivo, { cacheControl: '31536000', upsert: false, contentType: arquivo.type || undefined }));

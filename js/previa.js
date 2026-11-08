@@ -14,6 +14,10 @@ const comMouse = () => window.matchMedia?.('(hover: hover) and (pointer: fine)')
 
 const RECORTE = 1.22;
 
+let liberarHero = () => {};
+const heroPronto = new Promise((resolver) => { liberarHero = resolver; });
+export const semDestaque = () => liberarHero();
+
 function ativar(controle) {
   if (ativo && ativo !== controle) ativo.pausar();
   ativo = controle;
@@ -75,29 +79,41 @@ function semPrevia(tela, texto) {
   tela.append(caixa);
 }
 
-function imagem(tela, src, texto, youtubeId = '') {
+function imagem(tela, src, texto, youtubeId = '', principal = false) {
   if (!src && !youtubeId) return semPrevia(tela, texto);
   const img = document.createElement('img');
   img.className = 'previa-midia';
   img.alt = '';
-  img.loading = 'lazy';
   img.decoding = 'async';
   const falhou = () => {
     img.remove();
     semPrevia(tela, texto);
   };
-  if (src) {
-    img.src = src;
-    img.addEventListener('error', falhou);
+  const carregar = () => {
+    if (src) {
+      img.src = src;
+      img.addEventListener('error', falhou);
+    } else {
+      capaYoutube(img, youtubeId, falhou);
+    }
+  };
+  if (principal) {
+    img.loading = 'eager';
+    img.fetchPriority = 'high';
+    img.addEventListener('load', liberarHero, { once: true });
+    img.addEventListener('error', liberarHero, { once: true });
+    setTimeout(liberarHero, 3500);
+    carregar();
   } else {
-    capaYoutube(img, youtubeId, falhou);
+    img.loading = 'lazy';
+    heroPronto.then(carregar);
   }
   tela.append(img);
   return img;
 }
 
-function controleDeVideo(tela, video, poster) {
-  imagem(tela, poster, '', poster ? '' : video.youtube_id);
+function controleDeVideo(tela, video, poster, principal) {
+  imagem(tela, poster, '', poster ? '' : video.youtube_id, principal);
   const v = document.createElement('video');
   v.className = 'previa-midia';
   v.muted = true;
@@ -113,26 +129,37 @@ function controleDeVideo(tela, video, poster) {
   v.dataset.previa = 'video';
   v.addEventListener('playing', () => v.classList.add('pronto'), { once: true });
   tela.append(v);
+  let pedido = false;
+  let querTocar = false;
+  const rodar = () => {
+    const promessa = v.play();
+    if (promessa?.catch) promessa.catch(() => {});
+  };
   return {
     visivel: false,
     carregar() {
-      if (!autoplayPermitido() || v.getAttribute('src')) return;
-      v.src = urlSegura(video.preview_url, { midia: true });
+      if (!autoplayPermitido() || pedido) return;
+      pedido = true;
+      heroPronto.then(() => {
+        v.src = urlSegura(video.preview_url, { midia: true });
+        if (querTocar) rodar();
+      });
     },
     tocar() {
       if (!autoplayPermitido()) return;
+      querTocar = true;
       this.carregar();
-      const promessa = v.play();
-      if (promessa?.catch) promessa.catch(() => {});
+      if (v.getAttribute('src')) rodar();
     },
     pausar() {
+      querTocar = false;
       if (!v.paused) v.pause();
     },
   };
 }
 
-function controleDeYoutube(tela, video, poster, texto) {
-  imagem(tela, poster, texto, poster ? '' : video.youtube_id);
+function controleDeYoutube(tela, video, poster, texto, principal) {
+  imagem(tela, poster, texto, poster ? '' : video.youtube_id, principal);
   let iframe = null;
   let querTocar = false;
   let ouviu = false;
@@ -218,12 +245,12 @@ function ligarSobDemanda(tela, controle) {
   alvo.addEventListener('focusout', () => { if (comMouse()) desativar(controle); });
 }
 
-export function montarPrevia(tela, video, { modo = 'card', textoSem = '' } = {}) {
+export function montarPrevia(tela, video, { modo = 'card', textoSem = '', principal = false } = {}) {
   const poster = urlSegura(video.poster_url, { midia: true });
   let controle = null;
-  if (urlSegura(video.preview_url, { midia: true })) controle = controleDeVideo(tela, video, poster);
-  else if (video.youtube_id && autoplayPermitido()) controle = controleDeYoutube(tela, video, poster, textoSem);
-  else imagem(tela, poster, textoSem, poster ? '' : video.youtube_id);
+  if (urlSegura(video.preview_url, { midia: true })) controle = controleDeVideo(tela, video, poster, principal);
+  else if (video.youtube_id && autoplayPermitido()) controle = controleDeYoutube(tela, video, poster, textoSem, principal);
+  else imagem(tela, poster, textoSem, poster ? '' : video.youtube_id, principal);
   if (!controle) return;
   controles.set(tela, controle);
   if (modo !== 'destaque' && !urlSegura(video.preview_url, { midia: true })) ligarSobDemanda(tela, controle);

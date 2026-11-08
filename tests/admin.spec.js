@@ -384,6 +384,38 @@ test.describe('painel admin (modo local)', () => {
     await expect(page.locator('[data-lista="depoimentos"]')).not.toContainText('Cliente Teste');
   });
 
+  test('imagem grande enviada vira WebP menor, sem passar do lado máximo; SVG e GIF ficam como estão', async ({ page }) => {
+    await page.goto('/admin.html');
+    const r = await page.evaluate(async () => {
+      const { otimizarImagem } = await import('/js/data.js');
+      const tela = document.createElement('canvas');
+      tela.width = 2400;
+      tela.height = 1350;
+      const c = tela.getContext('2d');
+      for (let i = 0; i < 400; i += 1) {
+        c.fillStyle = `rgb(${(i * 7) % 255}, ${(i * 13) % 255}, ${(i * 29) % 255})`;
+        c.fillRect((i * 37) % 2400, (i * 53) % 1350, 120, 90);
+      }
+      const png = new File([await new Promise((ok) => tela.toBlob(ok, 'image/png'))], 'capa.png', { type: 'image/png' });
+      const otimizada = await otimizarImagem(png, 1280);
+      const medidas = await createImageBitmap(otimizada);
+      const svg = new File(['<svg xmlns="http://www.w3.org/2000/svg"/>'], 'a.svg', { type: 'image/svg+xml' });
+      return {
+        antes: png.size,
+        depois: otimizada.size,
+        tipo: otimizada.type,
+        nome: otimizada.name,
+        largura: medidas.width,
+        svgIgual: (await otimizarImagem(svg, 1280)) === svg,
+      };
+    });
+    expect(r.tipo).toBe('image/webp');
+    expect(r.nome).toBe('capa.webp');
+    expect(r.largura).toBe(1280);
+    expect(r.depois).toBeLessThan(r.antes);
+    expect(r.svgIgual).toBe(true);
+  });
+
   test('sair volta para o login', async ({ page }) => {
     await entrar(page);
     await page.click('[data-sair]');

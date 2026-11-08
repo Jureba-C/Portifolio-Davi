@@ -3,7 +3,7 @@ import { t, campo, aplicar, definirIdioma, idioma, aoMudarIdioma } from './i18n.
 import { iniciarRevelacao, pausarForaDaTela, iniciarAranhaHero, iniciarRodape, aranhasVivas, letrasSoltas, recorte, temMouse, reduzMovimento } from './animations.js';
 import { iniciarCursor } from './cursor.js';
 import { criarPlayer } from './player.js';
-import { montarPrevia, soltarPrevias, suspenderPrevias } from './previa.js';
+import { montarPrevia, semDestaque, soltarPrevias, suspenderPrevias } from './previa.js';
 import { el, usoSvg } from './dom.js';
 import { FOTO_PADRAO, SOBRE_PADRAO } from './padrao.js';
 
@@ -68,7 +68,7 @@ function abrirVideo(video, lista = null) {
   });
 }
 
-function quadro(video, { classe = '', selo = '', rec = false, assistir = '', vertical = false, modo = 'card', tag = '' }) {
+function quadro(video, { classe = '', selo = '', rec = false, assistir = '', vertical = false, modo = 'card', tag = '', principal = false }) {
   const tela = el('span', { class: 'quadro-tela' });
   const quem = campo(video, 'descricao');
   const link = el('a', {
@@ -89,7 +89,7 @@ function quadro(video, { classe = '', selo = '', rec = false, assistir = '', ver
     el('span', { class: 'quadro-titulo', text: video.titulo }),
     quem ? el('span', { class: 'quadro-sub', text: quem }) : null),
   assistir ? el('span', { class: 'quadro-assistir nota', text: assistir }) : null);
-  montarPrevia(tela, video, { modo, textoSem: t('trabalhos.semPrevia') });
+  montarPrevia(tela, video, { modo, textoSem: t('trabalhos.semPrevia'), principal });
   return link;
 }
 
@@ -133,9 +133,11 @@ function renderDestaques() {
     alvo.textContent = '';
   });
   const [primeiro, ...resto] = estado.db.videos.filter((v) => v.destaque).slice(0, 4);
-  if (!primeiro) principal.append(aranhaVazia(t('destaques.vazio')));
-  else {
-    principal.append(quadro(primeiro, { classe: 'destaque', rec: true, assistir: t('destaques.assistir'), modo: 'destaque', vertical: ehVertical(categoriaDe(primeiro)) }));
+  if (!primeiro) {
+    principal.append(aranhaVazia(t('destaques.vazio')));
+    semDestaque();
+  } else {
+    principal.append(quadro(primeiro, { classe: 'destaque', rec: true, principal: true, assistir: t('destaques.assistir'), modo: 'destaque', vertical: ehVertical(categoriaDe(primeiro)) }));
   }
   fileira.closest('.mais-destaques').hidden = resto.length === 0;
   resto.forEach((video) => fileira.append(quadro(video, { classe: 'destaque', modo: 'destaque', vertical: ehVertical(categoriaDe(video)) })));
