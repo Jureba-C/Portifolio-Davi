@@ -65,6 +65,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   let iframe = null;
   let idAtual = '';
   let origemFoco = null;
+  let navegou = false;
   let duracao = 0;
   let atual = 0;
   let tocando = false;
@@ -175,7 +176,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     menuQualidade.style.maxHeight = `${Math.max(0, tela.clientHeight - controles.offsetHeight - 8)}px`;
     menuQualidade.hidden = false;
     botaoQualidade.setAttribute('aria-expanded', 'true');
-    menuQualidade.querySelector('[aria-checked="true"]').focus();
+    (menuQualidade.querySelector('[aria-checked="true"]') ?? menuQualidade.firstElementChild).focus();
     atualizarControles();
   };
 
@@ -265,12 +266,14 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
       return;
     }
     const botao = { ' ': play, k: play, m: som, f: cheia, c: legenda }[e.key.toLowerCase()];
-    if (atalho && botao) {
+    const apertaFocado = e.key === ' ' && navegou && e.target !== play && e.target.closest?.('button, a');
+    if (atalho && botao && !apertaFocado) {
       e.preventDefault();
       botao.click();
       return;
     }
     if (e.key !== 'Tab') return;
+    navegou = true;
     const itens = [...caixa.querySelectorAll(FOCAVEIS)].filter((el) => el.offsetParent !== null);
     if (!itens.length) return;
     const primeiro = itens[0];
@@ -366,6 +369,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     aoAbrir();
     document.documentElement.style.overflow = 'hidden';
     document.addEventListener('keydown', prenderFoco);
+    navegou = false;
     raiz.querySelector('.player-fechar').focus();
   }
 

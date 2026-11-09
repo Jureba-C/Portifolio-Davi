@@ -262,8 +262,11 @@ async function mostrarMfa(etapa) {
   $('[data-mfa-qr]').removeAttribute('src');
   $('[data-mfa-segredo]').value = '';
   mostrarTela('mfa');
-  form.codigo.focus();
-  if (!cadastro) return;
+  if (!cadastro) {
+    form.codigo.focus();
+    return;
+  }
+  $('[data-mfa-titulo]').focus();
   try {
     const novo = await api.cadastrarMfa();
     fatorNovo = novo.fatorId;

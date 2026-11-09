@@ -104,7 +104,7 @@ test.describe('verificação em duas etapas (MFA)', () => {
     await expect(page.getByRole('img', { name: /QR code/ })).toHaveAttribute('src', /^data:image\/svg\+xml/);
     await expect(page.getByLabel(/Digite esta chave no app/)).toHaveValue(SEGREDO);
     await expect(page.locator('[data-mfa-cadastro]')).toContainText('Google Authenticator');
-    await expect(page.getByLabel('Código de 6 dígitos')).toBeFocused();
+    await expect(page.locator('[data-tela="mfa"]').getByRole('heading')).toBeFocused();
     expect(feitos.apagados).toEqual(['f-velho']);
 
     await page.getByLabel('Código de 6 dígitos').fill(CODIGO_CERTO);

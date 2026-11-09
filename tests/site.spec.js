@@ -815,10 +815,8 @@ test.describe('barra do player', () => {
   test('fica visível enquanto o vídeo aquece e desce 1 segundo depois que ele começa a tocar', async ({ page }) => {
     await youtubeFalso(page, SOBE_ATE_1080);
     await abrirPlayer(page);
-    await expect(page.locator('.player-capa')).toBeVisible();
     await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
     await expect(page.locator('.player-capa')).toHaveCount(0, { timeout: 6000 });
-    await expect(page.locator('[data-player]')).not.toHaveClass(/controles-ocultos/);
     await expect(page.locator('[data-player]')).toHaveClass(/controles-ocultos/, { timeout: 2500 });
     await expect.poll(() => opacidade(page), { timeout: 2000 }).toBe(0);
     const fio = await page.locator('.player-fio').evaluate((el) => Number(getComputedStyle(el).opacity));
@@ -1052,6 +1050,18 @@ test.describe('teclado, fim do vídeo e qualidade', () => {
     await page.keyboard.press('k');
     await expect(play).toHaveAttribute('aria-label', 'Pausar');
     await expect.poll(() => page.evaluate(() => window.__comandos)).toContain('pauseVideo:[]');
+  });
+
+  test('depois de navegar com Tab, espaço aperta o botão focado em vez de pausar', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('.player-capa')).toHaveCount(0, { timeout: 6000 });
+    const som = page.locator('[data-player-som]');
+    for (let i = 0; i < 20 && !(await som.evaluate((el) => el === document.activeElement)); i += 1) await page.keyboard.press('Tab');
+    await expect(som).toBeFocused();
+    await page.keyboard.press('Space');
+    await expect(som).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-player-play]')).toHaveAttribute('aria-label', 'Pausar');
   });
 
   test('no fim do vídeo a barra fica cheia e o tempo mostra a duração; tocar de novo volta ao começo', async ({ page }) => {

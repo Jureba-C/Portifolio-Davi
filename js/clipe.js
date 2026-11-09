@@ -57,15 +57,18 @@ export async function recodificarPeloVideo(arquivo, aoProgresso = () => {}, aoMo
   const video = Object.assign(document.createElement('video'), { muted: true, playsInline: true, preload: 'auto' });
   video.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
   let relogio;
+  let saida;
   try {
     const { Output, Mp4OutputFormat, BufferTarget, CanvasSource, getFirstEncodableVideoCodec } = await import('./vendor/mediabunny.js');
     const taxa = await quadrosPorSegundo(arquivo);
     document.body.append(video);
     await new Promise((pronto, erro) => {
+      relogio = setTimeout(() => erro(falha(NAO_DECODIFICA)), 30000);
       video.onloadeddata = pronto;
       video.onerror = () => erro(falha(NAO_DECODIFICA));
       video.src = endereco;
     });
+    clearTimeout(relogio);
     if (!video.videoWidth || !video.videoHeight) throw falha(NAO_DECODIFICA);
     const escala = Math.min(1, LADO_MENOR / Math.min(video.videoWidth, video.videoHeight));
     const largura = Math.round((video.videoWidth * escala) / 2) * 2;
@@ -75,17 +78,19 @@ export async function recodificarPeloVideo(arquivo, aoProgresso = () => {}, aoMo
     const tela = Object.assign(document.createElement('canvas'), { width: largura, height: altura });
     const pincel = tela.getContext('2d');
     const fonte = new CanvasSource(tela, { codec, bitrate: BITRATE });
-    const saida = new Output({ format: new Mp4OutputFormat({ fastStart: 'in-memory' }), target: new BufferTarget() });
+    saida = new Output({ format: new Mp4OutputFormat({ fastStart: 'in-memory' }), target: new BufferTarget() });
     saida.addVideoTrack(fonte, { frameRate: taxa });
     await saida.start();
     let ultimo = -1;
     let intervalo = 1 / (taxa || 30);
     let pendente = null;
+    let capturados = 0;
     let erroFonte = null;
     const capturar = (tempo) => {
       if (tempo <= ultimo || pendente || erroFonte) return;
       if (ultimo >= 0) intervalo = tempo - ultimo;
       ultimo = tempo;
+      capturados += 1;
       pincel.drawImage(video, 0, 0, largura, altura);
       pendente = fonte.add(tempo, intervalo).catch((e) => { erroFonte = e; }).finally(() => { pendente = null; });
       if (Number.isFinite(video.duration) && video.duration > 0) aoProgresso(Math.min(1, video.currentTime / video.duration));
@@ -109,10 +114,12 @@ export async function recodificarPeloVideo(arquivo, aoProgresso = () => {}, aoMo
     });
     await pendente;
     if (erroFonte || ultimo < 0) throw falha('erro ao recodificar');
+    if (Number.isFinite(video.duration) && capturados < video.duration * (taxa || 30) * 0.25) throw falha('o painel saiu da tela durante a compressão; deixe a aba aberta');
     await saida.finalize();
     aoProgresso(1);
     return comoMp4(saida.target.buffer, arquivo);
   } catch (erro) {
+    saida?.cancel().catch(() => {});
     aoMotivo(erro?.motivo ?? 'erro ao recodificar');
     return arquivo;
   } finally {

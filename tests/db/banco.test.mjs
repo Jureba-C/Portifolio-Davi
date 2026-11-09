@@ -183,6 +183,10 @@ test('vídeo guarda categorias extras com a principal na frente e sem repetir', 
     assert.deepEqual(sem.rows[0].category_ids, [motion]);
     const com = await db.query("insert into public.videos (titulo, youtube_id, category_id, category_ids) values ('Duas', 'dQw4w9WgXcQ', $1, $2::uuid[]) returning category_ids", [motion, [longa, motion, longa]]);
     assert.deepEqual(com.rows[0].category_ids, [motion, longa]);
+    const trocada = await db.query("insert into public.videos (titulo, youtube_id, category_id) values ('Troca', 'dQw4w9WgXcQ', $1) returning id", [motion]);
+    const so = await db.query('update public.videos set category_id = $1 where id = $2 returning category_ids', [longa, trocada.rows[0].id]);
+    assert.deepEqual(so.rows[0].category_ids, [longa]);
+    await db.query('delete from public.videos where id = $1', [trocada.rows[0].id]);
     const naLonga = await db.query('select count(*)::int as n from public.videos where category_ids @> array[$1::uuid]', [longa]);
     assert.equal(naLonga.rows[0].n, 5);
     await db.query("delete from public.videos where titulo in ('Só principal', 'Duas')");

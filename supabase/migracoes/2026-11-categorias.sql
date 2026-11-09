@@ -8,6 +8,9 @@ language plpgsql
 set search_path = public
 as $$
 begin
+  if tg_op = 'UPDATE' and new.category_id is distinct from old.category_id and new.category_ids is not distinct from old.category_ids then
+    new.category_ids := array_remove(new.category_ids, old.category_id);
+  end if;
   new.category_ids := array(
     select c
     from unnest(array[new.category_id] || coalesce(new.category_ids, '{}')) with ordinality as x(c, posicao)
