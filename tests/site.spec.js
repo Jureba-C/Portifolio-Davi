@@ -112,6 +112,41 @@ test.describe('site público', () => {
     await expect(page.locator('#trabalhos-titulo')).toHaveText('TRABALHOS');
   });
 
+  test('aba Todos vem primeiro, escolhida, com os vídeos de todas as categorias na ordem', async ({ page }) => {
+    await page.goto('/?intro=0');
+    const primeira = page.getByRole('tab').first();
+    await expect(primeira).toHaveText('Todos');
+    await expect(primeira).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('.grade')).not.toHaveClass(/grade-vertical/);
+    await expect(page.locator('.grade .card')).toHaveCount(12);
+    await expect(page.locator('.grade .quadro-titulo').first()).toHaveText('Showreel 2026');
+    await expect(page.locator('.grade .quadro-titulo').last()).toHaveText('Speedrun comentado');
+    await expect(page.locator('.grade .card.vertical')).toHaveCount(4);
+    await expect(page.locator('.grade .card', { hasText: 'O bug mais engraçado' }).locator('.card-tag')).toHaveCount(0);
+    await expect(page.locator('.grade .card', { hasText: 'Zerei o jogo' }).locator('.card-tag')).toHaveText('LONG FORM');
+    await expect(page.locator('.grade .card', { hasText: 'Showreel 2026' }).locator('.card-tag')).toHaveText('MOTION');
+    await page.click('[data-categoria="motion"]');
+    await expect(page.locator('[data-categoria="todas"]')).toHaveAttribute('aria-selected', 'false');
+    await expect(page.locator('.grade .card')).toHaveCount(5);
+    await expect(page.locator('.grade')).not.toContainText('O bug mais engraçado');
+    await page.click('[data-idioma="en"]');
+    await expect(page.getByRole('tab').first()).toHaveText('All');
+    await page.click('[data-idioma="pt"]');
+  });
+
+  test('vídeo com duas categorias aparece nas duas abas e uma vez só em Todos', async ({ page }) => {
+    await page.goto('/?intro=0');
+    const speedrun = page.locator('.grade .card', { hasText: 'Speedrun comentado' });
+    await expect(speedrun).toHaveCount(1);
+    await page.click('[data-categoria="motion"]');
+    await expect(speedrun).toHaveCount(1);
+    await expect(speedrun.locator('.card-tag')).toHaveText('MOTION');
+    await page.click('[data-categoria="long-form"]');
+    await expect(speedrun).toHaveCount(1);
+    await page.click('[data-categoria="vertical"]');
+    await expect(speedrun).toHaveCount(0);
+  });
+
   test('abas e sub-filtros do Long Form', async ({ page }) => {
     await page.goto('/?intro=0');
     await expect(page.locator('[data-lista="filtros"]')).toBeHidden();
@@ -131,10 +166,14 @@ test.describe('site público', () => {
   test('abas respondem às setas do teclado', async ({ page }, testInfo) => {
     test.skip(ehCelular(testInfo), 'teclado só no computador');
     await page.goto('/?intro=0');
-    await page.focus('[data-categoria="motion"]');
+    await page.focus('[data-categoria="todas"]');
     await page.keyboard.press('ArrowRight');
-    await expect(page.locator('[data-categoria="vertical"]')).toBeFocused();
-    await expect(page.locator('[data-categoria="vertical"]')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('[data-categoria="motion"]')).toBeFocused();
+    await expect(page.locator('[data-categoria="motion"]')).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('End');
+    await expect(page.locator('[data-categoria="long-form"]')).toBeFocused();
+    await page.keyboard.press('Home');
+    await expect(page.locator('[data-categoria="todas"]')).toHaveAttribute('aria-selected', 'true');
   });
 
   test('player abre com o vídeo do YouTube (nocookie) e fecha com ESC', async ({ page }) => {

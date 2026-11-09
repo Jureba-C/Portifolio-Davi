@@ -149,3 +149,50 @@ test('excluir categoria leva os vídeos junto e filtro vira nulo', async () => {
     assert.equal(restantes.rows[0].n, 0);
   });
 });
+
+test('vídeo guarda categorias extras com a principal na frente e sem repetir', async () => {
+  await como('authenticated', ADMIN, async () => {
+    const cats = await db.query("select id, slug from public.categories where slug in ('motion', 'long-form')");
+    const motion = cats.rows.find((c) => c.slug === 'motion').id;
+    const longa = cats.rows.find((c) => c.slug === 'long-form').id;
+    const sem = await db.query("insert into public.videos (titulo, youtube_id, category_id) values ('Só principal', 'dQw4w9WgXcQ', $1) returning category_ids", [motion]);
+    assert.deepEqual(sem.rows[0].category_ids, [motion]);
+    const com = await db.query("insert into public.videos (titulo, youtube_id, category_id, category_ids) values ('Duas', 'dQw4w9WgXcQ', $1, $2::uuid[]) returning category_ids", [motion, [longa, motion, longa]]);
+    assert.deepEqual(com.rows[0].category_ids, [motion, longa]);
+    const naLonga = await db.query('select count(*)::int as n from public.videos where category_ids @> array[$1::uuid]', [longa]);
+    assert.equal(naLonga.rows[0].n, 5);
+    await db.query("delete from public.videos where titulo in ('Só principal', 'Duas')");
+  });
+});
+
+test('excluir categoria secundária tira ela do vídeo; excluir a principal leva o vídeo', async () => {
+  await como('authenticated', ADMIN, async () => {
+    const nova = async (slug) => (await db.query('insert into public.categories (nome_pt, slug) values ($1, $1) returning id', [slug])).rows[0].id;
+    const principal = await nova('cat-principal');
+    const extra = await nova('cat-extra');
+    const v = await db.query("insert into public.videos (titulo, youtube_id, category_id, category_ids) values ('Multi', 'dQw4w9WgXcQ', $1, $2::uuid[]) returning id", [principal, [principal, extra]]);
+    const id = v.rows[0].id;
+    await db.query('delete from public.categories where id = $1', [extra]);
+    const depois = await db.query('select category_ids from public.videos where id = $1', [id]);
+    assert.deepEqual(depois.rows[0].category_ids, [principal]);
+    await db.query('delete from public.categories where id = $1', [principal]);
+    const sumiu = await db.query('select count(*)::int as n from public.videos where id = $1', [id]);
+    assert.equal(sumiu.rows[0].n, 0);
+  });
+});
+
+test('migração de categorias roda num banco antigo, preenche category_ids e pode rodar de novo', async () => {
+  const antigo = new PGlite();
+  await antigo.exec(AMBIENTE_SUPABASE);
+  const migracao = await readFile(new URL('migracoes/2026-11-categorias.sql', raiz), 'utf8');
+  const schema = await readFile(new URL('schema.sql', raiz), 'utf8');
+  assert.ok(schema.includes(migracao));
+  await antigo.exec(schema.replace(migracao, ''));
+  const cat = await antigo.query("insert into public.categories (nome_pt, slug) values ('Motion', 'motion') returning id");
+  await antigo.query("insert into public.videos (titulo, youtube_id, category_id) values ('Velho', 'dQw4w9WgXcQ', $1)", [cat.rows[0].id]);
+  await antigo.exec(migracao);
+  await antigo.exec(migracao);
+  const { rows } = await antigo.query('select category_ids from public.videos');
+  assert.deepEqual(rows[0].category_ids, [cat.rows[0].id]);
+  await antigo.close();
+});

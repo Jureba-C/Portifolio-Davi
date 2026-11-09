@@ -61,6 +61,10 @@ export function urlSegura(url, { midia = false } = {}) {
   return '';
 }
 
+export function pertence(video, categoriaId) {
+  return video.category_id === categoriaId || Boolean(video.category_ids?.includes(categoriaId));
+}
+
 export function linkYoutube(id) {
   return id ? `https://www.youtube.com/watch?v=${id}` : '';
 }
@@ -245,7 +249,11 @@ function apiLocal() {
     async excluir(tabela, id) {
       const atual = db();
       atual[tabela] = atual[tabela].filter((r) => r.id !== id);
-      if (tabela === 'categories') atual.videos = atual.videos.filter((v) => v.category_id !== id);
+      if (tabela === 'categories') {
+        atual.videos = atual.videos
+          .filter((v) => v.category_id !== id)
+          .map((v) => (v.category_ids ? { ...v, category_ids: v.category_ids.filter((c) => c !== id) } : v));
+      }
       if (tabela === 'longform_filters') {
         atual.videos = atual.videos.map((v) => (v.filter_id === id ? { ...v, filter_id: null } : v));
       }

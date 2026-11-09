@@ -43,7 +43,7 @@ async function simularSupabase(page) {
     }
     if (url.pathname.includes('/rest/v1/admins')) return json({ email: 'davi@teste.com' });
     if (url.pathname.endsWith('/rest/v1/settings')) return json([{ id: 1, nome: 'DECXZ', email: '', foto_url: '', sobre_pt: '', sobre_en: '', redes: {}, discord_nick: '', comissoes_abertas: true }]);
-    if (url.pathname.endsWith('/rest/v1/categories')) return json([{ id: 'c1', nome_pt: 'Motion', nome_en: 'Motion', slug: 'motion', ordem: 0, formato: 'horizontal' }]);
+    if (url.pathname.endsWith('/rest/v1/categories')) return json([{ id: 'c1', nome_pt: 'Motion', nome_en: 'Motion', slug: 'motion', ordem: 0, formato: 'horizontal' }, { id: 'c2', nome_pt: 'Vertical', nome_en: 'Vertical', slug: 'vertical', ordem: 1, formato: 'vertical' }]);
     if (url.pathname.endsWith('/rest/v1/videos')) {
       if (req.method() === 'PATCH') {
         feitos.patches.push({ id: url.searchParams.get('id'), corpo: JSON.parse(req.postData() ?? '{}') });
@@ -84,6 +84,25 @@ test.describe('clipes de prévia', () => {
     expect(feitos.enviados[0]).toMatch(/^previas\/leve\/[\w-]+\.mp4$/);
     await expect.poll(() => feitos.apagados, { timeout: 5000 }).toEqual(['previas/antigo.mp4']);
     await expect(page.locator('[data-otimizando]')).toBeHidden();
+  });
+
+  test('banco sem a coluna category_ids: o painel esconde "também aparece em" e não manda a coluna', async ({ page }) => {
+    const feitos = await simularSupabase(page);
+    await page.goto('/admin.html');
+    await page.fill('[data-form="login"] [name="email"]', 'davi@teste.com');
+    await page.fill('[data-form="login"] [name="senha"]', 'qualquer-senha');
+    await page.click('.login-entrar');
+    await expect(page.locator('[data-tela="painel"]')).toBeVisible();
+    const item = page.locator('[data-lista="trabalhos"] > li', { hasText: 'Sem clipe' });
+    await item.getByRole('button', { name: /Editar Sem clipe/ }).click();
+    await expect(page.locator('[data-gaveta="video"]')).toBeVisible();
+    await expect(page.locator('[data-campo-extras]')).toBeHidden();
+    await page.fill('[data-form="video"] [name="titulo"]', 'Sem clipe renomeado');
+    await page.click('[data-video-botao]');
+    await expect.poll(() => feitos.patches.find((p) => p.id === 'eq.v-sem')).toBeTruthy();
+    const corpo = feitos.patches.find((p) => p.id === 'eq.v-sem').corpo;
+    expect(corpo.category_id).toBe('c1');
+    expect(corpo).not.toHaveProperty('category_ids');
   });
 
   test('otimizarClipe devolve um arquivo que não é maior que o original (ou o próprio original)', async ({ page }) => {

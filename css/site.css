@@ -542,6 +542,7 @@ a.ficha:hover, a.ficha:focus-visible { background: var(--vermelho-escuro); trans
 }
 .grade:focus { outline: none; }
 .grade-vertical { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 58px 26px; }
+.grade:not(.grade-vertical) .card.vertical { width: min(100%, 240px); margin-inline: auto; }
 .card.quadro { margin-bottom: 18px; }
 .card .quadro-sombra { transform: translate(10px, 10px); }
 .card:hover .quadro-sombra { transform: translate(15px, 14px); }

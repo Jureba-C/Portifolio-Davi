@@ -12,6 +12,7 @@ function sql(valor) {
   if (valor === null || valor === undefined) return 'null';
   if (typeof valor === 'boolean') return valor ? 'true' : 'false';
   if (typeof valor === 'number') return String(valor);
+  if (Array.isArray(valor)) return `array[${valor.map(sql).join(', ')}]::uuid[]`;
   return `'${String(valor).replaceAll("'", "''")}'`;
 }
 
@@ -28,8 +29,8 @@ const partes = [
     categories.map((c) => [uuid(c.id), c.nome_pt, c.nome_en, c.slug, c.ordem, c.formato])),
   inserir('longform_filters', ['id', 'nome_pt', 'nome_en', 'ordem'],
     longform_filters.map((f) => [uuid(f.id), f.nome_pt, f.nome_en, f.ordem])),
-  inserir('videos', ['id', 'titulo', 'descricao_pt', 'descricao_en', 'youtube_id', 'category_id', 'filter_id', 'destaque', 'ordem'],
-    videos.map((v) => [uuid(v.id), v.titulo, v.descricao_pt, v.descricao_en, v.youtube_id, uuid(v.category_id), v.filter_id ? uuid(v.filter_id) : null, v.destaque, v.ordem])),
+  inserir('videos', ['id', 'titulo', 'descricao_pt', 'descricao_en', 'youtube_id', 'category_id', 'category_ids', 'filter_id', 'destaque', 'ordem'],
+    videos.map((v) => [uuid(v.id), v.titulo, v.descricao_pt, v.descricao_en, v.youtube_id, uuid(v.category_id), v.category_ids.map(uuid), v.filter_id ? uuid(v.filter_id) : null, v.destaque, v.ordem])),
   inserir('clients', ['id', 'nome', 'canal_url', 'foto_url', 'ordem'],
     clients.map((c) => [uuid(c.id), c.nome, c.canal_url, c.foto_url, c.ordem])),
   inserir('testimonials', ['id', 'nome', 'canal', 'texto_pt', 'texto_en', 'ordem'],
