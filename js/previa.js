@@ -253,7 +253,7 @@ export function montarPrevia(tela, video, { modo = 'card', textoSem = '', princi
   else imagem(tela, poster, textoSem, poster ? '' : video.youtube_id, principal);
   if (!controle) return;
   controles.set(tela, controle);
-  if (modo !== 'destaque' && !urlSegura(video.preview_url, { midia: true })) ligarSobDemanda(tela, controle);
+  if (modo !== 'destaque' && (!urlSegura(video.preview_url, { midia: true }) || !comMouse())) ligarSobDemanda(tela, controle);
   const obs = obterObservador();
   if (obs) obs.observe(tela);
   else if (!controle.sobDemanda) controle.tocar();

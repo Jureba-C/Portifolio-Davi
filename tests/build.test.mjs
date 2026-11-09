@@ -100,6 +100,7 @@ test('o .htaccess traz a CSP, o HTTPS, as URLs sem .html e a página 404', () =>
     const htaccess = readFileSync(join(r.pasta, '.htaccess'), 'utf8');
     assert.match(htaccess, /Header set Content-Security-Policy ".*connect-src 'self' https:\/\/\*\.supabase\.co/);
     assert.match(htaccess, /RewriteRule \^ https:\/\/%\{HTTP_HOST\}%\{REQUEST_URI\} \[L,R=301\]/);
+    assert.match(htaccess, /RewriteCond %\{HTTP_HOST\} \^www\\\.\(\.\+\)\$ \[NC\]\nRewriteRule \^ https:\/\/%1%\{REQUEST_URI\} \[L,R=301\]\nRewriteCond %\{HTTPS\} off/);
     assert.match(htaccess, /RewriteRule \^\(\.\+\)\$ \$1\.html \[L\]/);
     assert.match(htaccess, /ErrorDocument 404 \/404\.html/);
     assert.match(htaccess, /SetEnvIf Request_URI "\^\/admin\(\[\.\]html\)\?\$" HDR_\d/);
