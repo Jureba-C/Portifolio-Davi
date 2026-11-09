@@ -995,16 +995,13 @@ test.describe('clique no vídeo e legendas', () => {
     await cc.click();
     await expect(cc).toHaveAttribute('aria-pressed', 'true');
     await expect(cc).toHaveAttribute('aria-label', 'Desligar legendas');
-    let comandos = await page.evaluate(() => window.__comandos);
-    expect(comandos).toContain('loadModule:["captions"]');
-    expect(comandos).toContain('setOption:["captions","track",{"languageCode":"pt"}]');
+    await expect.poll(() => page.evaluate(() => window.__comandos)).toEqual(expect.arrayContaining(['loadModule:["captions"]', 'setOption:["captions","track",{"languageCode":"pt"}]']));
     await page.keyboard.press('Escape');
     await page.locator('.grade .card').first().click();
     await expect(page.locator('[data-player-video] iframe')).toHaveAttribute('src', /cc_load_policy=1/);
     await expect(cc).toHaveAttribute('aria-pressed', 'true');
     await cc.click();
-    comandos = await page.evaluate(() => window.__comandos);
-    expect(comandos).toContain('unloadModule:["captions"]');
+    await expect.poll(() => page.evaluate(() => window.__comandos)).toContain('unloadModule:["captions"]');
     await expect(cc).toHaveAttribute('aria-pressed', 'false');
   });
 
