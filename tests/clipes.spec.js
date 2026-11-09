@@ -132,4 +132,46 @@ test.describe('clipes de prévia', () => {
     });
     expect(igual).toBe(true);
   });
+
+  test('arquivo que não é vídeo diz por que não foi otimizado', async ({ page }) => {
+    await page.goto('/admin.html');
+    const r = await page.evaluate(async () => {
+      const { otimizarClipe } = await import('/js/clipe.js');
+      const lixo = new File([new Uint8Array(500)], 'nada.mp4', { type: 'video/mp4' });
+      const motivos = [];
+      const saida = await otimizarClipe(lixo, () => {}, (m) => motivos.push(m));
+      return { mesmo: saida === lixo, motivos };
+    });
+    expect(r.mesmo).toBe(true);
+    expect(r.motivos).toHaveLength(1);
+    expect(r.motivos[0]).toMatch(/\S/);
+  });
+
+  test('recodificarPeloVideo gera mp4 com a mesma duração ou devolve o original com o motivo', async ({ page }) => {
+    await page.goto('/admin.html');
+    const bytes = readFileSync('assets/exemplos/previa-motion.webm').toString('base64');
+    const r = await page.evaluate(async (b64) => {
+      const { recodificarPeloVideo } = await import('/js/clipe.js');
+      const dados = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const original = new File([dados, new Uint8Array(4_000_000)], 'previa.webm', { type: 'video/webm' });
+      const duracao = async (arquivo) => {
+        const v = document.createElement('video');
+        v.src = URL.createObjectURL(arquivo);
+        await new Promise((ok) => { v.onloadedmetadata = ok; v.onerror = ok; });
+        return v.duration;
+      };
+      let motivo = null;
+      const saida = await recodificarPeloVideo(original, () => {}, (m) => { motivo = m; });
+      const mesmo = saida === original;
+      return { mesmo, motivo, tipo: saida.type, tamanho: saida.size, antes: original.size, fonte: await duracao(new File([dados], 'f.webm', { type: 'video/webm' })), depois: mesmo ? null : await duracao(saida) };
+    }, bytes);
+    if (r.mesmo) {
+      expect(r.motivo).toMatch(/\S/);
+      return;
+    }
+    expect(r.tipo).toBe('video/mp4');
+    expect(r.tamanho).toBeGreaterThan(0);
+    expect(r.tamanho).toBeLessThan(r.antes);
+    expect(Math.abs(r.depois - r.fonte)).toBeLessThan(0.3);
+  });
 });

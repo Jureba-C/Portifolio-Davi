@@ -394,7 +394,8 @@ async function otimizarEscolhido(original) {
   const informar = (texto) => { if (arquivos.clipe === original) $('.arquivo-info', $('[data-arquivo="clipe"]')).textContent = texto; };
   marcarArquivo('clipe', `✓ ${original.name}`, 'otimizando… 0%');
   atualizarPrevia();
-  const otimizado = await otimizarClipe(original, (p) => informar(`otimizando… ${Math.round(p * 100)}%`));
+  let motivo = '';
+  const otimizado = await otimizarClipe(original, (p) => informar(`otimizando… ${Math.round(p * 100)}%`), (m) => { motivo = m; });
   if (arquivos.clipe !== original) return;
   if (otimizado.size > LIMITE_BUCKET_MB * 1024 * 1024) {
     limparArquivo('clipe');
@@ -404,7 +405,7 @@ async function otimizarEscolhido(original) {
   clipeOtimizado = otimizado !== original;
   arquivos.clipe = otimizado;
   marcarArquivo('clipe', `✓ ${otimizado.name}`, clipeOtimizado ? `${tamanho(original.size)} → ${tamanho(otimizado.size)}` : tamanho(original.size));
-  if (!clipeOtimizado && original.size > 4 * 1024 * 1024) toast('este navegador não conseguiu comprimir o clipe: use o Chrome, Edge ou Opera para o site abrir mais rápido', 'erro');
+  if (!clipeOtimizado && original.size > 4 * 1024 * 1024) toast(`não deu para comprimir o clipe${motivo ? `: ${motivo}` : ''}; ele vai assim mesmo, mas o site abre mais devagar`, 'erro');
   atualizarPrevia();
 }
 
@@ -1359,6 +1360,7 @@ async function otimizarClipesAntigos() {
       if (v.preview_url && !tentados.has(v.id) && await clipePesado(v.preview_url)) fila.push(v);
     }
     let economizado = 0;
+    const motivos = [];
     for (const [i, v] of fila.entries()) {
       while ($('dialog[open]')) await esperar(2000);
       lembrarTentado(v.id);
@@ -1369,8 +1371,12 @@ async function otimizarClipesAntigos() {
         const resposta = await fetch(v.preview_url);
         const blob = await resposta.blob();
         const original = new File([blob], 'clipe.mp4', { type: blob.type || 'video/mp4' });
-        const leve = await otimizarClipe(original, (p) => { barra.style.width = `${Math.round(p * 100)}%`; });
-        if (leve === original) continue;
+        let motivo = 'erro ao recodificar';
+        const leve = await otimizarClipe(original, (p) => { barra.style.width = `${Math.round(p * 100)}%`; }, (m) => { motivo = m; });
+        if (leve === original) {
+          if (motivo !== 'o resultado não ficou menor') motivos.push(motivo);
+          continue;
+        }
         const nova = await api.enviarArquivo(leve, PASTA_LEVE);
         await api.atualizar('videos', v.id, { preview_url: nova });
         await api.apagarArquivo(v.preview_url).catch(() => {});
@@ -1381,6 +1387,7 @@ async function otimizarClipesAntigos() {
       await recarregar();
       toast(`clipes otimizados: ${tamanho(economizado)} a menos ✓`);
     }
+    if (motivos.length) toast(`não deu para otimizar ${motivos.length} ${motivos.length === 1 ? 'clipe' : 'clipes'} neste navegador: ${[...new Set(motivos)].join(', ')}`, 'erro');
   } finally {
     faixa.hidden = true;
     otimizandoLote = false;

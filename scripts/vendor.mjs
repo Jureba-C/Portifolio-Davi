@@ -25,7 +25,7 @@ await build({
 
 await build({
   ...comum,
-  stdin: { contents: "export { Input, Output, Conversion, MP4, WEBM, BlobSource, BufferTarget, Mp4OutputFormat } from 'mediabunny';", resolveDir: process.cwd() },
+  stdin: { contents: "export { Input, Output, Conversion, MP4, WEBM, BlobSource, BufferTarget, Mp4OutputFormat, CanvasSource, getFirstEncodableVideoCodec } from 'mediabunny';", resolveDir: process.cwd() },
   outfile: 'js/vendor/mediabunny.js',
 });
 
