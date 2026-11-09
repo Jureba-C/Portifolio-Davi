@@ -70,7 +70,7 @@ Envie o `hostinger.zip` em **Arquivos → Gerenciador de arquivos → `public_ht
 
 ## 4. Conferir depois de publicar
 - Abra o site: a intro roda, os vídeos aparecem e o PT/EN funciona.
-- Abra `/admin`, entre com o e-mail e a senha do passo 1.5, crie um vídeo de teste e veja ele aparecer no site.
+- Abra `/admin`, entre com o e-mail e a senha do passo 1.5, ative o app autenticador (veja "Verificação em duas etapas"), crie um vídeo de teste e veja ele aparecer no site.
 - Exclua o vídeo de teste.
 - Abra um endereço que não existe (ex.: `/teste`): aparece a página 404 da aranha.
 
@@ -84,6 +84,13 @@ Envie o `hostinger.zip` em **Arquivos → Gerenciador de arquivos → `public_ht
   - clientes, depoimentos e categorias.
 - As mudanças aparecem no site na hora, para todo mundo.
 - **Trocar a senha:** no Supabase, Authentication → Users, apague o usuário e crie de novo com a senha nova. O e-mail continua na lista de admins, então o acesso volta igual.
+
+## Verificação em duas etapas (MFA)
+- O painel pede, além da senha, um código de 6 dígitos de um app autenticador (Google Authenticator, Authy ou 1Password).
+- ⚠️ No Supabase, em **Authentication → Multi-Factor**, confira se **TOTP (App Authenticator)** está ligado (vem ligado por padrão).
+- **Primeiro login:** depois da senha, o painel mostra um QR code e uma chave. Escaneie com o app (ou digite a chave) e confirme com o código que aparecer. Dali em diante, todo login pede o código do app.
+- ⚠️ **Projeto que já existia:** depois que cada admin ativou o app no painel novo, rode `supabase/migracoes/2026-11-mfa.sql` no SQL Editor. A partir daí o banco só aceita escrita de quem confirmou o código. Projeto novo não precisa: o `schema.sql` já vem com essa trava.
+- **Perdeu o celular:** no Supabase, **Authentication → Users →** o usuário **→ Factors**, apague o fator. No próximo login o painel pede para cadastrar o app de novo.
 
 ## Atualizar o site depois
 - Conteúdo (vídeos, textos, clientes, depoimentos): sempre pelo painel `/admin`, sem mexer em código e sem publicar de novo.

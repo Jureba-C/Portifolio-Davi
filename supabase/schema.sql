@@ -103,16 +103,16 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $$
-  select exists (
+  select coalesce(auth.jwt() ->> 'aal', '') = 'aal2' and exists (
     select 1 from public.admins
     where email = lower(coalesce(auth.jwt() ->> 'email', ''))
   );
 $$;
 
-revoke all on function public.eh_admin() from public;
-grant execute on function public.eh_admin() to anon, authenticated;
+revoke all on function public.eh_admin() from public, anon;
+grant execute on function public.eh_admin() to authenticated;
 
 alter table public.admins enable row level security;
 alter table public.categories enable row level security;

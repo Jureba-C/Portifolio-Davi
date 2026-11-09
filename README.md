@@ -14,6 +14,7 @@ Site-portfólio em cartaz vermelho, preto e branco (Persona 5 + Deadlock, janela
 1. Abra `seusite.com/admin`.
 2. Entre com o e-mail e a senha que foram criados para você. O olho ao lado da senha mostra o que você digitou.
 3. Errou? Aparece "credenciais incorretas!". É só tentar de novo.
+4. Digite o código de 6 dígitos do app autenticador (Google Authenticator, Authy ou 1Password). No primeiro login o painel mostra um QR code: escaneie com o app e confirme o código. Código errado ou vencido? Espere o próximo e tente de novo.
 
 O painel tem um menu com cinco telas: **Vídeos**, **Textos e redes**, **Clientes**, **Depoimentos** e **Categorias**. No celular, o menu fica embaixo. O número ao lado de cada item mostra quantos itens existem.
 
@@ -101,7 +102,13 @@ npm run check:comments           # garante que o código não tem comentários
 7. Em **Authentication → Sign In / Providers**, desligue **Allow new users to sign up**. Assim ninguém cria conta sozinho; só o admin que você cadastrou entra.
 8. Se já tinha rodado o `schema.sql` antes, rode de novo: ele só acrescenta o que falta (depoimentos, travas de links `https://` e de e-mail válido) sem apagar nada.
 
-Segurança: todas as tabelas têm Row Level Security. Qualquer pessoa lê. Só quem está logado **e** está na tabela `admins` escreve, reordena ou envia arquivos.
+Segurança: todas as tabelas têm Row Level Security. Qualquer pessoa lê. Só quem está logado **com o código do app autenticador** **e** está na tabela `admins` escreve, reordena ou envia arquivos.
+
+### Verificação em duas etapas (MFA)
+- O painel (só no modo nuvem) pede a senha e depois o código de 6 dígitos de um app autenticador. O modo demonstração (`demo@local`) não pede código.
+- Primeiro login: o painel mostra o QR code e a chave para cadastrar o app; confirmar o primeiro código ativa a verificação.
+- Projeto que já existia: depois que o admin ativou o app no painel novo, rode `supabase/migracoes/2026-11-mfa.sql` no SQL Editor. Ele faz o banco exigir o código (`aal2`) para escrever. O `schema.sql` já vem assim.
+- Perdeu o celular: Supabase → **Authentication → Users →** o usuário **→ Factors**, apague o fator. No próximo login o painel pede para cadastrar de novo.
 
 ### Publicar (Hostinger)
 O passo a passo completo está no **`DEPLOY.md`**. Em resumo:

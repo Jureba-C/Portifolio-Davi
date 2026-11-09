@@ -22,9 +22,9 @@ const AMBIENTE_SUPABASE = `
   alter table storage.objects enable row level security;
 `;
 
-async function como(papel, email, fn) {
+async function como(papel, email, fn, aal = 'aal2') {
   await db.exec('reset role');
-  await db.query(`select set_config('request.jwt.claims', $1, false)`, [email ? JSON.stringify({ email }) : '']);
+  await db.query(`select set_config('request.jwt.claims', $1, false)`, [email ? JSON.stringify({ email, aal }) : '']);
   await db.exec(`set role ${papel}`);
   try {
     return await fn();
@@ -68,6 +68,30 @@ test('usuário logado que não é admin não consegue alterar nada', async () =>
     db.query("insert into public.longform_filters (nome_pt) values ('x')")));
   await assert.rejects(como('authenticated', 'intruso@exemplo.com', () =>
     db.query("select public.reordenar('videos', array[]::uuid[])")));
+});
+
+test('admin sem a verificação em duas etapas (aal1) não escreve nada', async () => {
+  const alterado = await como('authenticated', ADMIN, () =>
+    db.query("update public.settings set nome = 'SEM MFA' where id = 1 returning id"), 'aal1');
+  assert.equal(alterado.rows.length, 0);
+  await assert.rejects(como('authenticated', ADMIN, () =>
+    db.query("insert into public.longform_filters (nome_pt) values ('x')"), 'aal1'));
+  await assert.rejects(como('authenticated', ADMIN, () =>
+    db.query("select public.reordenar('videos', array[]::uuid[])"), 'aal1'));
+  const lido = await como('authenticated', ADMIN, () => db.query('select email from public.admins'), 'aal1');
+  assert.deepEqual(lido.rows.map((x) => x.email), [ADMIN]);
+});
+
+test('visitante não consegue chamar eh_admin direto', async () => {
+  await assert.rejects(como('anon', null, () => db.query('select public.eh_admin()')));
+});
+
+test('a migração do MFA roda duas vezes e mantém o admin aal2 escrevendo', async () => {
+  const migracao = await readFile(new URL('migracoes/2026-11-mfa.sql', raiz), 'utf8');
+  await db.exec(migracao);
+  await db.exec(migracao);
+  const r = await como('authenticated', ADMIN, () => db.query('select public.eh_admin() as ok'));
+  assert.equal(r.rows[0].ok, true);
 });
 
 test('admin cria vídeo com clipe, reordena, destaca e exclui', async () => {

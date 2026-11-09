@@ -272,6 +272,15 @@ function apiLocal() {
   };
 }
 
+async function etapaMfa(cliente) {
+  const nivel = await cliente.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (nivel.error) throw nivel.error;
+  if (nivel.data.currentLevel === 'aal2') return null;
+  const fatores = await cliente.auth.mfa.listFactors();
+  if (fatores.error) throw fatores.error;
+  return fatores.data.totp.length ? 'codigo' : 'cadastro';
+}
+
 function apiNuvem() {
   const sb = () => obterCliente();
   const checar = ({ data, error }) => {
@@ -286,7 +295,7 @@ function apiNuvem() {
       const email = data.session?.user?.email;
       if (!email) return null;
       const admin = await cliente.from('admins').select('email').eq('email', email.toLowerCase()).maybeSingle();
-      return admin.data ? { email } : null;
+      return admin.data ? { email, etapa: await etapaMfa(cliente) } : null;
     },
     async entrar(email, senha) {
       const cliente = await sb();
@@ -297,7 +306,25 @@ function apiNuvem() {
         await cliente.auth.signOut();
         throw new Error('nao-admin');
       }
-      return { email: data.user.email };
+      return { email: data.user.email, etapa: await etapaMfa(cliente) };
+    },
+    async cadastrarMfa() {
+      const cliente = await sb();
+      const { all } = checar(await cliente.auth.mfa.listFactors());
+      for (const velho of all.filter((f) => f.factor_type === 'totp' && f.status !== 'verified')) {
+        checar(await cliente.auth.mfa.unenroll({ factorId: velho.id }));
+      }
+      const novo = checar(await cliente.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Painel Decxz' }));
+      return { fatorId: novo.id, qr: novo.totp.qr_code, segredo: novo.totp.secret };
+    },
+    async confirmarCodigo(codigo, fatorId) {
+      const limpo = String(codigo).replace(/\s/g, '');
+      if (!/^\d{6}$/.test(limpo)) throw new Error('codigo');
+      const cliente = await sb();
+      const id = fatorId ?? checar(await cliente.auth.mfa.listFactors()).totp[0]?.id;
+      if (!id) throw new Error('codigo');
+      const { error } = await cliente.auth.mfa.challengeAndVerify({ factorId: id, code: limpo });
+      if (error) throw error.status >= 400 && error.status < 500 ? new Error('codigo') : error;
     },
     async sair() {
       const cliente = await sb();

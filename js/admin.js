@@ -31,6 +31,7 @@ const ICONES = {
 
 const ERROS = {
   'armazenamento-cheio': 'no modo local o navegador não aguenta arquivos grandes. Com o Supabase ligado funciona.',
+  codigo: 'código incorreto ou expirado. confere no app e tenta de novo.',
   credenciais: 'credenciais incorretas!',
   'nao-admin': 'esse e-mail não tem acesso de admin!',
   'nuvem-nao-configurada': 'o painel ainda não está ligado na nuvem.',
@@ -62,6 +63,7 @@ const LIMITES = {
   capa: { tipos: /^image\//, mb: 3, rotulo: 'Enviar capa' },
 };
 let timerToast;
+let fatorNovo = null;
 
 function icone(nome, classe = 'ic') {
   const caixa = document.createElement('span');
@@ -243,6 +245,38 @@ function mostrarTela(nome) {
 function mostrarLogin() {
   mostrarTela('login');
   $('[data-form="login"] [name="email"]').focus();
+}
+
+async function mostrarMfa(etapa) {
+  const form = $('[data-form="mfa"]');
+  const erro = $('[data-mfa-erro]');
+  const cadastro = etapa === 'cadastro';
+  form.reset();
+  form.classList.remove('com-erro');
+  erro.textContent = '';
+  fatorNovo = null;
+  $('[data-mfa-titulo]').textContent = cadastro ? 'Ative a verificação em duas etapas' : 'Código de verificação';
+  $('[data-mfa-cadastro]').hidden = !cadastro;
+  $('[data-mfa-dica]').hidden = cadastro;
+  $('[data-mfa-qr]').removeAttribute('src');
+  $('[data-mfa-segredo]').value = '';
+  mostrarTela('mfa');
+  form.codigo.focus();
+  if (!cadastro) return;
+  try {
+    const novo = await api.cadastrarMfa();
+    fatorNovo = novo.fatorId;
+    $('[data-mfa-qr]').src = novo.qr;
+    $('[data-mfa-segredo]').value = novo.segredo;
+  } catch (falha) {
+    erro.textContent = erroAmigavel(falha);
+  }
+}
+
+async function seguir(sessao) {
+  if (!sessao) mostrarLogin();
+  else if (sessao.etapa) await mostrarMfa(sessao.etapa);
+  else await abrirPainel();
 }
 
 async function recarregar() {
@@ -1098,9 +1132,9 @@ function ligarEventos() {
     form.classList.remove('com-erro');
     botao.disabled = true;
     try {
-      await api.entrar(form.email.value, form.senha.value);
+      const sessao = await api.entrar(form.email.value, form.senha.value);
       form.reset();
-      await abrirPainel();
+      await seguir(sessao);
     } catch (falha) {
       erro.textContent = erroAmigavel(falha);
       form.classList.add('com-erro');
@@ -1108,6 +1142,36 @@ function ligarEventos() {
     } finally {
       botao.disabled = !nuvemConfigurada() && !loginLocalPermitido();
     }
+  });
+
+  $('[data-form="mfa"]').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const erro = $('[data-mfa-erro]');
+    const botao = $('button[type="submit"]', form);
+    erro.textContent = '';
+    form.classList.remove('com-erro');
+    botao.disabled = true;
+    try {
+      await api.confirmarCodigo(form.codigo.value, fatorNovo);
+      fatorNovo = null;
+      form.reset();
+      await abrirPainel();
+    } catch (falha) {
+      erro.textContent = erroAmigavel(falha);
+      form.classList.add('com-erro');
+      form.codigo.select();
+    } finally {
+      botao.disabled = false;
+    }
+  });
+
+  $('[data-mfa-segredo]').addEventListener('focus', (e) => e.currentTarget.select());
+
+  $('[data-mfa-sair]').addEventListener('click', async () => {
+    await api.sair().catch(() => {});
+    fatorNovo = null;
+    mostrarLogin();
   });
 
   $('[data-ver-senha]').addEventListener('click', (e) => {
@@ -1303,8 +1367,7 @@ async function iniciar() {
   } catch {
     sessao = null;
   }
-  if (sessao) await abrirPainel();
-  else mostrarLogin();
+  await seguir(sessao);
 }
 
 iniciar();

@@ -16,7 +16,7 @@ export async function clipePesado(url) {
 
 function jwt() {
   const parte = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
-  return `${parte({ alg: 'HS256', typ: 'JWT' })}.${parte({ sub: 'u1', role: 'authenticated', exp: 4102444800 })}.assinatura`;
+  return `${parte({ alg: 'HS256', typ: 'JWT' })}.${parte({ sub: 'u1', role: 'authenticated', aal: 'aal2', exp: 4102444800 })}.assinatura`;
 }
 
 const VIDEO = { descricao_pt: '', descricao_en: '', filter_id: null, destaque: false, poster_url: '', created_at: '2026-11-01T12:00:00Z' };
