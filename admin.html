@@ -38,6 +38,29 @@
   </form>
 </main>
 
+<main class="login-tela" data-tela="mfa" hidden>
+  <form class="login-cartao" data-form="mfa" novalidate>
+    <div class="marca"><span class="marca-logo">DECXZ</span><span class="marca-etiqueta">painel</span></div>
+    <h1 class="login-titulo" data-mfa-titulo>Código de verificação</h1>
+    <div class="mfa-cadastro" data-mfa-cadastro hidden>
+      <p class="campo-ajuda">1. Instale um app autenticador no celular: Google Authenticator, Authy ou 1Password.<br>2. No app, escaneie o QR code abaixo.<br>3. Digite o código de 6 dígitos que aparecer.</p>
+      <img class="mfa-qr" data-mfa-qr alt="QR code para cadastrar o painel Decxz no app autenticador" width="200" height="200">
+      <div class="campo">
+        <label class="campo-rotulo" for="mfa-segredo">Sem câmera? Digite esta chave no app</label>
+        <textarea id="mfa-segredo" class="mfa-segredo" data-mfa-segredo rows="2" readonly spellcheck="false" autocomplete="off"></textarea>
+      </div>
+    </div>
+    <p class="campo-ajuda" data-mfa-dica>Abra o app autenticador e digite o código de 6 dígitos do painel Decxz.</p>
+    <div class="campo">
+      <label class="campo-rotulo" for="mfa-codigo">Código de 6 dígitos</label>
+      <input id="mfa-codigo" name="codigo" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
+    </div>
+    <p class="form-erro" role="alert" data-mfa-erro></p>
+    <button type="submit" class="btn btn-primario btn-largo">Confirmar</button>
+    <button type="button" class="btn btn-fantasma-escuro btn-largo" data-mfa-sair>Sair</button>
+  </form>
+</main>
+
 <div class="painel-tela" data-tela="painel" hidden>
   <header class="topo">
     <div class="marca">

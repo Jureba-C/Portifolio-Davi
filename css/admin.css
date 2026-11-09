@@ -125,6 +125,10 @@
 .aviso-modo strong { color: var(--tinta); }
 .login-voltar { align-self: center; font-size: 15px; color: var(--tinta-2); }
 .login-voltar:hover { color: var(--tinta); }
+.mfa-cadastro { display: flex; flex-direction: column; gap: 14px; }
+.mfa-cadastro[hidden] { display: none; }
+.mfa-qr { align-self: center; width: 200px; max-width: 100%; height: auto; aspect-ratio: 1; padding: 8px; border-radius: var(--raio); background: #FFF; }
+.admin .mfa-segredo { font-family: ui-monospace, Menlo, monospace; letter-spacing: .06em; word-break: break-all; resize: none; }
 
 .painel-tela { min-height: 100vh; display: grid; grid-template-columns: 240px minmax(0, 1fr); grid-template-rows: auto 1fr; }
 .topo {
