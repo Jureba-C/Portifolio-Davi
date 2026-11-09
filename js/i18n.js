@@ -104,6 +104,9 @@ const TEXTOS = {
     'player.dialogo': 'Player do vídeo',
     'player.semVideo': 'esse vídeo ainda não tem link',
     'player.carregandoHd': 'CARREGANDO EM HD',
+    'player.qualidade': 'Qualidade do vídeo',
+    'player.qualidadeAuto': 'Auto',
+    'player.qualidadeDica': 'Preferência de qualidade: o YouTube pode baixar a qualidade se a internet cair',
   },
   en: {
     'pular': 'skip to the work',
@@ -210,6 +213,9 @@ const TEXTOS = {
     'player.dialogo': 'Video player',
     'player.semVideo': "this video doesn't have a link yet",
     'player.carregandoHd': 'LOADING IN HD',
+    'player.qualidade': 'Video quality',
+    'player.qualidadeAuto': 'Auto',
+    'player.qualidadeDica': 'Quality preference: YouTube may lower the quality if your connection drops',
   },
 };
 

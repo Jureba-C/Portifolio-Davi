@@ -1,14 +1,25 @@
 import { t, idioma } from './i18n.js';
 import { linkYoutube, capaYoutube } from './data.js';
 import { reduzMovimento } from './animations.js';
-import { alturaReal, aquecerQualidade, comandoYoutube, encaixarGrande, ouvirYoutube, qualidadeAlvo } from './youtube.js';
+import { ALTURAS, alturaReal, aquecerQualidade, comandoYoutube, encaixarGrande, ouvirYoutube, qualidadeAlvo } from './youtube.js';
 
 const FOCAVEIS = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 const CHAVE_LEGENDAS = 'player-legendas';
+const CHAVE_QUALIDADE = 'player-qualidade';
+const OPCOES_QUALIDADE = ['hd2160', 'hd1440', 'hd1080', 'hd720', 'large'];
 
 function lerLegendas() {
   try { return localStorage.getItem(CHAVE_LEGENDAS) === '1'; } catch { return false; }
 }
+
+function lerQualidade() {
+  try {
+    const salva = localStorage.getItem(CHAVE_QUALIDADE);
+    return OPCOES_QUALIDADE.includes(salva) ? salva : 'auto';
+  } catch { return 'auto'; }
+}
+
+const rotuloQualidade = (q) => (q === 'auto' ? t('player.qualidadeAuto') : `${ALTURAS[q]}p`);
 
 function novaCapa(youtubeId, extra = '') {
   const capa = document.createElement('div');
@@ -37,6 +48,8 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   const som = raiz.querySelector('[data-player-som]');
   const cheia = raiz.querySelector('[data-player-cheia]');
   const legenda = raiz.querySelector('[data-player-legenda]');
+  const botaoQualidade = raiz.querySelector('[data-player-qualidade]');
+  const menuQualidade = raiz.querySelector('[data-player-qualidades]');
   const toque = raiz.querySelector('[data-player-toque]');
   const barra = raiz.querySelector('[data-player-barra]');
   const progresso = raiz.querySelector('[data-player-progresso]');
@@ -61,6 +74,8 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   let pararDeOuvir = () => {};
   let soltarEncaixe = () => {};
   let legendas = lerLegendas();
+  let qualidade = lerQualidade();
+  let niveis = [];
   let esconder = 0;
   let ocioso = 0;
   let sobControles = false;
@@ -70,7 +85,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   const aquecendo = () => Boolean(aquecimento && !aquecimento.pronto);
 
   const atualizarControles = (atraso = 1000) => {
-    const deveOcultar = tocando && Boolean(iframe) && !aquecendo() && !sobControles && !focoNosControles && !raiz.hidden;
+    const deveOcultar = tocando && Boolean(iframe) && !aquecendo() && !sobControles && !focoNosControles && menuQualidade.hidden && !raiz.hidden;
     if (!deveOcultar) {
       clearTimeout(esconder);
       esconder = 0;
@@ -121,6 +136,9 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     som.setAttribute('aria-label', t(mudo ? 'player.comSom' : 'player.mudo'));
     legenda.setAttribute('aria-pressed', String(legendas));
     legenda.setAttribute('aria-label', t(legendas ? 'player.legendasDesligar' : 'player.legendasLigar'));
+    botaoQualidade.textContent = rotuloQualidade(qualidade);
+    botaoQualidade.setAttribute('aria-label', `${t('player.qualidade')}: ${rotuloQualidade(qualidade)}`);
+    botaoQualidade.title = t('player.qualidadeDica');
     atualizarControles();
   };
 
@@ -134,11 +152,55 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     }
   };
 
+  const encaixar = () => {
+    soltarEncaixe();
+    const telaGrande = (window.screen?.width || 0) * (window.devicePixelRatio || 1) >= 2560;
+    soltarEncaixe = qualidade === 'auto'
+      ? encaixarGrande(video, iframe, { alturaMinima: telaGrande ? 2160 : 1080 })
+      : encaixarGrande(video, iframe, { alturaMinima: ALTURAS[qualidade], exata: true });
+  };
+
+  const abrirMenu = () => {
+    const opcoes = OPCOES_QUALIDADE.filter((q) => (niveis.length ? niveis.includes(q) : ALTURAS[q] <= 1080));
+    menuQualidade.replaceChildren(...['auto', ...opcoes].map((q) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.tabIndex = -1;
+      item.dataset.qualidade = q;
+      item.setAttribute('role', 'menuitemradio');
+      item.setAttribute('aria-checked', String(q === qualidade));
+      item.textContent = rotuloQualidade(q);
+      return item;
+    }));
+    menuQualidade.style.maxHeight = `${Math.max(0, tela.clientHeight - controles.offsetHeight - 8)}px`;
+    menuQualidade.hidden = false;
+    botaoQualidade.setAttribute('aria-expanded', 'true');
+    menuQualidade.querySelector('[aria-checked="true"]').focus();
+    atualizarControles();
+  };
+
+  const fecharMenu = (devolverFoco = false) => {
+    if (menuQualidade.hidden) return;
+    menuQualidade.hidden = true;
+    botaoQualidade.setAttribute('aria-expanded', 'false');
+    if (devolverFoco) botaoQualidade.focus();
+    atualizarControles();
+  };
+
+  const irPara = (segundos) => {
+    if (!iframe || !duracao || aquecendo()) return;
+    atual = Math.min(duracao, Math.max(0, segundos));
+    enviar('seekTo', [atual, true]);
+    desenhar();
+  };
+
   const aoInfo = (info) => {
     aquecimento?.info(info);
+    if (Array.isArray(info.availableQualityLevels) && info.availableQualityLevels.length) niveis = info.availableQualityLevels;
     if (typeof info.duration === 'number' && info.duration > 0) duracao = info.duration;
     if (aquecendo()) return;
     if (typeof info.currentTime === 'number') atual = info.currentTime;
+    if (info.playerState === 0 && duracao) atual = duracao;
     if (typeof info.playerState === 'number') tocando = info.playerState === 1 || info.playerState === 3;
     if (typeof info.muted === 'boolean') mudo = info.muted;
     const capaFim = video.querySelector('.player-capa.fim');
@@ -176,14 +238,36 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   };
 
   const prenderFoco = (e) => {
+    if (!menuQualidade.hidden) {
+      const itens = [...menuQualidade.children];
+      const i = itens.indexOf(document.activeElement);
+      const destino = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: itens.length - 1 }[e.key];
+      if (destino !== undefined) {
+        e.preventDefault();
+        itens[(destino + itens.length) % itens.length].focus();
+      } else if (e.key === 'Escape' || e.key === 'Tab') {
+        e.preventDefault();
+        fecharMenu(true);
+      }
+      return;
+    }
     if (e.key === 'Escape') {
       e.preventDefault();
       fechar();
       return;
     }
-    if (vizinhos && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.target.closest?.('[data-player-barra]')) {
+    const atalho = !e.ctrlKey && !e.metaKey && !e.altKey && !e.target.closest?.('input, textarea, select, [data-player-barra]');
+    if (atalho && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
       e.preventDefault();
-      vizinhos.ir(e.key === 'ArrowLeft' ? -1 : 1);
+      const passo = e.key === 'ArrowLeft' ? -1 : 1;
+      if (e.shiftKey) vizinhos?.ir(passo);
+      else irPara(atual + passo * 5);
+      return;
+    }
+    const botao = { ' ': play, k: play, m: som, f: cheia, c: legenda }[e.key.toLowerCase()];
+    if (atalho && botao) {
+      e.preventDefault();
+      botao.click();
       return;
     }
     if (e.key !== 'Tab') return;
@@ -210,6 +294,8 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     atual = 0;
     tocando = false;
     mudo = false;
+    niveis = [];
+    fecharMenu();
     zerarControles();
     raiz.classList.toggle('vertical', Boolean(item.vertical));
     tag.textContent = item.tag || '';
@@ -248,7 +334,6 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
       aviso.append(ponto, t('player.carregandoHd'));
       capa.append(aviso);
       const quadroAtual = iframe;
-      const telaGrande = (window.screen?.width || 0) * (window.devicePixelRatio || 1) >= 2560;
       aquecimento = aquecerQualidade({
         alvo: (disponiveis) => qualidadeAlvo(alturaReal(quadroAtual), disponiveis),
         aoPronto: () => { if (iframe === quadroAtual) mostrarVideo(capa); },
@@ -257,7 +342,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
       raiz.classList.add('aquecendo');
       mudo = true;
       video.append(iframe, capa);
-      soltarEncaixe = encaixarGrande(video, iframe, { alturaMinima: telaGrande ? 2160 : 1080 });
+      encaixar();
       link.href = linkYoutube(item.youtubeId);
       link.hidden = false;
       tela.classList.remove('sem-video');
@@ -287,6 +372,7 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   function fechar() {
     if (raiz.hidden) return;
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    fecharMenu();
     raiz.hidden = true;
     zerarControles();
     encerrarAquecimento();
@@ -341,6 +427,10 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
     if (!iframe) return;
     if (aquecendo()) return aquecimento.encerrar();
     tocando = !tocando;
+    if (tocando && duracao && atual >= duracao) {
+      atual = 0;
+      enviar('seekTo', [0, true]);
+    }
     enviar(tocando ? 'playVideo' : 'pauseVideo');
     desenhar();
   });
@@ -378,10 +468,20 @@ export function criarPlayer({ aoAbrir = () => {}, aoFechar = () => {} } = {}) {
   barra.addEventListener('click', (e) => {
     if (!iframe || !duracao || aquecendo()) return;
     const r = barra.getBoundingClientRect();
-    const fracao = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
-    atual = fracao * duracao;
-    enviar('seekTo', [atual, true]);
+    irPara(((e.clientX - r.left) / r.width) * duracao);
+  });
+  botaoQualidade.addEventListener('click', () => (menuQualidade.hidden ? abrirMenu() : fecharMenu(true)));
+  menuQualidade.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-qualidade]');
+    if (!item) return;
+    qualidade = item.dataset.qualidade;
+    try { localStorage.setItem(CHAVE_QUALIDADE, qualidade); } catch {}
+    if (iframe) encaixar();
+    fecharMenu(true);
     desenhar();
+  });
+  raiz.addEventListener('pointerdown', (e) => {
+    if (!e.target.closest('[data-player-qualidades], [data-player-qualidade]')) fecharMenu();
   });
 
   return { abrir, fechar };

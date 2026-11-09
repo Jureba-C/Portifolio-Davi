@@ -1,5 +1,5 @@
 export const QUALIDADES = ['tiny', 'small', 'medium', 'large', 'hd720', 'hd1080', 'hd1440', 'hd2160', 'highres'];
-const ALTURAS = { tiny: 144, small: 240, medium: 360, large: 480, hd720: 720, hd1080: 1080, hd1440: 1440, hd2160: 2160, highres: 4320 };
+export const ALTURAS = { tiny: 144, small: 240, medium: 360, large: 480, hd720: 720, hd1080: 1080, hd1440: 1440, hd2160: 2160, highres: 4320 };
 
 export const nivel = (qualidade) => QUALIDADES.indexOf(qualidade);
 
@@ -18,13 +18,13 @@ export function qualidadeAlvo(altura, disponiveis = []) {
   return altura >= 1000 ? 'hd1080' : 'hd720';
 }
 
-export function encaixarGrande(caixa, iframe, { recorte = 1, alturaMinima = 1080 } = {}) {
+export function encaixarGrande(caixa, iframe, { recorte = 1, alturaMinima = 1080, exata = false } = {}) {
   const ajustar = () => {
     const largura = caixa.clientWidth;
     const altura = caixa.clientHeight;
     if (!largura || !altura) return;
     const minimo = alturaMinima / (window.devicePixelRatio || 1);
-    const fator = Math.max(1, minimo / Math.min(largura, altura));
+    const fator = exata ? minimo / Math.min(largura, altura) : Math.max(1, minimo / Math.min(largura, altura));
     iframe.style.width = `${Math.ceil(largura * fator)}px`;
     iframe.style.height = `${Math.ceil(altura * fator)}px`;
     iframe.style.setProperty('--escala', String(recorte / fator));

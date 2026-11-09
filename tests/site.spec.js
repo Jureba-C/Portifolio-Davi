@@ -175,7 +175,7 @@ test.describe('site público', () => {
     await page.locator('[data-player-proximo]').click();
     await expect(posicao).toHaveText(`2 / ${total}`);
     await expect(titulo).not.toHaveText(primeiro);
-    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('Shift+ArrowLeft');
     await expect(posicao).toHaveText(`1 / ${total}`);
     await expect(titulo).toHaveText(primeiro);
   });
@@ -960,6 +960,93 @@ test.describe('clique no vídeo e legendas', () => {
       });
       expect(sobra).toBeLessThanOrEqual(1);
       await expect(page.locator('[data-player-legenda]')).toBeVisible();
+      await expect(page.locator('[data-player-qualidade]')).toBeVisible();
     }
+  });
+});
+
+test.describe('teclado, fim do vídeo e qualidade', () => {
+  test('as setas pulam 5 segundos e Shift+seta troca de vídeo', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('.player-capa')).toHaveCount(0, { timeout: 6000 });
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('[data-player-tempo]')).toHaveText('0:10 / 0:30');
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.locator('[data-player-tempo]')).toHaveText('0:05 / 0:30');
+    await expect.poll(() => page.evaluate(() => window.__comandos.filter((c) => c.startsWith('seekTo')).slice(-4))).toEqual(['seekTo:[0,true]', 'seekTo:[5,true]', 'seekTo:[10,true]', 'seekTo:[5,true]']);
+    const posicao = page.locator('[data-player-posicao]');
+    await expect(posicao).toHaveText(/^1 \//);
+    await page.keyboard.press('Shift+ArrowRight');
+    await expect(posicao).toHaveText(/^2 \//);
+  });
+
+  test('espaço e K pausam e tocam sem fechar o player', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('.player-capa')).toHaveCount(0, { timeout: 6000 });
+    const play = page.locator('[data-player-play]');
+    await page.keyboard.press('Space');
+    await expect(page.locator('[data-player]')).toBeVisible();
+    await expect(play).toHaveAttribute('aria-label', 'Reproduzir');
+    await page.keyboard.press('k');
+    await expect(play).toHaveAttribute('aria-label', 'Pausar');
+    await expect.poll(() => page.evaluate(() => window.__comandos)).toContain('pauseVideo:[]');
+  });
+
+  test('no fim do vídeo a barra fica cheia e o tempo mostra a duração; tocar de novo volta ao começo', async ({ page }) => {
+    await youtubeFalso(page, [...SOBE_ATE_1080, [2600, { playerState: 0 }]]);
+    await abrirPlayer(page);
+    await expect(page.locator('.player-capa.fim')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[data-player-tempo]')).toHaveText('0:30 / 0:30');
+    expect(await page.locator('[data-player-progresso]').evaluate((el) => el.style.width)).toBe('100%');
+    await page.evaluate(() => { window.__comandos = []; });
+    await page.locator('[data-player-play]').click();
+    await expect(page.locator('[data-player-tempo]')).toHaveText('0:00 / 0:30');
+    await expect.poll(() => page.evaluate(() => window.__comandos)).toEqual(['seekTo:[0,true]', 'playVideo:[]']);
+  });
+
+  test('o menu de qualidade mostra só o que o YouTube tem, lembra a escolha e redesenha o vídeo', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await expect(page.locator('.player-capa')).toHaveCount(0, { timeout: 6000 });
+    const botao = page.locator('[data-player-qualidade]');
+    await expect(botao).toHaveText('Auto');
+    await expect(botao).toHaveAttribute('aria-haspopup', 'menu');
+    await expect(botao).toHaveAttribute('title', /internet/);
+    await botao.click();
+    await expect(botao).toHaveAttribute('aria-expanded', 'true');
+    const itens = page.locator('[data-player-qualidades] [role="menuitemradio"]');
+    await expect(itens).toHaveText(['Auto', '1080p', '720p', '480p']);
+    await expect(itens.first()).toHaveAttribute('aria-checked', 'true');
+    await expect(itens.first()).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await expect(itens.nth(2)).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('[data-player-qualidades]')).toBeHidden();
+    await expect(botao).toHaveText('720p');
+    await expect(botao).toBeFocused();
+    expect(await page.evaluate(() => localStorage.getItem('player-qualidade'))).toBe('hd720');
+    const real = await page.locator('[data-player-video] iframe').evaluate((f) => Math.min(f.offsetWidth, f.offsetHeight) * window.devicePixelRatio);
+    expect(Math.abs(real - 720)).toBeLessThanOrEqual(3);
+    await page.keyboard.press('Escape');
+    await page.locator('.grade .card').first().click();
+    await expect(page.locator('[data-player-qualidade]')).toHaveText('720p');
+  });
+
+  test('ESC fecha o menu de qualidade sem fechar o player', async ({ page }) => {
+    await youtubeFalso(page, SOBE_ATE_1080);
+    await abrirPlayer(page);
+    await page.locator('[data-player-qualidade]').click();
+    await expect(page.locator('[data-player-qualidades]')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('[data-player-qualidades]')).toBeHidden();
+    await expect(page.locator('[data-player]')).toBeVisible();
+    await expect(page.locator('[data-player-qualidade]')).toHaveAttribute('aria-expanded', 'false');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('[data-player]')).toBeHidden();
   });
 });
