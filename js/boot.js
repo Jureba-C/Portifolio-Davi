@@ -37,17 +37,15 @@
   window.addEventListener('keydown', pular);
   window.addEventListener('pointerdown', pular);
   var inicio = Date.now();
-  var relogio = function () {
-    if (terminou) return;
+  var relogio = setInterval(function () {
     var tc = document.querySelector('[data-intro-tc]');
-    if (tc) {
-      var quadros = Math.floor((Date.now() - inicio) * 0.024);
-      var seg = Math.floor(quadros / 24);
-      var q = quadros % 24;
-      tc.textContent = '00:00:' + (seg < 10 ? '0' : '') + seg + ':' + (q < 10 ? '0' : '') + q;
-    }
-    requestAnimationFrame(relogio);
-  };
-  requestAnimationFrame(relogio);
+    if (terminou) clearInterval(relogio);
+    if (terminou || !tc) return;
+    var quadros = Math.floor((Date.now() - inicio) * 0.024);
+    var seg = Math.floor(quadros / 24);
+    var q = quadros % 24;
+    var texto = '00:00:' + (seg < 10 ? '0' : '') + seg + ':' + (q < 10 ? '0' : '') + q;
+    if (tc.textContent !== texto) tc.textContent = texto;
+  }, 1000 / 24);
   setTimeout(fim, 3050);
 })();

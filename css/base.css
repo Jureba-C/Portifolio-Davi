@@ -89,7 +89,6 @@ h1, h2, h3, p { margin: 0; }
   height: 100%;
   pointer-events: none;
   background: url(../assets/grao.png) repeat;
-  will-change: transform;
 }
 
 .icone { width: 1em; height: 1em; flex-shrink: 0; }

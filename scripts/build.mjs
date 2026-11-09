@@ -92,6 +92,8 @@ async function gerarHtaccess() {
   const linhas = [
     'Options -Indexes',
     'RewriteEngine On',
+    'RewriteCond %{HTTP_HOST} ^www\\.(.+)$ [NC]',
+    'RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]',
     'RewriteCond %{HTTPS} off',
     'RewriteCond %{HTTP:X-Forwarded-Proto} !https',
     'RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]',

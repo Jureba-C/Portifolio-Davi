@@ -49,8 +49,9 @@ async function youtubeFalso(page, roteiro = null) {
   });
 }
 
-async function soLinksDoYoutube(page, { semMaxres = false, roteiro = null } = {}) {
+async function soLinksDoYoutube(page, { semMaxres = false, semWebp = false, roteiro = null } = {}) {
   await page.route('**/i.ytimg.com/**', (rota) => {
+    if (semWebp && rota.request().url().includes('/vi_webp/')) return rota.fulfill({ status: 404, body: '' });
     const pequena = semMaxres && rota.request().url().includes('maxresdefault');
     rota.fulfill({ contentType: 'image/svg+xml', body: pequena ? svg(120, 90) : svg(1280, 720) });
   });
@@ -349,6 +350,21 @@ test.describe('site público', () => {
     await expect.poll(() => video.evaluate((v) => !v.paused), { timeout: 8000 }).toBe(true);
   });
 
+  test('no celular, só o clipe do card do meio da tela toca; no computador, todos os que aparecem', async ({ page }, testInfo) => {
+    await page.goto('/?intro=0');
+    const cards = page.locator('.grade .card');
+    await cards.nth(1).evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await expect.poll(() => cards.nth(1).locator('video').evaluate((v) => !v.paused), { timeout: 8000 }).toBe(true);
+    await page.waitForTimeout(800);
+    const tocando = await page.locator('.grade video').evaluateAll((vs) => vs.filter((v) => !v.paused).length);
+    if (ehCelular(testInfo)) {
+      expect(tocando).toBe(1);
+      await expect(cards.nth(0).locator('img.previa-midia')).toBeVisible();
+    } else {
+      expect(tocando).toBeGreaterThan(1);
+    }
+  });
+
   test('vídeo sem clipe mostra a capa, sem botão de play', async ({ page }) => {
     await page.goto('/?intro=0');
     const semClipe = page.locator('.grade .card', { hasText: 'Vinheta de live' });
@@ -542,20 +558,26 @@ test.describe('prévias do YouTube', () => {
     page.on('request', (r) => { if (r.url().includes('i.ytimg.com')) pedidos.push(r.url()); });
     await soLinksDoYoutube(page);
     const principal = page.locator('[data-lista="showreel"] img.previa-midia').first();
-    await expect(principal).toHaveAttribute('src', /maxresdefault\.jpg$/);
+    await expect(principal).toHaveAttribute('src', /\/vi_webp\/[\w-]{11}\/maxresdefault\.webp$/);
     await expect(principal).toHaveAttribute('loading', 'eager');
     await expect(principal).toHaveAttribute('fetchpriority', 'high');
     const outra = page.locator('.grade .card img.previa-midia').first();
     await expect(outra).toHaveAttribute('loading', 'lazy');
-    await expect(outra).toHaveAttribute('src', /maxresdefault\.jpg$/);
-    const idPrincipal = (await principal.getAttribute('src')).split('/vi/')[1].split('/')[0];
+    await expect(outra).toHaveAttribute('src', /maxresdefault\.webp$/);
+    const idPrincipal = (await principal.getAttribute('src')).split('/vi_webp/')[1].split('/')[0];
     expect(pedidos[0]).toContain(idPrincipal);
   });
 
-  test('capa em alta, caindo para a próxima quando o YouTube não tem a maior', async ({ page }) => {
+  test('capa em alta, caindo para a próxima quando o YouTube não tem a maior', async ({ page, browser }) => {
     await soLinksDoYoutube(page);
     const capa = page.locator('.grade .card img.previa-midia').first();
-    await expect(capa).toHaveAttribute('src', /maxresdefault\.jpg$/);
+    await expect(capa).toHaveAttribute('src', /\/vi_webp\/[\w-]{11}\/maxresdefault\.webp$/);
+    const contexto = await browser.newContext();
+    const semWebp = await contexto.newPage();
+    await soLinksDoYoutube(semWebp, { semWebp: true });
+    await semWebp.locator('.grade .card').first().scrollIntoViewIfNeeded();
+    await expect(semWebp.locator('.grade .card img.previa-midia').first()).toHaveAttribute('src', /\/vi\/[\w-]{11}\/maxresdefault\.jpg$/);
+    await contexto.close();
     await soLinksDoYoutube(page, { semMaxres: true });
     await expect(page.locator('.grade .card img.previa-midia').first()).toHaveAttribute('src', /sddefault\.jpg$/);
   });
