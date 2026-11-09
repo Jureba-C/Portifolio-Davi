@@ -356,6 +356,10 @@
 .opcao { min-height: 40px; padding: 0 14px; border: 1.5px solid var(--campo-borda); border-radius: var(--raio); background: var(--cartao-2); color: var(--tinta); font-weight: 700; font-size: 15px; }
 .opcao:hover { border-color: var(--tinta); }
 .opcao[aria-checked="true"] { border-color: var(--vermelho); background: var(--vermelho); color: var(--branco-puro); }
+.opcao-extra { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.opcao-extra input { width: 18px; height: 18px; margin: 0; accent-color: var(--vermelho); }
+.opcao-extra:has(input:checked) { border-color: var(--vermelho); }
+.opcao-extra:has(input:focus-visible) { outline: 2px solid var(--vermelho); outline-offset: 2px; }
 
 .arquivos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .arquivo { position: relative; display: flex; min-width: 0; }

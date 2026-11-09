@@ -294,8 +294,13 @@
         </div>
       </section>
       <fieldset class="campo">
-        <legend class="campo-rotulo">Tipo</legend>
-        <div class="opcoes" role="radiogroup" aria-label="Tipo do vídeo" data-lista="tipos"></div>
+        <legend class="campo-rotulo">Categoria principal</legend>
+        <div class="opcoes" role="radiogroup" aria-label="Categoria principal do vídeo" data-lista="tipos"></div>
+      </fieldset>
+      <fieldset class="campo" data-campo-extras hidden>
+        <legend class="campo-rotulo">Também aparece em</legend>
+        <div class="opcoes" data-lista="extras"></div>
+        <span class="campo-ajuda">O vídeo entra também nessas abas do site. O formato e a etiqueta vêm da categoria principal.</span>
       </fieldset>
       <div class="campo">
         <label class="campo-rotulo" for="v-link">Link do YouTube</label>

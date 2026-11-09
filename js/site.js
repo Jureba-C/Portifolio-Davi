@@ -1,4 +1,4 @@
-import { carregarSite, linkYoutube, iniciais, urlSegura, thumbYoutube } from './data.js';
+import { carregarSite, linkYoutube, iniciais, urlSegura, thumbYoutube, pertence } from './data.js';
 import { t, campo, aplicar, definirIdioma, idioma, aoMudarIdioma } from './i18n.js';
 import { iniciarRevelacao, pausarForaDaTela, iniciarAranhaHero, iniciarRodape, aranhasVivas, letrasSoltas, recorte, temMouse, reduzMovimento } from './animations.js';
 import { iniciarCursor } from './cursor.js';
@@ -8,6 +8,7 @@ import { el, usoSvg } from './dom.js';
 import { FOTO_PADRAO, SOBRE_PADRAO } from './padrao.js';
 
 const TILTS = ['tilt-l', 'tilt-r', 'tilt-0'];
+const TODAS = 'todas';
 const ICONES = {
   instagram: '<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.9" fill="currentColor"/></svg>',
   x: '<svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"><path d="M4 4l16 16"/><path d="M20 4L4 20"/></svg>',
@@ -31,7 +32,8 @@ function aranhaVazia(texto) {
     el('p', { class: 'vazio-texto nota', text: texto }));
 }
 
-const nomeDaCategoria = (cat) => campo(cat, 'nome');
+const nomeDaCategoria = (cat) => (cat?.id === TODAS ? t('trabalhos.todasCategorias') : campo(cat, 'nome'));
+const abas = () => [{ id: TODAS, slug: TODAS }, ...estado.db.categories];
 const categoriaDe = (video) => estado.db.categories.find((c) => c.id === video.category_id);
 const ehVertical = (cat) => cat?.formato === 'vertical';
 const usaFiltros = (cat) => cat?.slug === 'long-form' && estado.db.longform_filters.length > 0;
@@ -45,7 +47,7 @@ function tagDoPlayer(video) {
 
 function videosDaGrade() {
   const cat = estado.db.categories.find((c) => c.id === estado.categoria);
-  let lista = estado.db.videos.filter((v) => v.category_id === estado.categoria);
+  let lista = estado.categoria === TODAS ? estado.db.videos : estado.db.videos.filter((v) => pertence(v, estado.categoria));
   if (usaFiltros(cat) && estado.filtro !== 'todos') lista = lista.filter((v) => v.filter_id === estado.filtro);
   return lista;
 }
@@ -345,14 +347,14 @@ function escolherCategoria(id, focar = false) {
     renderFiltros();
     renderVideos();
   };
-  if (mudou) varrer(nomeDaCategoria(estado.db.categories.find((c) => c.id === id)).toUpperCase(), trocar);
+  if (mudou) varrer(nomeDaCategoria(abas().find((c) => c.id === id)).toUpperCase(), trocar);
   else trocar();
 }
 
 function renderAbas(focar = false) {
   const alvo = document.querySelector('[data-lista="abas"]');
-  const cats = estado.db.categories;
-  if (!cats.some((c) => c.id === estado.categoria)) estado.categoria = cats[0]?.id ?? null;
+  const cats = abas();
+  if (!cats.some((c) => c.id === estado.categoria)) estado.categoria = TODAS;
   alvo.textContent = '';
   cats.forEach((cat) => {
     const ativa = cat.id === estado.categoria;
@@ -402,6 +404,7 @@ function renderVideos() {
   const grade = document.querySelector('[data-lista="videos"]');
   const cat = estado.db.categories.find((c) => c.id === estado.categoria);
   const vertical = ehVertical(cat);
+  const mista = estado.categoria === TODAS;
   soltarPrevias(grade);
   grade.className = `grade${vertical ? ' grade-vertical' : ''}`;
   grade.textContent = '';
@@ -411,11 +414,13 @@ function renderVideos() {
     return;
   }
   lista.forEach((video, i) => {
+    const deVideo = mista ? categoriaDe(video) : cat;
+    const emPe = ehVertical(deVideo);
     const card = quadro(video, {
       classe: `card ${TILTS[(vertical ? i + 1 : i) % 3]}`,
-      vertical,
+      vertical: emPe,
       assistir: t('trabalhos.verVideo'),
-      tag: vertical ? '' : nomeDaCategoria(cat).toUpperCase(),
+      tag: emPe ? '' : nomeDaCategoria(deVideo).toUpperCase(),
     });
     grade.append(el('div', { class: 'reveal' }, el('div', { class: 'pop', style: `animation-delay: ${(i * 0.08).toFixed(2)}s` }, card)));
   });
@@ -595,7 +600,7 @@ function marcarIdioma() {
 function iniciarAbasTeclado() {
   document.querySelector('[data-lista="abas"]').addEventListener('keydown', (e) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
-    const cats = estado.db.categories;
+    const cats = abas();
     const atual = cats.findIndex((c) => c.id === estado.categoria);
     let proximo = atual;
     if (e.key === 'ArrowRight') proximo = (atual + 1) % cats.length;

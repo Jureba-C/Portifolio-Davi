@@ -124,6 +124,30 @@ test.describe('painel admin (modo local)', () => {
     await expect(page.locator('[data-lista="trabalhos"] .etiqueta-cat').first()).toHaveText('Vertical');
   });
 
+  test('vídeo ganha uma categoria extra, volta marcada e aparece nos dois filtros', async ({ page }) => {
+    await entrar(page);
+    const item = page.locator('[data-lista="trabalhos"] > li', { hasText: 'Lyric video' });
+    await item.getByRole('button', { name: /Editar Lyric video/ }).click();
+    await expect(page.locator('[data-campo-extras]')).toBeVisible();
+    await expect(page.locator('[data-lista="extras"] [data-extra="motion"]')).toHaveCount(0);
+    const extra = page.getByRole('checkbox', { name: 'Vertical' });
+    await expect(extra).not.toBeChecked();
+    await extra.check();
+    await page.click('[data-video-botao]');
+    await expect(page.locator('[data-toast]')).toContainText('vídeo salvo');
+    await item.getByRole('button', { name: /Editar Lyric video/ }).click();
+    await expect(page.getByRole('checkbox', { name: 'Vertical' })).toBeChecked();
+    await expect(page.locator('[role="radio"][aria-checked="true"]')).toHaveText('Motion');
+    await page.locator('[data-gaveta="video"] .gaveta-botoes [data-fechar]').click();
+    await expect(page.locator('[data-gaveta="video"]')).toBeHidden();
+    const filtros = page.locator('[data-lista="filtro-categoria"]');
+    await filtros.getByRole('button', { name: /Vertical/ }).click();
+    await expect(page.locator('[data-lista="trabalhos"] > li')).toHaveCount(5);
+    await expect(page.locator('[data-lista="trabalhos"]')).toContainText('Lyric video');
+    await filtros.getByRole('button', { name: /Motion/ }).click();
+    await expect(page.locator('[data-lista="trabalhos"]')).toContainText('Lyric video');
+  });
+
   test('link inválido não é aceito', async ({ page }) => {
     await entrar(page);
     await novoVideo(page);

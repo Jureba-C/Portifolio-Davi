@@ -1,4 +1,4 @@
-import { criarApi, extrairIdYoutube, ehLinkDeShort, thumbYoutube, capaYoutube, iniciais, loginLocalPermitido } from './data.js';
+import { criarApi, extrairIdYoutube, ehLinkDeShort, thumbYoutube, capaYoutube, iniciais, loginLocalPermitido, pertence } from './data.js';
 import { clipePesado, otimizarClipe, PASTA_LEVE } from './clipe.js';
 import { nuvemConfigurada } from './supabase.js';
 import { el } from './dom.js';
@@ -45,6 +45,7 @@ let Sortable = null;
 let painelPronto = false;
 let paginaAtual = null;
 let tipoNovo = null;
+let extrasNovo = [];
 let filtroCategoria = 'todas';
 let editandoVideo = null;
 let editandoCliente = null;
@@ -486,7 +487,8 @@ function renderCategorias() {
   const ul = $('[data-lista="categorias"]');
   ul.textContent = '';
   db.categories.forEach((cat) => {
-    const total = db.videos.filter((v) => v.category_id === cat.id).length;
+    const total = db.videos.filter((v) => pertence(v, cat.id)).length;
+    const levados = db.videos.filter((v) => v.category_id === cat.id).length;
     const li = el('li', { class: 'item', 'data-id': cat.id });
     const mostrar = () => {
       li.textContent = '';
@@ -527,7 +529,7 @@ function renderCategorias() {
       pt.focus();
     };
     const excluir = async () => {
-      const aviso = total ? ` ${total === 1 ? 'O vídeo dela também some' : `Os ${total} vídeos dela também somem`}.` : '';
+      const aviso = levados ? ` ${levados === 1 ? 'O vídeo dela também some' : `Os ${levados} vídeos dela também somem`}.` : '';
       if (!(await confirmar(`Excluir a categoria "${cat.nome_pt}"?${aviso}`))) return;
       await acao(() => api.excluir('categories', cat.id), 'categoria excluída');
       await recarregar();
@@ -596,6 +598,31 @@ function renderTipos() {
     }));
   });
   $('[data-campo-filtro]').hidden = !usaFiltros(categoria(tipoNovo));
+  renderExtras();
+}
+
+function categoriasMultiplas() {
+  return api.modo === 'local' || db.videos.some((v) => 'category_ids' in v);
+}
+
+function renderExtras() {
+  const alvo = $('[data-lista="extras"]');
+  const outras = db.categories.filter((c) => c.id !== tipoNovo);
+  extrasNovo = extrasNovo.filter((id) => outras.some((c) => c.id === id));
+  $('[data-campo-extras]').hidden = !categoriasMultiplas() || !outras.length;
+  alvo.textContent = '';
+  outras.forEach((cat) => {
+    alvo.append(el('label', { class: 'opcao opcao-extra' },
+      el('input', {
+        type: 'checkbox',
+        'data-extra': cat.slug,
+        checked: extrasNovo.includes(cat.id),
+        onchange: (e) => {
+          extrasNovo = e.target.checked ? [...extrasNovo, cat.id] : extrasNovo.filter((id) => id !== cat.id);
+        },
+      }),
+      el('span', { text: cat.nome_pt })));
+  });
 }
 
 function atualizarPrevia() {
@@ -670,7 +697,7 @@ function camposVideo(form) {
 
 function estadoVideo() {
   const form = $('[data-form="video"]');
-  return JSON.stringify([tipoNovo, form.link.value, form.titulo.value, form.filter_id.value, form.descricao_pt.value, form.descricao_en.value, form.destaque.checked, arquivos.clipe?.name, arquivos.capa?.name, removidos.clipe, removidos.capa]);
+  return JSON.stringify([tipoNovo, extrasNovo, form.link.value, form.titulo.value, form.filter_id.value, form.descricao_pt.value, form.descricao_en.value, form.destaque.checked, arquivos.clipe?.name, arquivos.capa?.name, removidos.clipe, removidos.capa]);
 }
 
 const gavetas = {};
@@ -720,6 +747,7 @@ function abrirVideo(v = null) {
   $('[data-video-erro]').textContent = '';
   $('[data-video-titulo]').textContent = v ? 'Editar vídeo' : 'Novo vídeo';
   $('[data-video-botao]').textContent = v ? 'Salvar vídeo' : 'Adicionar vídeo';
+  extrasNovo = (v?.category_ids ?? []).filter((id) => id !== v.category_id);
   if (v) {
     tipoNovo = v.category_id;
     form.titulo.value = v.titulo ?? '';
@@ -767,6 +795,7 @@ async function salvarVideo(e) {
       preview_url,
       poster_url,
       category_id: tipoNovo,
+      ...(categoriasMultiplas() ? { category_ids: [tipoNovo, ...extrasNovo] } : {}),
       filter_id: usaFiltros(cat) ? form.filter_id.value || null : null,
       destaque: form.destaque.checked,
     };
@@ -788,7 +817,7 @@ function renderFiltroCategoria() {
   if (filtroCategoria !== 'todas' && !db.categories.some((c) => c.id === filtroCategoria)) filtroCategoria = 'todas';
   alvo.textContent = '';
   [{ id: 'todas', nome_pt: 'Todos' }, ...db.categories].forEach((c) => {
-    const total = c.id === 'todas' ? db.videos.length : db.videos.filter((v) => v.category_id === c.id).length;
+    const total = c.id === 'todas' ? db.videos.length : db.videos.filter((v) => pertence(v, c.id)).length;
     alvo.append(el('button', {
       type: 'button',
       class: 'chip',
@@ -807,7 +836,7 @@ function renderTrabalhos() {
   const busca = textoBusca();
   ul.textContent = '';
   const lista = db.videos.filter((v) => {
-    if (filtroCategoria !== 'todas' && v.category_id !== filtroCategoria) return false;
+    if (filtroCategoria !== 'todas' && !pertence(v, filtroCategoria)) return false;
     if (!busca) return true;
     const cat = categoria(v.category_id);
     return [v.titulo, v.descricao_pt, v.descricao_en, cat?.nome_pt].join(' ').toLowerCase().includes(busca);
